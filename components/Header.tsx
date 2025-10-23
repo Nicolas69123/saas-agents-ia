@@ -25,8 +25,11 @@ export default function Header() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
+            <li><Link href="/#agents">Agents IA</Link></li>
             <li><Link href="/features">Fonctionnalités</Link></li>
             <li><Link href="/pricing">Tarification</Link></li>
+            <li><Link href="/docs/integrations">Intégrations</Link></li>
+            <li><Link href="/docs/faq">FAQ</Link></li>
             <li><Link href="/blog">Blog</Link></li>
           </motion.ul>
 
@@ -81,7 +84,7 @@ export default function Header() {
         .navbar-menu {
           display: flex;
           list-style: none;
-          gap: 40px;
+          gap: 48px;
           flex: 1;
           justify-content: center;
         }

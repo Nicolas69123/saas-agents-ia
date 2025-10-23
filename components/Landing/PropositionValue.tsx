@@ -181,12 +181,14 @@ export default function PropositionValue() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 14px;
+          justify-content: center;
+          gap: 16px;
+          text-align: center;
         }
 
         .step-number {
-          width: 60px;
-          height: 60px;
+          width: 70px;
+          height: 70px;
           background: linear-gradient(135deg, #3b82f6, #8b5cf6);
           color: #ffffff;
           border-radius: 50%;
@@ -194,14 +196,16 @@ export default function PropositionValue() {
           align-items: center;
           justify-content: center;
           font-weight: 800;
-          font-size: 1.5rem;
+          font-size: 1.75rem;
           box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
         }
 
         .step span:last-child {
           color: rgba(255, 255, 255, 0.8);
           font-weight: 600;
-          font-size: 0.95rem;
+          font-size: 1rem;
+          max-width: 120px;
+          line-height: 1.3;
         }
 
         @media (max-width: 768px) {

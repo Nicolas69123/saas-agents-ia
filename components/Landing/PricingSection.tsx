@@ -102,17 +102,6 @@ export default function PricingSection() {
             </motion.div>
           ))}
         </div>
-
-        <motion.div
-          className="pricing-note"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.6, duration: 0.6 }}
-        >
-          <p>Tom IA Téléphonique: facturé séparément selon utilisation (0,50€/min)</p>
-          <p>Charly+ Premium: +29,90€/mois pour accès exclusif</p>
-        </motion.div>
       </div>
 
       <style jsx>{`
@@ -251,20 +240,6 @@ export default function PricingSection() {
           font-weight: 700;
           color: #3b82f6;
           font-size: 1.1rem;
-        }
-
-        .pricing-note {
-          text-align: center;
-          padding: 30px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 16px;
-          font-size: 0.9rem;
-        }
-
-        .pricing-note p {
-          margin: 8px 0;
-          color: rgba(255, 255, 255, 0.5);
         }
 
         @media (max-width: 768px) {

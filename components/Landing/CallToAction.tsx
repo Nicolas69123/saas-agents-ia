@@ -100,19 +100,21 @@ export default function CallToAction() {
 
         .cta-buttons {
           display: flex;
-          gap: 20px;
+          gap: 24px;
           justify-content: center;
-          margin-bottom: 40px;
+          margin-bottom: 0;
           flex-wrap: wrap;
         }
 
         .cta-buttons button {
-          min-width: 220px;
+          min-width: 240px;
+          padding: 18px 36px;
         }
 
         .cta-subtext {
-          font-size: 0.95rem;
+          font-size: 1rem;
           color: rgba(255, 255, 255, 0.5);
+          margin-top: 60px;
         }
 
         @media (max-width: 768px) {

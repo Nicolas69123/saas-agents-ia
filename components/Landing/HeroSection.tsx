@@ -16,44 +16,6 @@ export default function HeroSection() {
       {/* Gradient overlay */}
       <div className="gradient-overlay" />
 
-      {/* Cards flottantes (notifications style Agentova) */}
-      <motion.div
-        className="floating-card floating-card-1"
-        animate={{
-          y: [0, -10, 0],
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      >
-        <div className="card-icon">📊</div>
-        <div className="card-content">
-          <div className="card-title">155 demandes traitées</div>
-          <div className="card-subtitle">Hello, j'ai géré 155 demandes clients aujourd'hui...</div>
-        </div>
-      </motion.div>
-
-      <motion.div
-        className="floating-card floating-card-2"
-        animate={{
-          y: [0, -10, 0],
-        }}
-        transition={{
-          duration: 3,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 0.5,
-        }}
-      >
-        <div className="card-icon">✉️</div>
-        <div className="card-content">
-          <div className="card-title">10 emails en brouillon</div>
-          <div className="card-subtitle">Aujourd'hui, j'ai préparé 10 emails...</div>
-        </div>
-      </motion.div>
-
       <div className="container">
         <div className="hero-content">
           <div className="hero-text">
@@ -134,6 +96,39 @@ export default function HeroSection() {
                 <span className="social-number">Déjà 1,250+</span> entrepreneurs utilisent SaaS Agents IA
               </div>
             </motion.div>
+
+            {/* Cards flottantes (en-dessous) */}
+            <div className="floating-cards-container">
+              <motion.div
+                className="floating-card"
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+              >
+                <div className="card-icon">📊</div>
+                <div className="card-content">
+                  <div className="card-title">155 demandes traitées</div>
+                  <div className="card-subtitle">Hello, j'ai géré 155 demandes clients aujourd'hui...</div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                className="floating-card"
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+              >
+                <div className="card-icon">✉️</div>
+                <div className="card-content">
+                  <div className="card-title">10 emails en brouillon</div>
+                  <div className="card-subtitle">Aujourd'hui, j'ai préparé 10 emails...</div>
+                </div>
+              </motion.div>
+            </div>
           </div>
         </div>
       </div>
@@ -212,10 +207,10 @@ export default function HeroSection() {
 
         .hero-buttons {
           display: flex;
-          gap: 20px;
+          gap: 32px;
           justify-content: center;
           flex-wrap: wrap;
-          margin-bottom: 60px;
+          margin-bottom: 80px;
         }
 
         .social-proof {
@@ -224,6 +219,7 @@ export default function HeroSection() {
           justify-content: center;
           gap: 16px;
           flex-wrap: wrap;
+          margin-bottom: 80px;
         }
 
         .avatars {
@@ -259,31 +255,30 @@ export default function HeroSection() {
           color: #ffffff;
         }
 
+        /* Floating cards container (centrées en-dessous) */
+        .floating-cards-container {
+          display: flex;
+          justify-content: center;
+          gap: 24px;
+          flex-wrap: wrap;
+          margin-top: 40px;
+        }
+
         /* Floating notification cards */
         .floating-card {
-          position: absolute;
           background: rgba(255, 255, 255, 0.08);
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
           border: 1px solid rgba(255, 255, 255, 0.15);
           border-radius: 16px;
-          padding: 16px 20px;
+          padding: 20px 24px;
           display: flex;
           gap: 14px;
           align-items: flex-start;
-          max-width: 280px;
-          z-index: 10;
+          max-width: 320px;
+          flex: 1;
+          min-width: 280px;
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
-
-        .floating-card-1 {
-          top: 120px;
-          right: 10%;
-        }
-
-        .floating-card-2 {
-          top: 280px;
-          right: 8%;
         }
 
         .card-icon {

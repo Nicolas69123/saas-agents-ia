@@ -74,15 +74,17 @@ export default function Footer() {
       <style jsx>{`
         footer {
           background: #000000;
-          padding: 80px 20px 40px;
+          padding: 150px 20px 60px;
           border-top: 1px solid rgba(255, 255, 255, 0.1);
+          margin-top: 0;
         }
 
         .newsletter-section {
           text-align: center;
           max-width: 600px;
-          margin: 0 auto 80px;
-          padding-bottom: 60px;
+          margin: 0 auto;
+          padding-bottom: 150px;
+          margin-bottom: 300px;
           border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 

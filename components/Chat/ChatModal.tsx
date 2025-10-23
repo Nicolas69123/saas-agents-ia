@@ -111,7 +111,9 @@ export default function ChatModal({
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
+          background: rgba(0, 0, 0, 0.8);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -123,11 +125,14 @@ export default function ChatModal({
           width: 100%;
           max-width: 900px;
           height: 90vh;
-          background: #fff;
-          border-radius: 40px;
+          background: rgba(10, 10, 10, 0.98);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          border-radius: 24px;
           display: flex;
           flex-direction: column;
-          box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 25px 80px rgba(0, 0, 0, 0.9);
           animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
           overflow: hidden;
         }
@@ -147,9 +152,9 @@ export default function ChatModal({
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 16px 20px;
-          border-bottom: 1px solid #e5e7eb;
-          background: #fff;
+          padding: 20px 24px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          background: rgba(0, 0, 0, 0.3);
         }
 
         .chat-header-left {
@@ -172,9 +177,14 @@ export default function ChatModal({
           justify-content: center;
         }
 
+        .sidebar-toggle {
+          color: rgba(255, 255, 255, 0.8);
+        }
+
         .sidebar-toggle:hover {
-          background: #f5f5f5;
+          background: rgba(255, 255, 255, 0.1);
           transform: scale(1.1);
+          color: #ffffff;
         }
 
         .sidebar-toggle:active {
@@ -188,12 +198,13 @@ export default function ChatModal({
         .agent-info h2 {
           margin: 0;
           font-size: 1rem;
+          color: #ffffff;
         }
 
         .agent-info p {
           margin: 0;
           font-size: 0.8rem;
-          opacity: 0.6;
+          color: rgba(255, 255, 255, 0.5);
         }
 
         .chat-header-right {
@@ -212,11 +223,13 @@ export default function ChatModal({
           display: flex;
           align-items: center;
           justify-content: center;
+          color: rgba(255, 255, 255, 0.7);
         }
 
         .chat-action-btn:hover {
-          background: #f5f5f5;
+          background: rgba(255, 255, 255, 0.1);
           transform: scale(1.1) rotate(5deg);
+          color: #ffffff;
         }
 
         .chat-action-btn:active {
