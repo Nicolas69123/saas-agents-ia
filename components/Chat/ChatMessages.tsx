@@ -2,11 +2,14 @@
 
 import { useEffect, useRef } from 'react'
 import { Message } from '@/hooks/useChat'
+import { AgentAvatar } from '@/components/OptimizedImage'
+import { AgentAvatar as AgentAvatarType } from '@/data/agents'
 
 interface ChatMessagesProps {
   messages: Message[]
   agentName: string
   agentIcon: string
+  agentAvatar?: AgentAvatarType
   isLoading: boolean
 }
 
@@ -14,6 +17,7 @@ export default function ChatMessages({
   messages,
   agentName,
   agentIcon,
+  agentAvatar,
   isLoading,
 }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -33,8 +37,14 @@ export default function ChatMessages({
           key={message.id}
           className={`message message-${message.role}`}
         >
-          {message.role === 'agent' && (
-            <div className="message-avatar">{agentIcon}</div>
+          {message.role === 'agent' && agentAvatar && (
+            <div className="message-avatar">
+              <AgentAvatar
+                src={agentAvatar.url}
+                alt={agentAvatar.alt}
+                size={36}
+              />
+            </div>
           )}
           <div className="message-content">
             {message.role === 'agent' && (
@@ -51,9 +61,15 @@ export default function ChatMessages({
         </div>
       ))}
 
-      {isLoading && (
+      {isLoading && agentAvatar && (
         <div className="message message-agent">
-          <div className="message-avatar">{agentIcon}</div>
+          <div className="message-avatar">
+            <AgentAvatar
+              src={agentAvatar.url}
+              alt={agentAvatar.alt}
+              size={36}
+            />
+          </div>
           <div className="message-content">
             <span className="message-sender">{agentName}</span>
             <div className="message-text">
@@ -102,14 +118,11 @@ export default function ChatMessages({
         }
 
         .message-avatar {
-          font-size: 1.8rem;
           width: 36px;
           height: 36px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #f5f5f5;
-          border-radius: 16px;
           flex-shrink: 0;
         }
 

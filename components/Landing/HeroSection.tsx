@@ -1,5 +1,8 @@
 'use client'
 
+import OptimizedImage from '@/components/OptimizedImage'
+import { siteImages } from '@/config/images'
+
 export default function HeroSection() {
   return (
     <section className="hero-section">
@@ -21,8 +24,14 @@ export default function HeroSection() {
           </div>
 
           <div className="hero-visual">
-            <div className="carousel-placeholder">
-              <p>[ Carrousel d'images agents IA ]</p>
+            <div className="hero-image-wrapper">
+              <OptimizedImage
+                src={siteImages.hero.url}
+                alt={siteImages.hero.alt}
+                className="hero-image"
+                priority
+                quality={90}
+              />
             </div>
           </div>
         </div>
@@ -74,21 +83,18 @@ export default function HeroSection() {
           flex-wrap: wrap;
         }
 
-        .carousel-placeholder {
+        .hero-image-wrapper {
           width: 100%;
           aspect-ratio: 16/9;
-          border: 2px dashed #ccc;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #fff;
-          min-height: 300px;
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+          transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        .carousel-placeholder p {
-          text-align: center;
-          opacity: 0.5;
+        .hero-image-wrapper:hover {
+          transform: scale(1.02) translateY(-5px);
+          box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
         }
 
         @media (max-width: 768px) {

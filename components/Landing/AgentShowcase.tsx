@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { agents } from '@/data/agents'
 import ChatModal from '@/components/Chat/ChatModal'
+import { AgentAvatar } from '@/components/OptimizedImage'
 
 export default function AgentShowcase() {
   const [selectedAgent, setSelectedAgent] = useState<typeof agents[0] | null>(null)
@@ -17,7 +18,14 @@ export default function AgentShowcase() {
         <div className="agents-grid">
           {agents.map((agent) => (
             <div key={agent.id} className="agent-card">
-              <div className="agent-icon">[ {agent.icon} ]</div>
+              <div className="agent-icon">
+                <AgentAvatar
+                  src={agent.avatar.url}
+                  alt={agent.avatar.alt}
+                  size={80}
+                  borderColor={agent.avatar.color}
+                />
+              </div>
               <h3>{agent.name}</h3>
               <p className="agent-description">{agent.description}</p>
               <p className="agent-domain">Domaine: {agent.domain}</p>
@@ -82,14 +90,10 @@ export default function AgentShowcase() {
         }
 
         .agent-icon {
-          font-size: 2rem;
-          margin-bottom: 16px;
-          height: 60px;
+          margin-bottom: 20px;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #f5f5f5;
-          border-radius: 8px;
         }
 
         .agent-card h3 {

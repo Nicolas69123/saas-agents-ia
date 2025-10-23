@@ -1,7 +1,15 @@
+import { agentAvatars } from '@/config/images'
+
 export interface AgentSuggestion {
   icon: string
   title: string
   description: string
+}
+
+export interface AgentAvatar {
+  url: string
+  color: string
+  alt: string
 }
 
 export interface Agent {
@@ -13,6 +21,7 @@ export interface Agent {
   category: 'finance' | 'management'
   welcomeMessage: string
   suggestions: AgentSuggestion[]
+  avatar: AgentAvatar
 }
 
 export const agents: Agent[] = [
@@ -30,7 +39,8 @@ export const agents: Agent[] = [
       { icon: '📊', title: 'Analyser mes dépenses', description: 'Vue d\'ensemble de mes coûts' },
       { icon: '📈', title: 'Rapport mensuel', description: 'Bilan comptable du mois' },
       { icon: '💶', title: 'Vérifier ma TVA', description: 'Calcul et déclaration TVA' }
-    ]
+    ],
+    avatar: agentAvatars.comptable
   },
   {
     id: 'tresorier',
@@ -45,7 +55,8 @@ export const agents: Agent[] = [
       { icon: '📊', title: 'Analyser mes flux', description: 'Entrées vs sorties' },
       { icon: '⚠️', title: 'Alertes de trésorerie', description: 'Configurer des seuils' },
       { icon: '💰', title: 'Optimiser ma tréso', description: 'Suggestions d\'amélioration' }
-    ]
+    ],
+    avatar: agentAvatars.tresorier
   },
   {
     id: 'investissements',
@@ -60,7 +71,8 @@ export const agents: Agent[] = [
       { icon: '💡', title: 'Recommandations', description: 'Opportunités d\'investissement' },
       { icon: '🎯', title: 'Diversifier', description: 'Stratégie de diversification' },
       { icon: '📊', title: 'Rapport détaillé', description: 'Analyse complète' }
-    ]
+    ],
+    avatar: agentAvatars.investissements
   },
 
   // Management Domain
@@ -77,7 +89,8 @@ export const agents: Agent[] = [
       { icon: '📸', title: 'Légende Instagram', description: 'Caption + hashtags pertinents' },
       { icon: '📅', title: 'Planning de contenu', description: 'Calendrier pour le mois' },
       { icon: '📊', title: 'Analyser mes stats', description: 'Performance des posts' }
-    ]
+    ],
+    avatar: agentAvatars['reseaux-sociaux']
   },
   {
     id: 'email-marketing',
@@ -92,7 +105,8 @@ export const agents: Agent[] = [
       { icon: '🎯', title: 'Campagne promo', description: 'Email de vente ciblé' },
       { icon: '📊', title: 'Analyser mes campagnes', description: 'Taux d\'ouverture et clics' },
       { icon: '✨', title: 'Optimiser mes emails', description: 'Améliorer les performances' }
-    ]
+    ],
+    avatar: agentAvatars['email-marketing']
   },
   {
     id: 'ressources-humaines',
@@ -107,7 +121,8 @@ export const agents: Agent[] = [
       { icon: '👤', title: 'Analyser un CV', description: 'Évaluation de candidat' },
       { icon: '📋', title: 'Onboarding', description: 'Checklist nouveau salarié' },
       { icon: '💼', title: 'Entretien annuel', description: 'Préparer les évaluations' }
-    ]
+    ],
+    avatar: agentAvatars['ressources-humaines']
   },
   {
     id: 'support-client',
@@ -122,7 +137,8 @@ export const agents: Agent[] = [
       { icon: '📋', title: 'Traiter un ticket', description: 'Résoudre une demande' },
       { icon: '🤖', title: 'FAQ automatique', description: 'Base de connaissances' },
       { icon: '😊', title: 'Satisfaction client', description: 'Analyser les retours' }
-    ]
+    ],
+    avatar: agentAvatars['support-client']
   },
   {
     id: 'telephonique',
@@ -137,6 +153,7 @@ export const agents: Agent[] = [
       { icon: '🎙️', title: 'Message vocal', description: 'Répondeur professionnel' },
       { icon: '📊', title: 'Analyser mes appels', description: 'Stats et durée' },
       { icon: '⏰', title: 'Planifier des rappels', description: 'Automatiser les suivis' }
-    ]
+    ],
+    avatar: agentAvatars.telephonique
   }
 ]

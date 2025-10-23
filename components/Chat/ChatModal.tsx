@@ -7,6 +7,7 @@ import ChatSidebar from './ChatSidebar'
 import ChatMessages from './ChatMessages'
 import ChatInput from './ChatInput'
 import ChatSuggestions from './ChatSuggestions'
+import { AgentAvatar } from '@/components/OptimizedImage'
 
 interface ChatModalProps {
   agentId: string
@@ -46,7 +47,16 @@ export default function ChatModal({
             >
               ☰
             </button>
-            <span className="agent-icon">{agentIcon}</span>
+            <div className="agent-icon">
+              {agentData && (
+                <AgentAvatar
+                  src={agentData.avatar.url}
+                  alt={agentData.avatar.alt}
+                  size={44}
+                  borderColor={agentData.avatar.color}
+                />
+              )}
+            </div>
             <div className="agent-info">
               <h2>{agentName}</h2>
               <p>Toujours prêt à vous aider</p>
@@ -88,6 +98,7 @@ export default function ChatModal({
                   messages={chat.currentConversation.messages}
                   agentName={agentName}
                   agentIcon={agentIcon}
+                  agentAvatar={agentData?.avatar}
                   isLoading={chat.isLoading}
                 />
               </>
@@ -182,7 +193,9 @@ export default function ChatModal({
         }
 
         .agent-icon {
-          font-size: 2rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .agent-info h2 {
