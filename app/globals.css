@@ -1,3 +1,7 @@
+/* ============================================================================
+   GLOBAL STYLES - Style Agentova Dark Theme
+   ============================================================================ */
+
 /* Reset et base */
 * {
   margin: 0;
@@ -12,6 +16,10 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
+
+  /* DARK THEME */
+  background-color: #000000;
+  color: #ffffff;
 }
 
 /* Layout */
@@ -20,16 +28,22 @@ header {
   top: 0;
   width: 100%;
   z-index: 1000;
-  border-bottom: 1px solid #e5e7eb;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: rgba(0, 0, 0, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 main {
   width: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 footer {
   width: 100%;
-  border-top: 1px solid #e5e7eb;
+  background: #000000;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Containers */
@@ -45,46 +59,76 @@ footer {
 
 /* Sections */
 section {
-  padding: 80px 20px;
+  padding: 100px 20px;
+  position: relative;
 }
 
-/* Typographie */
+/* Sections avec gradient background */
+section.gradient-section {
+  background: radial-gradient(ellipse at center, rgba(59, 130, 246, 0.1), transparent 70%);
+}
+
+/* ============================================================================
+   TYPOGRAPHIE
+   ============================================================================ */
+
 h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
   line-height: 1.2;
   margin-bottom: 20px;
+  color: #ffffff;
 }
 
 h1 {
-  font-size: 3rem;
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 h2 {
-  font-size: 2.25rem;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 h3 {
-  font-size: 1.875rem;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 600;
 }
 
 p {
   margin-bottom: 16px;
   font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.7;
 }
 
-/* Boutons */
+/* Gradient text effect */
+.gradient-text {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ============================================================================
+   BOUTONS - Style Agentova
+   ============================================================================ */
+
 button, .btn {
-  padding: 12px 24px;
+  padding: 16px 32px;
   border: none;
-  border-radius: 24px;
+  border-radius: 12px;
   font-size: 1rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
   overflow: hidden;
+  font-family: inherit;
 }
 
+/* Button ripple effect */
 button:before, .btn:before {
   content: '';
   position: absolute;
@@ -93,107 +137,175 @@ button:before, .btn:before {
   width: 0;
   height: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
   transform: translate(-50%, -50%);
   transition: width 0.6s, height 0.6s;
 }
 
-button:hover, .btn:hover {
+button:active:before, .btn:active:before {
+  width: 100px;
+  height: 100px;
+}
+
+/* Button Primary - Outline transparent */
+.btn-primary {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+/* Button Secondary - Solid white */
+.btn-secondary {
+  background: #ffffff;
+  color: #000000;
+  border: none;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 30px rgba(255, 255, 255, 0.3);
 }
 
 button:active, .btn:active {
   transform: translateY(0) scale(0.98);
 }
 
-button:active:before, .btn:active:before {
-  width: 80px;
-  height: 80px;
+/* ============================================================================
+   CARDS - Glassmorphism Style
+   ============================================================================ */
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 30px;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.btn-primary {
-  border: 1px solid #000;
-  background: #fff;
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
-.btn-primary:hover {
-  background: #f5f5f5;
-  border-color: #000;
-}
+/* ============================================================================
+   AGENTS GRID
+   ============================================================================ */
 
-.btn-secondary {
-  border: 1px solid #000;
-  background: #000;
-  color: #fff;
-}
-
-.btn-secondary:hover {
-  background: #222;
-  border-color: #000;
-}
-
-/* Grille d'agents */
 .agents-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 30px;
-  margin-top: 40px;
+  margin-top: 60px;
 }
 
-/* Cartes d'agents */
 .agent-card {
-  padding: 30px;
-  border: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
-  transition: all 0.3s ease;
+  padding: 40px 30px;
+  text-align: center;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
 }
 
 .agent-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: #000;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(59, 130, 246, 0.3);
 }
 
 .agent-card h3 {
   font-size: 1.5rem;
   margin-bottom: 12px;
+  color: #ffffff;
 }
 
 .agent-card p {
   font-size: 0.95rem;
   line-height: 1.6;
+  color: rgba(255, 255, 255, 0.6);
 }
 
-/* Pricing cards */
+/* ============================================================================
+   PRICING CARDS
+   ============================================================================ */
+
 .pricing-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 30px;
-  margin-top: 40px;
+  margin-top: 60px;
 }
 
 .pricing-card {
-  padding: 40px 30px;
-  border: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
+  padding: 50px 40px;
   text-align: center;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .pricing-card.featured {
-  border: 2px solid #000;
+  border: 2px solid rgba(59, 130, 246, 0.5);
+  background: rgba(59, 130, 246, 0.08);
   transform: scale(1.05);
 }
 
+.pricing-card.featured::before {
+  content: 'POPULAIRE';
+  position: absolute;
+  top: 20px;
+  right: -30px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: #ffffff;
+  padding: 6px 40px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  transform: rotate(45deg);
+  letter-spacing: 0.05em;
+}
+
+.pricing-card:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-10px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
 .pricing-card h3 {
-  font-size: 1.5rem;
-  margin-bottom: 20px;
+  font-size: 1.75rem;
+  margin-bottom: 12px;
+  color: #ffffff;
 }
 
 .pricing-card .price {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin: 20px 0;
+  font-size: 3rem;
+  font-weight: 800;
+  margin: 30px 0;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .pricing-card ul {
@@ -203,31 +315,147 @@ button:active:before, .btn:active:before {
 }
 
 .pricing-card li {
-  padding: 12px 0;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
 }
 
 .pricing-card li:before {
   content: "✓ ";
   font-weight: 700;
-  margin-right: 10px;
+  margin-right: 12px;
+  color: #3b82f6;
 }
 
-/* Responsive */
+/* ============================================================================
+   SCROLLBAR CUSTOM (Dark)
+   ============================================================================ */
+
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================================================
+   SELECTION
+   ============================================================================ */
+
+::selection {
+  background: rgba(59, 130, 246, 0.3);
+  color: #ffffff;
+}
+
+::-moz-selection {
+  background: rgba(59, 130, 246, 0.3);
+  color: #ffffff;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
 @media (max-width: 768px) {
-  h1 {
-    font-size: 2rem;
-  }
-
-  h2 {
-    font-size: 1.5rem;
-  }
-
   section {
-    padding: 40px 20px;
+    padding: 60px 20px;
   }
 
   .pricing-card.featured {
     transform: scale(1);
   }
+
+  .pricing-card.featured::before {
+    top: 15px;
+    right: -35px;
+    padding: 4px 35px;
+    font-size: 0.7rem;
+  }
+
+  .agents-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================================
+   UTILITIES
+   ============================================================================ */
+
+.text-center {
+  text-align: center;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.mt-8 {
+  margin-top: 2rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mb-8 {
+  margin-bottom: 2rem;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }

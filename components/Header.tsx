@@ -1,36 +1,56 @@
 'use client'
 
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 
 export default function Header() {
   return (
     <header>
       <div className="container">
         <nav className="navbar">
-          <div className="navbar-brand">
+          <motion.div
+            className="navbar-brand"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
             <Link href="/">
               <h2>SaaS Agents IA</h2>
             </Link>
-          </div>
+          </motion.div>
 
-          <ul className="navbar-menu">
+          <motion.ul
+            className="navbar-menu"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             <li><Link href="/features">Fonctionnalités</Link></li>
             <li><Link href="/pricing">Tarification</Link></li>
             <li><Link href="/blog">Blog</Link></li>
-          </ul>
+          </motion.ul>
 
-          <div className="navbar-actions">
-            <Link href="/auth/login" className="btn btn-primary">Se connecter</Link>
+          <motion.div
+            className="navbar-actions"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <Link href="/auth/login" className="login-link">Se connecter</Link>
             <Link href="/auth/signup" className="btn btn-secondary">S'inscrire</Link>
-          </div>
+          </motion.div>
         </nav>
       </div>
 
       <style jsx>{`
         header {
-          background: #fff;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-          backdrop-filter: blur(10px);
+          background: rgba(0, 0, 0, 0.8);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          position: sticky;
+          top: 0;
+          z-index: 1000;
         }
 
         .navbar {
@@ -44,34 +64,73 @@ export default function Header() {
         .navbar-brand h2 {
           margin: 0;
           font-size: 1.5rem;
+          color: #ffffff;
+          font-weight: 700;
         }
 
         .navbar-brand a {
           text-decoration: none;
           color: inherit;
+          transition: opacity 0.3s ease;
+        }
+
+        .navbar-brand a:hover {
+          opacity: 0.8;
         }
 
         .navbar-menu {
           display: flex;
           list-style: none;
-          gap: 30px;
+          gap: 40px;
           flex: 1;
+          justify-content: center;
         }
 
         .navbar-menu a {
           text-decoration: none;
-          color: inherit;
+          color: rgba(255, 255, 255, 0.8);
           font-weight: 500;
-          transition: opacity 0.2s;
+          font-size: 0.95rem;
+          transition: all 0.3s ease;
+          position: relative;
+        }
+
+        .navbar-menu a:after {
+          content: '';
+          position: absolute;
+          bottom: -4px;
+          left: 0;
+          width: 0;
+          height: 2px;
+          background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+          transition: width 0.3s ease;
         }
 
         .navbar-menu a:hover {
-          opacity: 0.6;
+          color: #ffffff;
+        }
+
+        .navbar-menu a:hover:after {
+          width: 100%;
         }
 
         .navbar-actions {
           display: flex;
-          gap: 12px;
+          gap: 16px;
+          align-items: center;
+        }
+
+        .login-link {
+          text-decoration: none;
+          color: rgba(255, 255, 255, 0.8);
+          font-weight: 500;
+          font-size: 0.95rem;
+          transition: color 0.3s ease;
+          padding: 8px 16px;
+        }
+
+        .login-link:hover {
+          color: #ffffff;
         }
 
         @media (max-width: 768px) {
@@ -85,6 +144,11 @@ export default function Header() {
             width: 100%;
             flex-direction: column;
             gap: 12px;
+            align-items: center;
+          }
+
+          .navbar-menu a:after {
+            display: none;
           }
 
           .navbar-actions {

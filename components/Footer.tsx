@@ -1,11 +1,30 @@
 'use client'
 
+import { motion } from 'framer-motion'
+
 export default function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
     <footer>
       <div className="container">
+        {/* Newsletter Section */}
+        <motion.div
+          className="newsletter-section"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <h3>Soyez les premiers informés</h3>
+          <p>Abonnez-vous pour accéder en avant-première à ce qu'on prépare. L'innovation n'attend pas.</p>
+          <div className="newsletter-form">
+            <input type="email" placeholder="Votre adresse e-mail" />
+            <button className="btn btn-secondary">M'inscrire</button>
+          </div>
+        </motion.div>
+
+        {/* Footer Links */}
         <div className="footer-content">
           <div className="footer-section">
             <h4>Produit</h4>
@@ -54,22 +73,78 @@ export default function Footer() {
 
       <style jsx>{`
         footer {
-          background: #f9f9f9;
-          padding: 60px 20px 40px;
+          background: #000000;
+          padding: 80px 20px 40px;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .newsletter-section {
+          text-align: center;
+          max-width: 600px;
+          margin: 0 auto 80px;
+          padding-bottom: 60px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .newsletter-section h3 {
+          font-size: 2rem;
+          margin-bottom: 16px;
+          color: #ffffff;
+          font-weight: 700;
+        }
+
+        .newsletter-section p {
+          font-size: 1rem;
+          color: rgba(255, 255, 255, 0.6);
+          margin-bottom: 30px;
+          line-height: 1.6;
+        }
+
+        .newsletter-form {
+          display: flex;
+          gap: 12px;
+          max-width: 500px;
+          margin: 0 auto;
+        }
+
+        .newsletter-form input {
+          flex: 1;
+          padding: 16px 20px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.05);
+          color: #ffffff;
+          font-size: 1rem;
+          transition: all 0.3s ease;
+        }
+
+        .newsletter-form input::placeholder {
+          color: rgba(255, 255, 255, 0.4);
+        }
+
+        .newsletter-form input:focus {
+          outline: none;
+          border-color: rgba(59, 130, 246, 0.5);
+          background: rgba(255, 255, 255, 0.08);
+        }
+
+        .newsletter-form button {
+          padding: 16px 32px;
+          white-space: nowrap;
         }
 
         .footer-content {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 40px;
-          margin-bottom: 40px;
-          border-bottom: 1px solid #e5e7eb;
-          padding-bottom: 40px;
+          gap: 60px;
+          margin-bottom: 50px;
         }
 
         .footer-section h4 {
           font-size: 1.1rem;
-          margin-bottom: 20px;
+          margin-bottom: 24px;
+          color: #ffffff;
+          font-weight: 700;
         }
 
         .footer-section ul {
@@ -77,42 +152,66 @@ export default function Footer() {
         }
 
         .footer-section li {
-          margin-bottom: 12px;
+          margin-bottom: 14px;
         }
 
         .footer-section a {
           text-decoration: none;
-          color: inherit;
-          opacity: 0.7;
-          transition: opacity 0.2s;
+          color: rgba(255, 255, 255, 0.6);
+          transition: color 0.3s ease;
+          font-size: 0.95rem;
         }
 
         .footer-section a:hover {
-          opacity: 1;
+          color: #ffffff;
         }
 
         .footer-bottom {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          text-align: center;
+          padding-top: 30px;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .footer-bottom p {
           margin: 0;
           font-size: 0.9rem;
-          opacity: 0.6;
+          color: rgba(255, 255, 255, 0.5);
         }
 
         @media (max-width: 768px) {
+          footer {
+            padding: 60px 20px 30px;
+          }
+
+          .newsletter-section {
+            margin-bottom: 60px;
+          }
+
+          .newsletter-form {
+            flex-direction: column;
+          }
+
+          .newsletter-form button {
+            width: 100%;
+          }
+
           .footer-content {
             grid-template-columns: repeat(2, 1fr);
-            gap: 30px;
+            gap: 40px;
           }
 
           .footer-bottom {
             flex-direction: column;
             gap: 12px;
+            text-align: center;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .footer-content {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>
