@@ -74,72 +74,74 @@ export default function Footer() {
       <style jsx>{`
         footer {
           background: #000000;
-          padding: 150px 20px 60px;
+          padding: 80px 20px 40px;
           border-top: 1px solid rgba(255, 255, 255, 0.1);
           margin-top: 0;
         }
 
         .newsletter-section {
           text-align: center;
-          max-width: 600px;
+          max-width: 650px;
           margin: 0 auto;
-          padding-bottom: 150px;
-          margin-bottom: 300px;
+          padding-bottom: 60px;
+          margin-bottom: 80px;
           border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .newsletter-section h3 {
-          font-size: 2rem;
-          margin-bottom: 16px;
+          font-size: 2.2rem;
+          margin-bottom: 20px;
           color: #ffffff;
           font-weight: 700;
         }
 
         .newsletter-section p {
-          font-size: 1rem;
-          color: rgba(255, 255, 255, 0.6);
-          margin-bottom: 30px;
-          line-height: 1.6;
+          font-size: 1.05rem;
+          color: rgba(255, 255, 255, 0.7);
+          margin-bottom: 40px;
+          line-height: 1.7;
         }
 
         .newsletter-form {
           display: flex;
-          gap: 12px;
-          max-width: 500px;
+          gap: 16px;
+          max-width: 550px;
           margin: 0 auto;
         }
 
         .newsletter-form input {
           flex: 1;
-          padding: 16px 20px;
+          padding: 18px 24px;
           border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 12px;
+          border-radius: 14px;
           background: rgba(255, 255, 255, 0.05);
           color: #ffffff;
           font-size: 1rem;
-          transition: all 0.3s ease;
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .newsletter-form input::placeholder {
-          color: rgba(255, 255, 255, 0.4);
+          color: rgba(255, 255, 255, 0.45);
         }
 
         .newsletter-form input:focus {
           outline: none;
-          border-color: rgba(59, 130, 246, 0.5);
-          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(59, 130, 246, 0.6);
+          background: rgba(255, 255, 255, 0.1);
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
 
         .newsletter-form button {
-          padding: 16px 32px;
+          padding: 18px 36px;
           white-space: nowrap;
+          font-weight: 600;
         }
 
         .footer-content {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 60px;
-          margin-bottom: 50px;
+          gap: 80px;
+          margin-bottom: 60px;
         }
 
         .footer-section h4 {

@@ -115,23 +115,28 @@ export default function SignupPage() {
           align-items: center;
           justify-content: center;
           padding: 20px;
-          background: #f9f9f9;
+          background: #000000;
+          background-image: radial-gradient(ellipse at 20% 50%, rgba(59, 130, 246, 0.15), transparent 50%),
+                            radial-gradient(ellipse at 80% 80%, rgba(139, 92, 246, 0.15), transparent 50%);
         }
 
         .auth-container {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 60px;
+          gap: 80px;
           width: 100%;
-          max-width: 1000px;
+          max-width: 1100px;
           align-items: center;
         }
 
         .auth-form {
-          background: #fff;
-          padding: 40px;
-          border-radius: 12px;
-          border: 1px solid #e5e7eb;
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          padding: 50px;
+          border-radius: 24px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         }
 
         .auth-logo {
@@ -143,17 +148,25 @@ export default function SignupPage() {
 
         .auth-logo h2 {
           margin: 0;
-          font-size: 1.5rem;
+          font-size: 1.75rem;
+          color: #ffffff;
+          font-weight: 800;
+          background: linear-gradient(135deg, #ffffff, #a0a0a0);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
         }
 
         .auth-form h1 {
-          font-size: 1.8rem;
-          margin-bottom: 8px;
+          font-size: 2.2rem;
+          margin-bottom: 12px;
+          color: #ffffff;
+          font-weight: 800;
         }
 
         .auth-form > p {
-          opacity: 0.6;
-          margin-bottom: 30px;
+          color: rgba(255, 255, 255, 0.6);
+          margin-bottom: 40px;
+          font-size: 1.05rem;
         }
 
         form {
@@ -173,16 +186,24 @@ export default function SignupPage() {
 
         .form-group input {
           width: 100%;
-          padding: 12px;
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
+          padding: 16px 18px;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.05);
+          color: #ffffff;
+          border-radius: 12px;
           font-size: 1rem;
-          transition: border-color 0.2s;
+          transition: all 0.3s ease;
+        }
+
+        .form-group input::placeholder {
+          color: rgba(255, 255, 255, 0.4);
         }
 
         .form-group input:focus {
           outline: none;
-          border-color: #000;
+          border-color: rgba(59, 130, 246, 0.6);
+          background: rgba(255, 255, 255, 0.1);
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
 
         .form-checkbox {

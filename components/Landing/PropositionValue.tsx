@@ -171,10 +171,12 @@ export default function PropositionValue() {
 
         .onboarding-steps {
           display: flex;
-          justify-content: space-around;
+          justify-content: center;
           align-items: center;
           flex-wrap: wrap;
-          gap: 40px;
+          gap: 60px;
+          margin: 0 auto;
+          max-width: 900px;
         }
 
         .step {
@@ -182,8 +184,7 @@ export default function PropositionValue() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 16px;
-          text-align: center;
+          gap: 20px;
         }
 
         .step-number {
@@ -198,14 +199,21 @@ export default function PropositionValue() {
           font-weight: 800;
           font-size: 1.75rem;
           box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .step:hover .step-number {
+          transform: scale(1.15);
+          box-shadow: 0 12px 32px rgba(59, 130, 246, 0.6);
         }
 
         .step span:last-child {
-          color: rgba(255, 255, 255, 0.8);
+          color: rgba(255, 255, 255, 0.85);
           font-weight: 600;
           font-size: 1rem;
-          max-width: 120px;
-          line-height: 1.3;
+          text-align: center;
+          line-height: 1.4;
+          white-space: nowrap;
         }
 
         @media (max-width: 768px) {

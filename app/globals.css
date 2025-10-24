@@ -28,10 +28,156 @@ header {
   top: 0;
   width: 100%;
   z-index: 1000;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  background: rgba(0, 0, 0, 0.8);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(0, 0, 0, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* NAVBAR */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 0;
+  gap: 60px;
+}
+
+.navbar-brand h2 {
+  margin: 0;
+  font-size: 1.75rem;
+  color: #ffffff;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ffffff, #a0a0a0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.navbar-brand a {
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s ease;
+}
+
+.navbar-brand a:hover {
+  transform: scale(1.05);
+  filter: brightness(1.2);
+}
+
+/* MENU EN LIGNE - Floating Dots Style */
+.navbar-menu {
+  display: flex !important;
+  flex-direction: row !important;
+  list-style: none !important;
+  gap: 50px !important;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: relative;
+}
+
+.navbar-menu li {
+  list-style: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: relative;
+}
+
+/* Dot coloré à gauche du lien */
+.navbar-menu li::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  opacity: 0;
+}
+
+.navbar-menu li:hover::before {
+  opacity: 1;
+  width: 12px;
+  height: 12px;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+  animation: pulse-dot 1.5s infinite;
+}
+
+/* Line qui se dessine entre les dots */
+.navbar-menu li::after {
+  content: '';
+  position: absolute;
+  left: -15px;
+  top: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  transform: translateY(-50%);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  opacity: 0;
+}
+
+.navbar-menu li:hover::after {
+  width: 50px;
+  opacity: 0.6;
+}
+
+.navbar-menu a {
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  padding: 12px 16px;
+  display: inline-block;
+}
+
+.navbar-menu a:hover {
+  color: #ffffff !important;
+  transform: translateX(8px);
+  text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+}
+
+/* Animation pulse pour les dots */
+@keyframes pulse-dot {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(139, 92, 246, 1);
+  }
+}
+
+.navbar-actions {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.login-link {
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  padding: 10px 20px;
+  border-radius: 12px;
+}
+
+.login-link:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
 }
 
 main {
@@ -101,6 +247,19 @@ p {
   font-size: 1rem;
   color: rgba(255, 255, 255, 0.7);
   line-height: 1.7;
+}
+
+/* LIENS - Style global */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* LISTES - Pas de puces par défaut */
+ul, ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 /* Gradient text effect */
