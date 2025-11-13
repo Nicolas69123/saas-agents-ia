@@ -4,7 +4,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer>
+    <footer className="site-footer">
       <div className="container">
         <div className="footer-content">
           <div className="footer-section">
@@ -53,7 +53,7 @@ export default function Footer() {
       </div>
 
       <style jsx>{`
-        footer {
+        .site-footer {
           background: #f9f9f9;
           padding: 60px 20px 40px;
         }

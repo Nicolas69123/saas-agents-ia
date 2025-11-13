@@ -6,6 +6,16 @@ export default function FeaturesPage() {
   return (
     <div>
       <section className="page-hero">
+        {/* Image de fond */}
+        <div className="hero-background">
+          <img
+            src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=1920&q=80&fit=crop"
+            alt="Innovation et Technologie"
+            className="hero-bg-image"
+          />
+          <div className="hero-overlay"></div>
+        </div>
+
         <div className="container">
           <h1>Fonctionnalités Puissantes</h1>
           <p>Tout ce dont vous avez besoin pour automatiser votre entreprise</p>
@@ -17,7 +27,7 @@ export default function FeaturesPage() {
           {features.map((feature, index) => (
             <div key={index} className={`feature-block ${index % 2 === 1 ? 'reverse' : ''}`}>
               <div className="feature-image">
-                <div className="placeholder">[ {feature.icon} ]</div>
+                <img src={feature.icon} alt={feature.title} className="feature-img" />
               </div>
               <div className="feature-content">
                 <h2>{feature.title}</h2>
@@ -59,19 +69,56 @@ export default function FeaturesPage() {
 
       <style jsx>{`
         .page-hero {
-          background: #f5f5f5;
-          padding: 80px 20px;
+          padding: 120px 20px;
           text-align: center;
+          position: relative;
+          min-height: 400px;
+          display: flex;
+          align-items: center;
+        }
+
+        /* Image de fond */
+        .hero-background {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 0;
+        }
+
+        .hero-bg-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .hero-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 100%);
+        }
+
+        .container {
+          position: relative;
+          z-index: 1;
         }
 
         .page-hero h1 {
           font-size: 2.5rem;
           margin-bottom: 16px;
+          color: #ffffff;
+          text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
         .page-hero p {
           font-size: 1.1rem;
-          opacity: 0.7;
+          color: #ffffff;
+          opacity: 0.95;
+          text-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
         }
 
         .features-full {
@@ -98,13 +145,14 @@ export default function FeaturesPage() {
           min-height: 400px;
           background: #f5f5f5;
           border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          overflow: hidden;
         }
 
-        .placeholder {
-          font-size: 4rem;
+        .feature-img {
+          width: 100%;
+          height: 100%;
+          min-height: 400px;
+          object-fit: cover;
         }
 
         .feature-content h2 {

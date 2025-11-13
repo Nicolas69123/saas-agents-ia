@@ -7,7 +7,9 @@ export interface AgentSuggestion {
 export interface Agent {
   id: string
   name: string
+  firstName: string
   icon: string
+  avatar: string
   description: string
   domain: string
   category: 'finance' | 'management'
@@ -20,7 +22,9 @@ export const agents: Agent[] = [
   {
     id: 'comptable',
     name: 'Agent Comptable',
+    firstName: 'Lucas',
     icon: '📊',
+    avatar: '/avatars/agent-1.png',
     description: 'Automatise la gestion comptable et la facturation',
     domain: 'Finance',
     category: 'finance',
@@ -35,7 +39,9 @@ export const agents: Agent[] = [
   {
     id: 'tresorier',
     name: 'Agent Trésorier',
+    firstName: 'Marc',
     icon: '💰',
+    avatar: '/avatars/agent-2.png',
     description: 'Gère la trésorerie et les flux de cash',
     domain: 'Finance',
     category: 'finance',
@@ -50,7 +56,9 @@ export const agents: Agent[] = [
   {
     id: 'investissements',
     name: 'Agent Investissements',
+    firstName: 'Julie',
     icon: '📈',
+    avatar: '/avatars/agent-3.png',
     description: 'Analyse et optimise vos placements financiers',
     domain: 'Finance',
     category: 'finance',
@@ -67,7 +75,9 @@ export const agents: Agent[] = [
   {
     id: 'reseaux-sociaux',
     name: 'Agent Réseaux Sociaux',
+    firstName: 'Thomas',
     icon: '📱',
+    avatar: '/avatars/agent-4.png',
     description: 'Crée et publie vos contenus sur les réseaux',
     domain: 'Gestion d\'Entreprise',
     category: 'management',
@@ -82,7 +92,9 @@ export const agents: Agent[] = [
   {
     id: 'email-marketing',
     name: 'Agent Email Marketing',
+    firstName: 'Sophie',
     icon: '✉️',
+    avatar: '/avatars/agent-5.png',
     description: 'Gère vos campagnes email automatisées',
     domain: 'Gestion d\'Entreprise',
     category: 'management',
@@ -97,7 +109,9 @@ export const agents: Agent[] = [
   {
     id: 'ressources-humaines',
     name: 'Agent RH',
+    firstName: 'Claire',
     icon: '👥',
+    avatar: '/avatars/agent-6.png',
     description: 'Optimise la gestion de vos ressources humaines',
     domain: 'Gestion d\'Entreprise',
     category: 'management',
@@ -112,7 +126,9 @@ export const agents: Agent[] = [
   {
     id: 'support-client',
     name: 'Agent Support Client',
+    firstName: 'Emma',
     icon: '🎧',
+    avatar: '/avatars/agent-7.png',
     description: 'Fournit un support client automatisé 24/7',
     domain: 'Gestion d\'Entreprise',
     category: 'management',
@@ -127,7 +143,9 @@ export const agents: Agent[] = [
   {
     id: 'telephonique',
     name: 'Agent Téléphonique',
+    firstName: 'Léa',
     icon: '☎️',
+    avatar: '/avatars/agent-8.png',
     description: 'Gère les appels et communications vocales',
     domain: 'Gestion d\'Entreprise',
     category: 'management',

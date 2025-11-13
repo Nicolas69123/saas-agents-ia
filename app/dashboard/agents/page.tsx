@@ -1,194 +1,221 @@
 'use client'
 
-import DashboardHeader from '@/components/Dashboard/Header'
 import { agents } from '@/data/agents'
+import Link from 'next/link'
 
 export default function AgentsPage() {
   return (
-    <div className="dashboard-content">
-      <DashboardHeader pageTitle="Mes Agents" />
-
-      <div className="container-dashboard">
-        <div className="page-controls">
-          <button className="btn btn-secondary">➕ Ajouter un agent</button>
-          <input type="text" placeholder="Rechercher un agent..." className="search-input" />
+    <div className="dashboard-page">
+      <header className="page-header">
+        <div>
+          <h1>Mes Agents</h1>
+          <p>Gérez vos 8 agents IA spécialisés</p>
         </div>
-
-        <div className="agents-table-wrapper">
-          <table className="agents-table">
-            <thead>
-              <tr>
-                <th>Agent</th>
-                <th>Domaine</th>
-                <th>Statut</th>
-                <th>Workflows</th>
-                <th>Dernière exécution</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {agents.map((agent) => (
-                <tr key={agent.id}>
-                  <td>
-                    <div className="agent-cell">
-                      <span className="agent-icon">{agent.icon}</span>
-                      <span className="agent-name">{agent.name}</span>
-                    </div>
-                  </td>
-                  <td>{agent.domain}</td>
-                  <td>
-                    <span className="status-badge active">✓ Actif</span>
-                  </td>
-                  <td>
-                    <span className="workflow-count">5</span>
-                  </td>
-                  <td>Il y a 2h</td>
-                  <td>
-                    <div className="action-buttons">
-                      <button className="action-icon">⚙️</button>
-                      <button className="action-icon">📊</button>
-                      <button className="action-icon">⋯</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="header-actions">
+          <button className="btn-secondary">Filtrer</button>
+          <Link href="/pricing"><button className="btn-primary">Ajouter un agent</button></Link>
         </div>
+      </header>
+
+      <div className="agents-grid">
+        {agents.map((agent) => (
+          <div key={agent.id} className="agent-card">
+            <div className="agent-header">
+              <img src={agent.avatar} alt={agent.firstName} className="agent-avatar" />
+              <span className="status-badge">● Actif</span>
+            </div>
+            <div className="agent-body">
+              <h3>{agent.firstName}</h3>
+              <p className="agent-role">{agent.name}</p>
+              <p className="agent-domain">{agent.domain}</p>
+            </div>
+            <div className="agent-stats">
+              <div className="stat-item">
+                <span className="stat-label">Workflows</span>
+                <span className="stat-value">12</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Activité</span>
+                <span className="stat-value">5 min</span>
+              </div>
+            </div>
+            <button className="btn-agent">Configurer</button>
+          </div>
+        ))}
       </div>
 
       <style jsx>{`
-        .dashboard-content {
-          padding: 30px;
-        }
-
-        .container-dashboard {
+        .dashboard-page {
+          padding: 40px;
           max-width: 1400px;
           margin: 0 auto;
         }
 
-        .page-controls {
+        .page-header {
           display: flex;
-          gap: 20px;
-          margin-bottom: 30px;
+          justify-content: space-between;
           align-items: center;
+          margin-bottom: 32px;
         }
 
-        .search-input {
-          flex: 1;
-          padding: 12px;
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          font-size: 1rem;
+        .page-header h1 {
+          margin: 0 0 6px 0;
+          font-size: 2rem;
+          color: #0f172a;
         }
 
-        .search-input:focus {
-          outline: none;
-          border-color: #000;
+        .page-header p {
+          margin: 0;
+          color: #64748b;
         }
 
-        .agents-table-wrapper {
-          background: #fff;
-          border: 1px solid #e5e7eb;
-          border-radius: 12px;
-          overflow: hidden;
-        }
-
-        .agents-table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-
-        .agents-table th {
-          background: #f5f5f5;
-          padding: 16px;
-          text-align: left;
-          font-weight: 600;
-          font-size: 0.9rem;
-          border-bottom: 1px solid #e5e7eb;
-        }
-
-        .agents-table td {
-          padding: 16px;
-          border-bottom: 1px solid #e5e7eb;
-        }
-
-        .agents-table tbody tr:hover {
-          background: #fafafa;
-        }
-
-        .agents-table tbody tr:last-child td {
-          border-bottom: none;
-        }
-
-        .agent-cell {
+        .header-actions {
           display: flex;
-          align-items: center;
           gap: 12px;
         }
 
-        .agent-icon {
-          font-size: 1.5rem;
+        .btn-primary, .btn-secondary {
+          padding: 10px 18px;
+          border: none;
+          border-radius: 10px;
+          font-size: 0.875rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          font-family: inherit;
         }
 
-        .agent-name {
-          font-weight: 600;
+        .btn-primary {
+          background: #0f172a;
+          color: #fff;
+        }
+
+        .btn-primary:hover {
+          background: #020617;
+          transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+          background: #fff;
+          color: #0f172a;
+          border: 1.5px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+          border-color: #cbd5e1;
+        }
+
+        .agents-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 16px;
+        }
+
+        .agent-card {
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 16px;
+          padding: 24px;
+        }
+
+        .agent-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 16px;
+        }
+
+        .agent-avatar {
+          width: 64px;
+          height: 64px;
+          border-radius: 12px;
+          object-fit: cover;
         }
 
         .status-badge {
-          display: inline-block;
-          padding: 4px 12px;
-          border-radius: 20px;
-          font-size: 0.85rem;
-          font-weight: 600;
-        }
-
-        .status-badge.active {
-          background: #f0f9f0;
+          padding: 4px 10px;
+          background: #d1fae5;
           color: #065f46;
-        }
-
-        .workflow-count {
+          border-radius: 12px;
+          font-size: 0.75rem;
           font-weight: 600;
         }
 
-        .action-buttons {
+        .agent-body h3 {
+          margin: 0 0 4px 0;
+          font-size: 1.25rem;
+          color: #0f172a;
+        }
+
+        .agent-role {
+          margin: 0 0 4px 0;
+          font-size: 0.875rem;
+          color: #64748b;
+        }
+
+        .agent-domain {
+          margin: 0 0 16px 0;
+          font-size: 0.8125rem;
+          color: #94a3b8;
+        }
+
+        .agent-stats {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+          padding: 16px 0;
+          border-top: 1px solid #f1f5f9;
+          margin-bottom: 16px;
+        }
+
+        .stat-item {
           display: flex;
-          gap: 8px;
+          flex-direction: column;
+          gap: 4px;
         }
 
-        .action-icon {
-          width: 32px;
-          height: 32px;
-          border: 1px solid #e5e7eb;
-          background: #fff;
-          border-radius: 6px;
+        .stat-label {
+          font-size: 0.75rem;
+          color: #94a3b8;
+        }
+
+        .stat-value {
+          font-size: 1.125rem;
+          font-weight: 700;
+          color: #0f172a;
+        }
+
+        .btn-agent {
+          width: 100%;
+          padding: 10px;
+          background: #0f172a;
+          color: #fff;
+          border: none;
+          border-radius: 8px;
+          font-size: 0.875rem;
+          font-weight: 500;
           cursor: pointer;
-          transition: all 0.2s;
-          font-size: 0.9rem;
+          transition: all 0.2s ease;
+          font-family: inherit;
         }
 
-        .action-icon:hover {
-          border-color: #000;
-          background: #f5f5f5;
+        .btn-agent:hover {
+          background: #020617;
         }
 
         @media (max-width: 768px) {
-          .page-controls {
+          .dashboard-page {
+            padding: 20px;
+          }
+
+          .page-header {
             flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
           }
 
-          .agents-table {
-            font-size: 0.9rem;
-          }
-
-          .agents-table th,
-          .agents-table td {
-            padding: 12px 8px;
-          }
-
-          .action-buttons {
-            flex-direction: column;
+          .agents-grid {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>

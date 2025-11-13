@@ -6,6 +6,16 @@ export default function PricingPage() {
   return (
     <div>
       <section className="page-hero">
+        {/* Image de fond */}
+        <div className="hero-background">
+          <img
+            src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1920&q=80&fit=crop"
+            alt="Business et Finance"
+            className="hero-bg-image"
+          />
+          <div className="hero-overlay"></div>
+        </div>
+
         <div className="container">
           <h1>Tarification Simple et Transparente</h1>
           <p>Trouvez le plan qui correspond à vos besoins</p>
@@ -36,19 +46,56 @@ export default function PricingPage() {
 
       <style jsx>{`
         .page-hero {
-          background: #f5f5f5;
-          padding: 80px 20px;
+          padding: 120px 20px;
           text-align: center;
+          position: relative;
+          min-height: 400px;
+          display: flex;
+          align-items: center;
+        }
+
+        /* Image de fond */
+        .hero-background {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 0;
+        }
+
+        .hero-bg-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .hero-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 100%);
+        }
+
+        .container {
+          position: relative;
+          z-index: 1;
         }
 
         .page-hero h1 {
           font-size: 2.5rem;
           margin-bottom: 16px;
+          color: #ffffff;
+          text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
         .page-hero p {
           font-size: 1.1rem;
-          opacity: 0.7;
+          color: #ffffff;
+          opacity: 0.95;
+          text-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
         }
 
         .faq-preview {
