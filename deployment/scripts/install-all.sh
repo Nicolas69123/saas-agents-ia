@@ -230,21 +230,33 @@ install_postgresql() {
     log_success "Base de données configurée"
 }
 
-# 5. Installation Nginx
+# 5. Configuration serveur web
 install_nginx() {
     echo ""
-    log_step "ÉTAPE 6/12 - Installation Nginx"
+    log_step "ÉTAPE 6/12 - Configuration serveur web"
 
+    # Détecter Apache
+    if command -v apache2 &> /dev/null; then
+        WEBSERVER="apache"
+        log_success "Apache détecté - utilisation d'Apache"
+        log_info "Activation modules Apache..."
+        a2enmod proxy proxy_http proxy_wstunnel rewrite headers ssl >> "$LOG_FILE" 2>&1
+        systemctl restart apache2
+        return 0
+    fi
+
+    # Sinon Nginx
     if command -v nginx &> /dev/null; then
+        WEBSERVER="nginx"
         log_success "Nginx déjà installé"
         return 0
     fi
 
+    WEBSERVER="nginx"
     log_info "Installation de Nginx..."
     apt install -y nginx >> "$LOG_FILE" 2>&1
     systemctl start nginx
     systemctl enable nginx
-
     log_success "Nginx installé"
 }
 
@@ -259,7 +271,7 @@ install_certbot() {
     fi
 
     log_info "Installation de Certbot..."
-    apt install -y certbot python3-certbot-nginx >> "$LOG_FILE" 2>&1
+    apt install -y certbot python3-certbot-nginx python3-certbot-apache >> "$LOG_FILE" 2>&1
 
     log_success "Certbot installé"
 }
@@ -357,19 +369,49 @@ EOF
     log_success "Application buildée"
 }
 
-# 10. Configuration Nginx
+# 10. Configuration serveur web
 configure_nginx() {
     echo ""
-    log_step "ÉTAPE 10/12 - Configuration Nginx"
+    log_step "ÉTAPE 10/12 - Configuration serveur web"
 
-    log_info "Création de la configuration Nginx..."
+    if [ "$WEBSERVER" = "apache" ]; then
+        log_info "Configuration Apache..."
+        a2dissite 000-default >> "$LOG_FILE" 2>&1 || true
 
-    cat > /etc/nginx/sites-available/$APP_NAME << EOF
+        cat > /etc/apache2/sites-available/$APP_NAME.conf << 'APACHEEOF'
+<VirtualHost *:80>
+    ServerName DOMAIN_VAR
+    ServerAlias www.DOMAIN_VAR
+
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:3000/
+    ProxyPassReverse / http://localhost:3000/
+
+    RewriteEngine on
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^/?(.*) "ws://localhost:3000/$1" [P,L]
+
+    LimitRequestBody 52428800
+
+    ErrorLog ${APACHE_LOG_DIR}/APP_VAR-error.log
+    CustomLog ${APACHE_LOG_DIR}/APP_VAR-access.log combined
+</VirtualHost>
+APACHEEOF
+
+        sed -i "s/DOMAIN_VAR/$DOMAIN/g" /etc/apache2/sites-available/$APP_NAME.conf
+        sed -i "s/APP_VAR/$APP_NAME/g" /etc/apache2/sites-available/$APP_NAME.conf
+        a2ensite $APP_NAME >> "$LOG_FILE" 2>&1
+        apache2ctl configtest >> "$LOG_FILE" 2>&1 || log_warning "Config Apache non optimale"
+        systemctl reload apache2
+        log_success "Apache configuré"
+    else
+        log_info "Configuration Nginx..."
+        cat > /etc/nginx/sites-available/$APP_NAME << EOF
 server {
     listen 80;
     listen [::]:80;
     server_name $DOMAIN www.$DOMAIN;
-
     client_max_body_size 50M;
 
     location / {
@@ -382,7 +424,6 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_cache_bypass \$http_upgrade;
-
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
@@ -398,6 +439,15 @@ server {
     gzip_vary on;
     gzip_min_length 1024;
     gzip_types text/plain text/css text/xml text/javascript application/javascript application/json;
+}
+EOF
+
+        ln -sf /etc/nginx/sites-available/$APP_NAME /etc/nginx/sites-enabled/
+        rm -f /etc/nginx/sites-enabled/default
+        nginx -t >> "$LOG_FILE" 2>&1
+        systemctl reload nginx
+        log_success "Nginx configuré"
+    fi
 }
 EOF
 
@@ -441,13 +491,24 @@ configure_ssl() {
 
     # Obtenir le certificat SSL
     log_info "Obtention du certificat SSL..."
-    certbot --nginx \
-        -d "$DOMAIN" \
-        -d "www.$DOMAIN" \
-        --non-interactive \
-        --agree-tos \
-        --email "$SSL_EMAIL" \
-        --redirect >> "$LOG_FILE" 2>&1
+
+    if [ "$WEBSERVER" = "apache" ]; then
+        certbot --apache \
+            -d "$DOMAIN" \
+            -d "www.$DOMAIN" \
+            --non-interactive \
+            --agree-tos \
+            --email "$SSL_EMAIL" \
+            --redirect >> "$LOG_FILE" 2>&1
+    else
+        certbot --nginx \
+            -d "$DOMAIN" \
+            -d "www.$DOMAIN" \
+            --non-interactive \
+            --agree-tos \
+            --email "$SSL_EMAIL" \
+            --redirect >> "$LOG_FILE" 2>&1
+    fi
 
     if [ $? -eq 0 ]; then
         log_success "SSL configuré avec succès"
