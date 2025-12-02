@@ -222,10 +222,13 @@ install_postgresql() {
     # Créer la base de données et l'utilisateur
     log_info "Configuration de la base de données..."
 
-    sudo -u postgres psql -c "CREATE DATABASE ${APP_NAME}_prod;" 2>/dev/null || log_warning "DB existe déjà"
-    sudo -u postgres psql -c "CREATE USER ${APP_NAME}_user WITH PASSWORD '$DB_PASSWORD';" 2>/dev/null || log_warning "User existe déjà"
-    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${APP_NAME}_prod TO ${APP_NAME}_user;" >> "$LOG_FILE" 2>&1
-    sudo -u postgres psql -c "ALTER DATABASE ${APP_NAME}_prod OWNER TO ${APP_NAME}_user;" >> "$LOG_FILE" 2>&1
+    # PostgreSQL n'accepte pas les tirets - remplacer par underscores
+    DB_NAME=$(echo "${APP_NAME}" | tr '-' '_')
+
+    sudo -u postgres psql -c "CREATE DATABASE ${DB_NAME}_prod;" 2>/dev/null || log_warning "DB existe déjà"
+    sudo -u postgres psql -c "CREATE USER ${DB_NAME}_user WITH PASSWORD '$DB_PASSWORD';" 2>/dev/null || log_warning "User existe déjà"
+    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME}_prod TO ${DB_NAME}_user;" >> "$LOG_FILE" 2>&1
+    sudo -u postgres psql -c "ALTER DATABASE ${DB_NAME}_prod OWNER TO ${DB_NAME}_user;" >> "$LOG_FILE" 2>&1
 
     log_success "Base de données configurée"
 }
@@ -323,6 +326,9 @@ configure_app() {
     # Créer le fichier .env
     log_info "Création du fichier .env..."
 
+    # PostgreSQL n'accepte pas les tirets - utiliser underscores
+    DB_NAME=$(echo "${APP_NAME}" | tr '-' '_')
+
     cat > .env << EOF
 # Production Environment Variables
 NODE_ENV=production
@@ -330,7 +336,7 @@ PORT=3000
 NEXT_PUBLIC_API_URL=https://$DOMAIN
 
 # Database
-DATABASE_URL="postgresql://${APP_NAME}_user:$DB_PASSWORD@localhost:5432/${APP_NAME}_prod"
+DATABASE_URL="postgresql://${DB_NAME}_user:$DB_PASSWORD@localhost:5432/${DB_NAME}_prod"
 
 # NextAuth
 NEXTAUTH_SECRET=$(openssl rand -base64 32)
