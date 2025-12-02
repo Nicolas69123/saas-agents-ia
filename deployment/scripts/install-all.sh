@@ -449,18 +449,6 @@ EOF
         log_success "Nginx configuré"
     fi
 }
-EOF
-
-    # Activer la configuration
-    ln -sf /etc/nginx/sites-available/$APP_NAME /etc/nginx/sites-enabled/
-    rm -f /etc/nginx/sites-enabled/default
-
-    # Tester la configuration
-    nginx -t >> "$LOG_FILE" 2>&1
-    systemctl reload nginx
-
-    log_success "Nginx configuré"
-}
 
 # 11. Configuration SSL
 configure_ssl() {
