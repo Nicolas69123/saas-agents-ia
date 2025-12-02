@@ -446,4 +446,6 @@ Projet privé - Tous droits réservés © 2025 SaaS Agents IA
 
 ---
 
-**🎉 Projet en développement actif - Dernière mise à jour : 22 Octobre 2025**
+**🎉 Projet en développement actif - Dernière mise à jour : 02 Décembre 2025**
+
+🚀 **Déploiement automatique actif !** - Chaque push sur `main` déclenche un déploiement sur la VM.
