@@ -62,13 +62,18 @@ export default function HeroSection() {
 
   return (
     <section className="hero-section">
-      {/* Image de fond pleine largeur */}
+      {/* Vidéo de fond pleine largeur */}
       <div className="hero-background">
-        <img
-          src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1920&q=80&fit=crop"
-          alt="Intelligence Artificielle"
-          className="hero-bg-image"
-        />
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="hero-bg-video"
+        >
+          <source src="/hero-background.mp4" type="video/mp4" />
+          Votre navigateur ne supporte pas la lecture de vidéos.
+        </video>
         <div className="hero-overlay"></div>
       </div>
 
@@ -151,7 +156,7 @@ export default function HeroSection() {
           align-items: center;
         }
 
-        /* Image de fond pleine largeur */
+        /* Vidéo de fond pleine largeur */
         .hero-background {
           position: absolute;
           top: 0;
@@ -159,12 +164,14 @@ export default function HeroSection() {
           width: 100%;
           height: 100%;
           z-index: 0;
+          overflow: hidden;
         }
 
-        .hero-bg-image {
+        .hero-bg-video {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          object-position: center;
         }
 
         .hero-overlay {

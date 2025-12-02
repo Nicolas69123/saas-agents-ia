@@ -93,7 +93,12 @@ export default function AgentsPage() {
 
             <div className="agent-card-footer">
               <button className="btn-config">⚙️ Configurer</button>
-              <button className="btn-chat">💬 Tester</button>
+              <button
+                className="btn-chat"
+                onClick={() => window.location.href = `/chat/${agent.id}`}
+              >
+                💬 Discuter
+              </button>
             </div>
           </div>
         ))}

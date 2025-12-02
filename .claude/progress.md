@@ -1,11 +1,106 @@
 # Avancement du Projet - projects saas agents ia
 
-> **Dernière mise à jour** : 2025-10-22 Après-midi (16h30)
-> **Session** : Intégration n8n & Workflows Agents IA 🚀
+> **Dernière mise à jour** : 2025-12-02 Matin (10h30)
+> **Session** : Déploiement VM Automatisé & Optimisation Frontend 🚀
 
 ---
 
 ## 🎯 Session Actuelle
+
+**Date** : 2025-12-02 Matin
+**Durée** : ~2h30
+**Focus** : Script d'installation tout-en-un, vidéo background, optimisation structure
+
+### Ce qui a été fait aujourd'hui
+
+#### 🚀 **Script d'Installation Automatisé Complet**
+- ✅ **Script `install-all.sh`** - Installation en 1 SEULE commande (17K lignes)
+  - Installe Node.js 20.x, PM2, PostgreSQL, Nginx, Certbot, Git
+  - Configure automatiquement la base de données PostgreSQL
+  - Clone le repo et build l'application
+  - Configure Nginx avec reverse proxy
+  - Configure SSL avec Let's Encrypt
+  - Configure le firewall UFW
+  - Démarre l'application avec PM2
+  - Interface interactive (demande domaine, email, password DB)
+  - Logs détaillés dans `/var/log/saas-agents-install.log`
+  - Vérifications automatiques post-installation
+  - **Durée** : 10-15 minutes pour installation complète
+
+- ✅ **Guide ultra-complet** : `INSTALLATION-1-COMMANDE.md`
+  - Instructions détaillées pour chaque étape
+  - Troubleshooting complet
+  - Commandes utiles (PM2, Nginx, PostgreSQL)
+  - Configuration sécurité
+  - Conseils par provider (Oracle Cloud, DigitalOcean, AWS)
+
+#### 🎨 **Amélioration Frontend**
+- ✅ Vidéo en background de la landing page
+  - Vidéo `hero-background.mp4` (6.1 MB) copiée dans `public/`
+  - Balise `<video>` avec autoPlay, loop, muted, playsInline
+  - CSS adapté pour `hero-bg-video` (object-fit: cover)
+  - Lecture automatique en boucle
+
+- ✅ Dashboard amélioré (commit précédent)
+  - Icônes aux cartes de stats
+  - Section "Activités récentes" avec avatars
+  - Hero section avec carousel interactif
+
+#### 📦 **Structure Deployment/ Optimisée**
+- ✅ Dossier `deployment/` créé avec tout le nécessaire
+  - **3 scripts** : install-all.sh, deploy.sh, rollback.sh
+  - **1 guide** : INSTALLATION-1-COMMANDE.md
+  - **Config** : ecosystem.config.js, nginx.conf, .env.production
+  - **Doc** : 03-ALTERNATIVES.md (comparaison Vercel, Railway, etc.)
+
+- ✅ **Nettoyage effectué** - 12 fichiers redondants supprimés
+  - Supprimé install-dependencies.sh, setup-nginx.sh, setup-ssl.sh, setup-firewall.sh
+  - Supprimé 01-QUICKSTART.md, 02-FULL-GUIDE.md (remplacés par INSTALLATION-1-COMMANDE.md)
+  - Supprimé duplicatas à la racine (docs/, ecosystem.config.js, scripts/deploy.sh)
+  - Structure finale : 3 scripts essentiels + 1 guide complet
+
+#### 🔧 **Configuration Database**
+- ✅ Base de données actuelle : **SQLite** (dev.db - 114 KB)
+  - 6 tables : users, agents, conversations, messages, workflows, workflow_executions
+  - 8 agents IA pré-chargés
+
+- ✅ Base de données production : **PostgreSQL**
+  - Configuration automatique par install-all.sh
+  - Création user + DB automatique
+  - Migrations Prisma automatiques
+  - Seed des 8 agents automatique
+
+#### 📝 **Commits & PR**
+- ✅ **Commit 1** : `4891ffe` - Dashboard et hero section améliorés
+  - +911 lignes : Dashboard avec activités, hero carousel interactif
+  - Logo OmniA ajouté
+
+- ✅ **Commit 2** : `8211a4c` - Déploiement VM complet
+  - +4,494 lignes : 19 fichiers (deployment/ complet)
+  - Scripts, docs, configurations
+
+- ✅ **PR #4** mise à jour avec 3 commits (7,997 lignes au total)
+
+### Prochaines étapes immédiates
+
+1. 🎬 **Commit les changements actuels**
+   - Vidéo background
+   - Script install-all.sh
+   - Nettoyage fichiers redondants
+   - README deployment/ mis à jour
+
+2. 🚀 **Déployer sur une VM** (optionnel)
+   - Tester le script install-all.sh sur Oracle Cloud
+   - Ou déployer sur Vercel en 2 minutes
+
+3. 🔧 **Intégration Backend** (futur)
+   - Connecter chat à Claude API
+   - Activer les workflows n8n
+   - Configurer authentification OAuth
+
+---
+
+## 🗓️ Session Précédente
 
 **Date** : 2025-10-22 Après-midi
 **Durée** : ~1h30

@@ -32,12 +32,20 @@ export default function AgentShowcase() {
                 <span className="agent-domain-badge">{agent.domain}</span>
               </div>
               <p className="agent-description">Expert en {agent.domain.toLowerCase()}</p>
-              <button
-                className="agent-link"
-                onClick={() => openAgentInfo(agent)}
-              >
-                Voir plus d'info →
-              </button>
+              <div className="agent-actions">
+                <button
+                  className="agent-link-chat"
+                  onClick={() => window.location.href = `/chat/${agent.id}`}
+                >
+                  💬 Discuter
+                </button>
+                <button
+                  className="agent-link-info"
+                  onClick={() => openAgentInfo(agent)}
+                >
+                  ℹ️ En savoir +
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -83,7 +91,7 @@ export default function AgentShowcase() {
             <div className="modal-footer">
               <button className="btn-primary-modal" onClick={() => {
                 setShowModal(false)
-                window.location.href = `/pricing`
+                window.location.href = `/chat/${selectedAgent.id}`
               }}>
                 Discuter avec {selectedAgent.firstName}
               </button>
@@ -182,7 +190,50 @@ export default function AgentShowcase() {
           font-size: 0.95rem;
           line-height: 1.6;
           opacity: 0.8;
-          margin-bottom: 12px;
+          margin-bottom: 20px;
+        }
+
+        .agent-actions {
+          display: flex;
+          gap: 12px;
+          margin-top: 20px;
+        }
+
+        .agent-link-chat,
+        .agent-link-info {
+          flex: 1;
+          padding: 12px 16px;
+          border: none;
+          border-radius: 12px;
+          font-size: 0.875rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+          font-family: inherit;
+        }
+
+        .agent-link-chat {
+          background: #0f172a;
+          color: #fff;
+        }
+
+        .agent-link-chat:hover {
+          background: #020617;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(15, 23, 42, 0.3);
+        }
+
+        .agent-link-info {
+          background: #fff;
+          color: #0f172a;
+          border: 1.5px solid #e5e7eb;
+        }
+
+        .agent-link-info:hover {
+          background: #f9fafb;
+          border-color: #000;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
         }
 
         .agent-domain {
