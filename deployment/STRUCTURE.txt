@@ -1,0 +1,27 @@
+📦 deployment/
+│
+├── 📄 README.md                          # Guide principal du dossier
+│
+├── 📁 docs/                              # Documentation complète
+│   ├── 01-QUICKSTART.md                 # ⚡ Guide rapide (5 commandes)
+│   ├── 02-FULL-GUIDE.md                 # 📖 Guide complet détaillé
+│   └── 03-ALTERNATIVES.md               # 🎯 Comparaison des solutions
+│
+├── 📁 scripts/                           # Scripts automatisés (tous exécutables ✅)
+│   ├── deploy.sh                        # 🚀 Script de déploiement principal
+│   ├── install-dependencies.sh          # 📦 Installation Node.js, PM2, Nginx, Git
+│   ├── setup-nginx.sh                   # 🌐 Configuration Nginx
+│   ├── setup-ssl.sh                     # 🔒 Configuration SSL (Let's Encrypt)
+│   ├── setup-firewall.sh                # 🔥 Configuration firewall (UFW)
+│   └── rollback.sh                      # ⏮️  Rollback en cas d'erreur
+│
+└── 📁 config/                            # Fichiers de configuration
+    ├── ecosystem.config.js              # ⚙️  Configuration PM2
+    ├── nginx.conf                       # 🌐 Configuration Nginx (exemple)
+    └── .env.production                  # 🔐 Variables d'environnement (template)
+
+📊 Statistiques:
+- 3 guides de documentation
+- 6 scripts automatisés
+- 3 fichiers de configuration
+- Tous les scripts sont exécutables (chmod +x)
