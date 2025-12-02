@@ -31,7 +31,7 @@ export default function Header() {
         <nav className="header-nav">
           {/* Logo */}
           <Link href="/" className="logo">
-            Omnia
+            <img src="/logos/ai-omnia-logo.svg" alt="AI OmniA" className="logo-image" />
           </Link>
 
           {/* Menu - UNE SEULE CLASSE */}
@@ -107,6 +107,18 @@ export default function Header() {
           font-size: 1.5rem;
           font-weight: 700;
           color: #0f172a;
+          display: flex;
+          align-items: center;
+        }
+
+        .logo-image {
+          height: 45px;
+          width: auto;
+          transition: transform 0.3s ease;
+        }
+
+        .logo:hover .logo-image {
+          transform: scale(1.05);
         }
 
         /* Menu - UNE SEULE CLASSE */
