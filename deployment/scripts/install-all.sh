@@ -111,21 +111,24 @@ get_user_input() {
     echo ""
 
     # Domaine
-    read -p "$(echo -e ${CYAN}📍 Nom de domaine (ex: saas-agents-ia.fr): ${NC})" DOMAIN
+    echo -e "${CYAN}📍 Nom de domaine (ex: saas-agents-ia.fr): ${NC}"
+    read DOMAIN
     if [ -z "$DOMAIN" ]; then
         log_error "Le nom de domaine est requis"
         exit 1
     fi
 
     # Email pour SSL
-    read -p "$(echo -e ${CYAN}📧 Email pour SSL (Let's Encrypt): ${NC})" SSL_EMAIL
+    echo -e "${CYAN}📧 Email pour SSL (Let's Encrypt): ${NC}"
+    read SSL_EMAIL
     if [ -z "$SSL_EMAIL" ]; then
         log_error "L'email est requis"
         exit 1
     fi
 
     # Mot de passe PostgreSQL
-    read -sp "$(echo -e ${CYAN}🔐 Mot de passe PostgreSQL (DB): ${NC})" DB_PASSWORD
+    echo -e "${CYAN}🔐 Mot de passe PostgreSQL (DB): ${NC}"
+    read -s DB_PASSWORD
     echo ""
     if [ -z "$DB_PASSWORD" ]; then
         log_error "Le mot de passe DB est requis"
@@ -139,7 +142,8 @@ get_user_input() {
     echo "  - Email: $SSL_EMAIL"
     echo "  - App: $APP_DIR"
     echo ""
-    read -p "$(echo -e ${YELLOW}Continuer avec cette configuration? (y/N): ${NC})" CONFIRM
+    echo -e "${YELLOW}Continuer avec cette configuration? (y/N): ${NC}"
+    read CONFIRM
     if [[ ! $CONFIRM =~ ^[Yy]$ ]]; then
         log_error "Installation annulée"
         exit 1
@@ -277,7 +281,8 @@ clone_repository() {
 
     if [ -d "$APP_DIR" ]; then
         log_warning "Le dossier $APP_DIR existe déjà"
-        read -p "$(echo -e ${YELLOW}Supprimer et re-cloner? (y/N): ${NC})" CONFIRM
+        echo -e "${YELLOW}Supprimer et re-cloner? (y/N): ${NC}"
+        read CONFIRM
         if [[ $CONFIRM =~ ^[Yy]$ ]]; then
             rm -rf "$APP_DIR"
         else
