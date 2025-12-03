@@ -1,17 +1,194 @@
 # Avancement du Projet - projects saas agents ia
 
-> **Dernière mise à jour** : 2025-12-02 Matin (10h30)
-> **Session** : Déploiement VM Automatisé & Optimisation Frontend 🚀
+> **Dernière mise à jour** : 2025-12-02 Après-midi (16h00)
+> **Session** : Déploiement Production VM + Webhook Automatique 🚀
 
 ---
 
 ## 🎯 Session Actuelle
 
+**Date** : 2025-12-02 Après-midi
+**Durée** : ~3h
+**Focus** : Déploiement production sur VM, webhook GitHub, automatisation complète
+
+### Ce qui a été fait aujourd'hui
+
+#### 🎯 **Déploiement Production Réussi**
+- ✅ **VM Production** : 86.202.190.207 (Debian 13)
+  - Apache2 comme serveur web (au lieu de Nginx)
+  - Port SSH personnalisé : 2222
+  - PostgreSQL configuré avec DB `saas_agents_ia_prod`
+  - Node.js 20.19.6 + PM2 6.0.14 installés
+
+- ✅ **Configuration Apache VirtualHost**
+  - Détection automatique d'Apache dans le script
+  - Configuration reverse proxy vers Next.js (localhost:3000)
+  - Support WebSocket pour hot reload
+  - Limite upload 50 MB
+  - Logs Apache configurés
+
+- ✅ **Corrections Script install-all.sh**
+  - **Bug 1** : Syntaxe `read -p` avec heredoc → Séparé en `echo` + `read`
+  - **Bug 2** : EOF orphelin ligne 452 → Supprimé bloc dupliqué
+  - **Bug 3** : PostgreSQL rejette les tirets → Conversion `saas-agents-ia` → `saas_agents_ia`
+  - **Bug 4** : Next.js build errors → Cleared cache + `npx prisma generate`
+  - **Bug 5** : prisma.config.ts invalide → Fichier supprimé
+  - Support Apache : Modules activés (proxy, rewrite, headers, ssl)
+
+- ✅ **Build Production Réussi**
+  - 24 routes compilées avec succès
+  - Prisma client généré
+  - Database migrations appliquées
+  - 8 agents IA en base de données
+  - Taille totale : ~100 KB First Load JS
+
+#### 🔄 **Script de Mise à Jour (update-from-github.sh)**
+- ✅ Script intelligent de mise à jour créé
+  - `git pull` automatique depuis GitHub
+  - Détection changements `package.json` → `npm install`
+  - Détection changements `schema.prisma` → `npx prisma generate`
+  - Build automatique de l'application
+  - Redémarrage PM2 automatique
+  - Sauvegarde des changements locaux (git stash)
+  - Restauration après mise à jour
+  - Logs détaillés avec couleurs
+
+- ✅ Documentation complète : `deployment/UPDATE.md`
+  - Méthode simple (1 commande)
+  - Méthode manuelle step-by-step
+  - Troubleshooting complet
+  - Option automatisation avec cron
+
+**Usage** :
+```bash
+cd /opt/saas-agents-ia
+./deployment/scripts/update-from-github.sh
+```
+
+#### 🚀 **Système de Déploiement Automatique (Webhook GitHub)**
+- ✅ **Webhook Receiver Node.js** (`webhook-receiver.js`)
+  - Serveur HTTP sur port 9000
+  - Validation signature GitHub (HMAC SHA-256)
+  - Écoute événements `push` sur branche `main`
+  - Healthcheck endpoint : `/health`
+  - Logs détaillés avec timestamps
+  - Gestion signaux (SIGTERM) pour arrêt propre
+
+- ✅ **Service Systemd** (`webhook-deploy.service`)
+  - Démarrage automatique au boot
+  - Restart automatique en cas de crash
+  - Variables d'environnement sécurisées
+  - Logs centralisés dans `/var/log/webhook-deployment.log`
+
+- ✅ **Script de Configuration** (`setup-webhook.sh`)
+  - Génération secret webhook sécurisé (64 caractères)
+  - Installation service systemd
+  - Configuration firewall (port 9000)
+  - Démarrage automatique du service
+  - Instructions complètes pour GitHub
+
+- ✅ **Documentation Webhook** : `deployment/WEBHOOK.md`
+  - Guide d'installation complet
+  - Configuration GitHub step-by-step
+  - Commandes utiles (status, logs, restart)
+  - Troubleshooting détaillé
+  - Diagramme de workflow
+
+**Fonctionnement** :
+```
+GitHub Push → Webhook → VM (port 9000) → Vérifie signature →
+Lance update-from-github.sh → git pull + build + PM2 restart → Site à jour ! 🎉
+```
+
+#### 🐛 **Problèmes Rencontrés & Solutions**
+
+**Problème 1 : Bash Syntax Errors**
+- Erreur : `erreur de syntaxe près du symbole inattendu « ( »`
+- Cause : `read -p "$(echo -e ...)"` avec nested command substitution
+- Solution : Séparé en 2 commandes (`echo` puis `read`)
+- Fichiers modifiés : Lignes 114, 122, 130, 145, 284
+
+**Problème 2 : PostgreSQL Database Name**
+- Erreur : `ERREUR: erreur de syntaxe sur ou près de « - »`
+- Cause : PostgreSQL rejette les tirets dans les noms non-quotés
+- Solution : `DB_NAME=$(echo "${APP_NAME}" | tr '-' '_')`
+- Impact : `saas-agents-ia` → `saas_agents_ia_prod`
+
+**Problème 3 : Next.js Build Module Not Found**
+- Erreur : `Module not found: Can't resolve '@/data/agents'`
+- Cause : Build cache corrompu + Prisma client manquant
+- Solution : `rm -rf .next node_modules && npm install && npx prisma generate`
+
+**Problème 4 : Apache Config EOF**
+- Erreur : `Invalid command 'EOF', perhaps misspelled`
+- Cause : Heredoc mal fermé, EOF inclus dans le fichier
+- Solution : `sed -i '/^  EOF/d'` pour supprimer la ligne
+
+**Problème 5 : Webhook GitHub - "failed to connect to host"**
+- Symptôme : GitHub ne peut pas atteindre `http://86.202.190.207:9000/webhook`
+- Causes identifiées :
+  1. SSL verification activée sur GitHub → Désactivée
+  2. Port 9000 potentiellement bloqué par l'hébergeur
+  3. VM down à la fin de la session (timeout)
+- Status : **En cours de résolution** (VM à redémarrer)
+
+#### 📊 **Status Final**
+
+**Infrastructure Production** :
+- ✅ VM accessible : http://86.202.190.207
+- ✅ Next.js en production (build réussi)
+- ✅ Apache configuré et fonctionnel
+- ✅ PostgreSQL opérationnel
+- ⚠️ PM2 : Application à démarrer après reboot VM
+- ⚠️ Webhook : Port 9000 à tester après reboot VM
+
+**Fichiers Créés** (4 nouveaux fichiers) :
+1. `deployment/scripts/update-from-github.sh` (114 lignes)
+2. `deployment/UPDATE.md` (107 lignes)
+3. `deployment/webhook/webhook-receiver.js` (172 lignes)
+4. `deployment/scripts/setup-webhook.sh` (130 lignes)
+5. `deployment/webhook/webhook-deploy.service` (30 lignes)
+6. `deployment/WEBHOOK.md` (300+ lignes)
+
+**Commits Pushés** :
+- `a51796e` - feat: Add automatic update script from GitHub
+- `7f25102` - feat: Add automatic deployment with GitHub webhooks
+- `7837a4c` - test: Webhook automatic deployment
+
+### Prochaines étapes immédiates
+
+1. 🔴 **Redémarrer la VM** (priorité #1)
+   - La VM est down (timeout SSH + HTTP)
+   - Redémarrer depuis le panel hébergeur
+   - Vérifier services : PM2, Apache, webhook
+
+2. 🚀 **Démarrer l'application avec PM2**
+   ```bash
+   pm2 start npm --name "saas-agents-ia" -- start
+   pm2 save
+   pm2 startup
+   ```
+
+3. 🔧 **Tester le webhook GitHub**
+   - Vérifier que le service tourne : `systemctl status webhook-deploy`
+   - Tester healthcheck : `curl http://localhost:9000/health`
+   - Faire un push de test sur GitHub
+   - Vérifier les logs : `tail -f /var/log/webhook-deployment.log`
+
+4. 🌐 **Alternative si port 9000 bloqué**
+   - Configurer webhook via Apache sur port 80
+   - Créer une route `/webhook` dans Apache
+   - ProxyPass vers localhost:9000
+
+---
+
+## 🗓️ Session Précédente
+
 **Date** : 2025-12-02 Matin
 **Durée** : ~2h30
 **Focus** : Script d'installation tout-en-un, vidéo background, optimisation structure
 
-### Ce qui a été fait aujourd'hui
+### Ce qui a été fait le matin
 
 #### 🚀 **Script d'Installation Automatisé Complet**
 - ✅ **Script `install-all.sh`** - Installation en 1 SEULE commande (17K lignes)
