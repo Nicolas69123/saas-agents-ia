@@ -48,7 +48,7 @@ export const webhookConfigs: WebhookConfig[] = [
     agentId: 'reseaux-sociaux',
     name: 'Agent Réseaux Sociaux',
     webhookUrl: `${N8N_BASE_URL}/webhook/reseaux-sociaux`,
-    isActive: false,
+    isActive: true, // Workflow: n8n-workflows/chat-marketing.json
   },
   {
     agentId: 'email-marketing',
@@ -60,7 +60,7 @@ export const webhookConfigs: WebhookConfig[] = [
     agentId: 'ressources-humaines',
     name: 'Agent RH',
     webhookUrl: `${N8N_BASE_URL}/webhook/ressources-humaines`,
-    isActive: false,
+    isActive: true, // Workflow: n8n-workflows/chat-rh.json
   },
   {
     agentId: 'support-client',
