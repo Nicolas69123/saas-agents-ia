@@ -1,0 +1,862 @@
+{
+  "name": "Agent Reseaux Sociaux - Chat Integration",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "reseaux-sociaux",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-chat-entry",
+      "name": "Webhook Chat Entry",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-4200, 2160],
+      "webhookId": "reseaux-sociaux-chat"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Tu es un Agent IA creatif et decisionnel charge de transformer les idees brutes des utilisateurs en contenus multimedias engageants.\n\nTu recevras un prompt brut de l'utilisateur (souvent informel ou incomplet).\n\nTa mission se divise en trois etapes:\n\n1. Amelioration du prompt:\nReformule et enrichis le prompt utilisateur pour le rendre plus clair, precis, inspirant et exploitable par un modele de generation de contenu.\n\n2. Classification intelligente du besoin:\nIdentifie automatiquement le type de contenu attendu selon les mots-cles et le contexte:\n\n- Si le prompt evoque une image, photo, visuel, scene, affiche, illustration -> \"type_contenu\": \"image\"\n- Si le prompt evoque une video, script, scene filmee, publicite, voix-off -> \"type_contenu\": \"video\"\n- Si le prompt evoque un texte, article, post, citation, message LinkedIn -> \"type_contenu\": \"texte\"\n- Si c'est une salutation, question, demande de clarification -> \"type_contenu\": \"conversation\"\n\n3. Preparation des elements complementaires:\n- Genere une courte description (accroche claire, engageante)\n- Cree une liste de hashtags pertinents (maximum 10)\n\nPour les conversations (salut, merci, questions):\n- Reponds naturellement et de maniere engageante\n- Propose ton aide pour creer du contenu\n\nTu ne dois jamais generer le contenu final ici.\nTa mission est d'ameliorer, d'analyser et de router le prompt vers le bon type de generation."
+        }
+      },
+      "id": "ai-agent-main",
+      "name": "AI Agent: Generate Video Concept",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [-3680, 2160],
+      "typeVersion": 1.9,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.0-flash-001",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [-3792, 2416],
+      "id": "openrouter-model-main",
+      "name": "OpenRouter Chat Model Main",
+      "credentials": {
+        "openRouterApi": {
+          "id": "MyyJhhHpoa0JGlk9",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"type_contenu\": {\n      \"type\": \"string\",\n      \"enum\": [\"image\", \"video\", \"texte\", \"conversation\"],\n      \"description\": \"Type de contenu identifie automatiquement\"\n    },\n    \"prompt_ameliore\": {\n      \"type\": \"string\",\n      \"description\": \"Prompt enrichi et reformule a partir du texte utilisateur\"\n    },\n    \"description\": {\n      \"type\": \"string\",\n      \"description\": \"Courte description engageante et adaptee au contenu\"\n    },\n    \"hashtags\": {\n      \"type\": \"string\",\n      \"description\": \"Hashtags combines en une seule chaine separes par des espaces\"\n    },\n    \"keywords\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"description\": \"Liste des mots-cles principaux extraits ou generes\"\n    }\n  },\n  \"required\": [\n    \"type_contenu\",\n    \"description\"\n  ]\n}"
+      },
+      "id": "parser-json",
+      "name": "Parser: Extract JSON from Idea",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [-3504, 2416],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-image",
+              "leftValue": "={{ $json.output.type_contenu }}",
+              "rightValue": "image",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-2928, 1584],
+      "id": "if-type-image",
+      "name": "if type : image"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-video",
+              "leftValue": "={{ $json.output.type_contenu }}",
+              "rightValue": "video",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-2928, 2160],
+      "id": "if-type-video",
+      "name": "if type : videos"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-texte",
+              "leftValue": "={{ $json.output.type_contenu }}",
+              "rightValue": "texte",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-2928, 2752],
+      "id": "if-type-text",
+      "name": "if type : text"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-conv",
+              "leftValue": "={{ $json.output.type_contenu }}",
+              "rightValue": "conversation",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [-2928, 3280],
+      "id": "if-type-conversation",
+      "name": "if type : conversation"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ response: $json.output.description || 'Comment puis-je vous aider a creer du contenu?' }) }}",
+        "options": {}
+      },
+      "id": "respond-conversation",
+      "name": "Respond Conversation",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [-2544, 3280]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1E4TEGOpxNGwsAluoFazWEesRdPbiJXX1gqFNfKgL3dE/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Image"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Prompt ameliorer": "={{ $json.output.prompt_ameliore }}",
+            "Description": "={{ $json.output.description }}",
+            "Hashtags": "={{ $json.output.hashtags }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Prompt ameliorer",
+              "displayName": "Prompt ameliorer",
+              "type": "string"
+            },
+            {
+              "id": "Description",
+              "displayName": "Description",
+              "type": "string"
+            },
+            {
+              "id": "Hashtags",
+              "displayName": "Hashtags",
+              "type": "string"
+            },
+            {
+              "id": "URL IMAGE",
+              "displayName": "URL IMAGE",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "sheets-save-image",
+      "name": "Google Sheets: Save Script Idea [ Image ]",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [-2544, 1568],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NDc4GB6NjacxXP7e",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.infip.pro/v1/images/generations",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n  \"model\": \"img3\",\n  \"prompt\": \"{{ $json.output.prompt_ameliore }}\",\n  \"n\": 1,\n  \"size\": \"1024x1024\"\n}",
+        "options": {}
+      },
+      "id": "generate-image-api",
+      "name": "Call image with Ghostbot API",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [-2272, 1568],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "snCVhCXIPQOobcKl",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.data[0].url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [-2032, 1568],
+      "id": "download-image",
+      "name": "Download Image"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "url-img",
+              "name": "URL_IMAGE",
+              "value": "={{ $json.data[0].url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-1792, 1568],
+      "id": "set-image-url",
+      "name": "Set Image URL"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1E4TEGOpxNGwsAluoFazWEesRdPbiJXX1gqFNfKgL3dE/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Image"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "URL IMAGE": "={{ $json.URL_IMAGE }}"
+          },
+          "matchingColumns": ["URL IMAGE"],
+          "schema": [
+            {
+              "id": "URL IMAGE",
+              "displayName": "URL IMAGE",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "sheets-update-image-url",
+      "name": "Google Sheets: Update Image URL",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [-1552, 1568],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NDc4GB6NjacxXP7e",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ response: 'Image generee avec succes! ' + $json.URL_IMAGE, type: 'image', url: $json.URL_IMAGE }) }}",
+        "options": {}
+      },
+      "id": "respond-image",
+      "name": "Respond Image",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [-1312, 1568]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1E4TEGOpxNGwsAluoFazWEesRdPbiJXX1gqFNfKgL3dE/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1169278069,
+          "mode": "list",
+          "cachedResultName": "Videos"
+        },
+        "columns": {
+          "value": {
+            "idea": "={{ $json.output.prompt_ameliore }}",
+            "caption": "={{ $json.output.description }}",
+            "production": "pending",
+            "environment_prompt": "={{ $json.output.hashtags }}"
+          },
+          "mappingMode": "defineBelow",
+          "matchingColumns": ["id"],
+          "schema": [
+            {"id": "id", "type": "string"},
+            {"id": "idea", "type": "string"},
+            {"id": "caption", "type": "string"},
+            {"id": "production", "type": "string"},
+            {"id": "environment_prompt", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "sheets-save-video",
+      "name": "Google Sheets: Save Script Idea [ Videos ]",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [-2544, 2144],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NDc4GB6NjacxXP7e",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ response: 'Video en preparation: ' + $json.output.description + '\\n\\nHashtags: ' + $json.output.hashtags, type: 'video', status: 'pending' }) }}",
+        "options": {}
+      },
+      "id": "respond-video",
+      "name": "Respond Video",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [-2272, 2144]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1E4TEGOpxNGwsAluoFazWEesRdPbiJXX1gqFNfKgL3dE/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 39238683,
+          "mode": "list",
+          "cachedResultName": "Texte"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Sujet": "={{ $json.output.prompt_ameliore }}",
+            "Description": "={{ $json.output.description }}",
+            "Hashtags": "={{ $json.output.hashtags }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {"id": "Sujet", "type": "string"},
+            {"id": "Description", "type": "string"},
+            {"id": "Hashtags", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "sheets-save-text-init",
+      "name": "Google Sheets: Save Script Idea [ Texte ]",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [-2544, 2736],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NDc4GB6NjacxXP7e",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Redige un post pour les reseaux sociaux sur ce sujet:\n\n{{ $json.output.prompt_ameliore }}\n\nDescription: {{ $json.output.description }}\n\nReponds avec un texte engageant, optimise pour LinkedIn/Instagram.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Tu es un redacteur expert en communication digitale. Reponds TOUJOURS avec ce format JSON:\n\n{\n  \"sujet\": \"Sujet du post\",\n  \"ton_utilise\": \"Ton utilise\",\n  \"texte_genere\": \"Texte final du post\",\n  \"hashtags\": \"#hashtag1 #hashtag2\",\n  \"emojis_utilises\": \"\"\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [-2272, 2736],
+      "id": "generate-text-agent",
+      "name": "Generate Text Content"
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.0-flash-001",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [-2272, 3008],
+      "id": "openrouter-text",
+      "name": "OpenRouter Chat Model Text",
+      "credentials": {
+        "openRouterApi": {
+          "id": "MyyJhhHpoa0JGlk9",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"sujet\": { \"type\": \"string\" },\n    \"ton_utilise\": { \"type\": \"string\" },\n    \"texte_genere\": { \"type\": \"string\" },\n    \"emojis_utilises\": { \"type\": \"string\" },\n    \"hashtags\": { \"type\": \"string\" }\n  },\n  \"required\": [\"texte_genere\"]\n}"
+      },
+      "id": "parser-text",
+      "name": "Parser Text Output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [-2000, 3008],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {"id": "sujet", "name": "Sujet", "value": "={{ $json.output.sujet }}", "type": "string"},
+            {"id": "ton", "name": "Ton", "value": "={{ $json.output.ton_utilise }}", "type": "string"},
+            {"id": "texte", "name": "Texte_genere", "value": "={{ $json.output.texte_genere }}", "type": "string"},
+            {"id": "hashtags", "name": "Hashtags", "value": "={{ $json.output.hashtags }}", "type": "string"}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-1792, 2736],
+      "id": "set-text-fields",
+      "name": "Set Text Fields"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1E4TEGOpxNGwsAluoFazWEesRdPbiJXX1gqFNfKgL3dE/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 39238683,
+          "mode": "list",
+          "cachedResultName": "Texte"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "sheets-log-text",
+      "name": "Google Sheets: Log Final Texte Output",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [-1552, 2736],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NDc4GB6NjacxXP7e",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ response: $json.Texte_genere || 'Texte genere avec succes!', type: 'texte', hashtags: $json.Hashtags }) }}",
+        "options": {}
+      },
+      "id": "respond-text",
+      "name": "Respond Text",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [-1312, 2736]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ response: 'Je ne suis pas sur de comprendre. Precisez si vous voulez une image, une video ou un texte.' }) }}",
+        "options": {}
+      },
+      "id": "respond-fallback",
+      "name": "Respond Fallback",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [-2544, 1840]
+    }
+  ],
+  "connections": {
+    "Webhook Chat Entry": {
+      "main": [
+        [
+          {
+            "node": "AI Agent: Generate Video Concept",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent: Generate Video Concept": {
+      "main": [
+        [
+          {
+            "node": "if type : image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "if type : videos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "if type : text",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "if type : conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model Main": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent: Generate Video Concept",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parser: Extract JSON from Idea": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent: Generate Video Concept",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if type : image": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets: Save Script Idea [ Image ]",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if type : videos": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets: Save Script Idea [ Videos ]",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if type : text": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets: Save Script Idea [ Texte ]",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "if type : conversation": {
+      "main": [
+        [
+          {
+            "node": "Respond Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets: Save Script Idea [ Image ]": {
+      "main": [
+        [
+          {
+            "node": "Call image with Ghostbot API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call image with Ghostbot API": {
+      "main": [
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image": {
+      "main": [
+        [
+          {
+            "node": "Set Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Image URL": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets: Update Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets: Update Image URL": {
+      "main": [
+        [
+          {
+            "node": "Respond Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets: Save Script Idea [ Videos ]": {
+      "main": [
+        [
+          {
+            "node": "Respond Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets: Save Script Idea [ Texte ]": {
+      "main": [
+        [
+          {
+            "node": "Generate Text Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model Text": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Generate Text Content",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parser Text Output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Generate Text Content",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Text Content": {
+      "main": [
+        [
+          {
+            "node": "Set Text Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Text Fields": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets: Log Final Texte Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets: Log Final Texte Output": {
+      "main": [
+        [
+          {
+            "node": "Respond Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "7da48531f20623e8ae2d8be423b956af7deeb8d55d0079c7a3bb652eca5248c7"
+  }
+}
