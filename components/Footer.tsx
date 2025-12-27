@@ -1,120 +1,216 @@
 'use client'
 
+import Link from 'next/link'
+import Image from 'next/image'
+
 export default function Footer() {
-  const currentYear = new Date().getFullYear()
+  const links = {
+    product: [
+      { label: 'Agents IA', href: '/agents' },
+      { label: 'Tarification', href: '/pricing' },
+      { label: 'Intégrations', href: '/integrations' },
+      { label: 'API', href: '/api-docs' },
+    ],
+    resources: [
+      { label: 'Blog', href: '/blog' },
+      { label: 'Documentation', href: '/docs' },
+      { label: 'Tutoriels', href: '/tutorials' },
+      { label: 'FAQ', href: '/faq' },
+    ],
+    company: [
+      { label: 'À propos', href: '/about' },
+      { label: 'Contact', href: '/contact' },
+      { label: 'Carrières', href: '/careers' },
+    ],
+    legal: [
+      { label: 'Confidentialité', href: '/privacy' },
+      { label: 'CGU', href: '/terms' },
+      { label: 'Cookies', href: '/cookies' },
+    ],
+  }
 
   return (
-    <footer className="site-footer">
+    <footer style={{
+      background: 'var(--bg-secondary)',
+      borderTop: '1px solid var(--border)',
+      padding: '4rem 0 2rem',
+    }}>
       <div className="container">
-        <div className="footer-content">
-          <div className="footer-section">
-            <h4>Produit</h4>
-            <ul>
-              <li><a href="/#agents">Agents IA</a></li>
-              <li><a href="/features">Fonctionnalités</a></li>
-              <li><a href="/pricing">Tarification</a></li>
-              <li><a href="/docs/integrations">Intégrations</a></li>
-            </ul>
+        {/* Main Grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '2fr repeat(4, 1fr)',
+          gap: '3rem',
+          marginBottom: '4rem',
+        }}>
+          {/* Brand */}
+          <div>
+            <Link href="/" style={{
+              display: 'flex',
+              alignItems: 'center',
+              marginBottom: '1.5rem',
+            }}>
+              <Image
+                src="/logos/omnia-logo-dark.png"
+                alt="OmnIA"
+                width={150}
+                height={48}
+                style={{
+                  height: '36px',
+                  width: 'auto',
+                  objectFit: 'contain',
+                }}
+                className="logo-light"
+              />
+              <Image
+                src="/logos/omnia-logo-white.png"
+                alt="OmnIA"
+                width={150}
+                height={48}
+                style={{
+                  height: '36px',
+                  width: 'auto',
+                  objectFit: 'contain',
+                  display: 'none',
+                }}
+                className="logo-dark"
+              />
+            </Link>
+            <p style={{
+              fontSize: '0.95rem',
+              color: 'var(--text-secondary)',
+              lineHeight: 1.7,
+              marginBottom: '1.5rem',
+              maxWidth: '280px',
+            }}>
+              Automatisez votre business avec nos agents IA spécialisés.
+            </p>
+            {/* Social */}
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              {['twitter', 'linkedin', 'github'].map(social => (
+                <a
+                  key={social}
+                  href={`https://${social}.com/aiomnia`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--text-tertiary)',
+                    fontSize: '0.875rem',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = 'var(--accent)'
+                    e.currentTarget.style.color = 'var(--accent)'
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = 'var(--border)'
+                    e.currentTarget.style.color = 'var(--text-tertiary)'
+                  }}
+                >
+                  {social === 'twitter' && '𝕏'}
+                  {social === 'linkedin' && 'in'}
+                  {social === 'github' && '◉'}
+                </a>
+              ))}
+            </div>
           </div>
 
-          <div className="footer-section">
-            <h4>Ressources</h4>
-            <ul>
-              <li><a href="/docs">Documentation</a></li>
-              <li><a href="/blog">Blog</a></li>
-              <li><a href="/docs/faq">FAQ</a></li>
-              <li><a href="/support">Support</a></li>
-            </ul>
-          </div>
-
-          <div className="footer-section">
-            <h4>Légal</h4>
-            <ul>
-              <li><a href="/legal/privacy">Confidentialité</a></li>
-              <li><a href="/legal/terms">Conditions d'utilisation</a></li>
-              <li><a href="/legal/cookies">Cookies</a></li>
-            </ul>
-          </div>
-
-          <div className="footer-section">
-            <h4>Contactez-nous</h4>
-            <ul>
-              <li><a href="mailto:contact@saas-agents-ia.fr">contact@saas-agents-ia.fr</a></li>
-              <li><a href="tel:+33123456789">+33 (0)1 23 45 67 89</a></li>
-              <li>Paris, France</li>
-            </ul>
-          </div>
+          {/* Link Columns */}
+          {Object.entries(links).map(([category, items]) => (
+            <div key={category}>
+              <h4 style={{
+                fontFamily: 'Sora, sans-serif',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                color: 'var(--text-tertiary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                marginBottom: '1.25rem',
+              }}>
+                {category === 'product' && 'Produit'}
+                {category === 'resources' && 'Ressources'}
+                {category === 'company' && 'Entreprise'}
+                {category === 'legal' && 'Légal'}
+              </h4>
+              <ul style={{ listStyle: 'none' }}>
+                {items.map(link => (
+                  <li key={link.href} style={{ marginBottom: '0.75rem' }}>
+                    <Link
+                      href={link.href}
+                      style={{
+                        fontSize: '0.95rem',
+                        color: 'var(--text-secondary)',
+                        transition: 'color 0.2s ease',
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.color = 'var(--accent)'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        <div className="footer-bottom">
-          <p>&copy; {currentYear} SaaS Agents IA. Tous droits réservés.</p>
-          <p>Made with ❤️</p>
+        {/* Bottom */}
+        <div style={{
+          borderTop: '1px solid var(--border)',
+          paddingTop: '2rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem',
+        }}>
+          <p style={{
+            fontSize: '0.875rem',
+            color: 'var(--text-tertiary)',
+          }}>
+            © {new Date().getFullYear()} OmnIA. Tous droits réservés.
+          </p>
+          <p style={{
+            fontSize: '0.875rem',
+            color: 'var(--text-tertiary)',
+          }}>
+            Conçu avec soin à Paris
+          </p>
         </div>
       </div>
 
       <style jsx>{`
-        .site-footer {
-          background: #f9f9f9;
-          padding: 60px 20px 40px;
-        }
-
-        .footer-content {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 40px;
-          margin-bottom: 40px;
-          border-bottom: 1px solid #e5e7eb;
-          padding-bottom: 40px;
-        }
-
-        .footer-section h4 {
-          font-size: 1.1rem;
-          margin-bottom: 20px;
-        }
-
-        .footer-section ul {
-          list-style: none;
-        }
-
-        .footer-section li {
-          margin-bottom: 12px;
-        }
-
-        .footer-section a {
-          text-decoration: none;
-          color: inherit;
-          opacity: 0.7;
-          transition: opacity 0.2s;
-        }
-
-        .footer-section a:hover {
-          opacity: 1;
-        }
-
-        .footer-bottom {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          text-align: center;
-        }
-
-        .footer-bottom p {
-          margin: 0;
-          font-size: 0.9rem;
-          opacity: 0.6;
-        }
-
-        @media (max-width: 768px) {
-          .footer-content {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 30px;
+        @media (max-width: 1024px) {
+          .container > div:first-child {
+            grid-template-columns: repeat(3, 1fr) !important;
           }
-
-          .footer-bottom {
-            flex-direction: column;
-            gap: 12px;
+          .container > div:first-child > div:first-child {
+            grid-column: span 3;
+            margin-bottom: 1rem;
           }
         }
+        @media (max-width: 640px) {
+          .container > div:first-child {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+          .container > div:first-child > div:first-child {
+            grid-column: span 2;
+          }
+        }
+
+        /* Logo theme switching */
+        :global(.logo-light) { display: block !important; }
+        :global(.logo-dark) { display: none !important; }
+
+        :global([data-theme="dark"]) :global(.logo-light) { display: none !important; }
+        :global([data-theme="dark"]) :global(.logo-dark) { display: block !important; }
       `}</style>
     </footer>
   )

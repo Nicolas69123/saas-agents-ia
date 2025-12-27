@@ -59,3 +59,5 @@ next-env.d.ts
 
 # n8n (optionnel)
 # n8n-workflows/*.json
+.playwright-mcp/
+.next/

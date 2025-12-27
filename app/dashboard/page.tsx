@@ -1,494 +1,340 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { agents } from '@/data/agents'
+
+const stats = [
+  { label: 'Requêtes ce mois', value: '2,847', change: '+12%', color: '#4F46E5' },
+  { label: 'Agents actifs', value: '5', change: '+2', color: '#059669' },
+  { label: 'Temps économisé', value: '47h', change: '+8h', color: '#7C3AED' },
+  { label: 'Taux de réussite', value: '98.5%', change: '+0.3%', color: '#DB2777' },
+]
+
+const recentActivity = [
+  { agent: 'Lucas', action: 'A généré 3 factures', time: 'Il y a 5 min', avatar: '/avatars/agent-1.png', color: '#4F46E5' },
+  { agent: 'Thomas', action: 'A publié 2 posts LinkedIn', time: 'Il y a 15 min', avatar: '/avatars/agent-4.png', color: '#7C3AED' },
+  { agent: 'Emma', action: 'A répondu à 12 tickets', time: 'Il y a 30 min', avatar: '/avatars/agent-7.png', color: '#2563EB' },
+  { agent: 'Sophie', action: 'A envoyé la newsletter', time: 'Il y a 1h', avatar: '/avatars/agent-5.png', color: '#DB2777' },
+  { agent: 'Claire', action: 'A trié 25 CV', time: 'Il y a 2h', avatar: '/avatars/agent-6.png', color: '#EA580C' },
+]
+
+const activeAgents = [
+  { name: 'Lucas', role: 'Comptable', status: 'active', requests: 847, avatar: '/avatars/agent-1.png', color: '#4F46E5' },
+  { name: 'Thomas', role: 'Réseaux Sociaux', status: 'active', requests: 523, avatar: '/avatars/agent-4.png', color: '#7C3AED' },
+  { name: 'Emma', role: 'Support Client', status: 'active', requests: 612, avatar: '/avatars/agent-7.png', color: '#2563EB' },
+  { name: 'Sophie', role: 'Email Marketing', status: 'active', requests: 234, avatar: '/avatars/agent-5.png', color: '#DB2777' },
+  { name: 'Claire', role: 'RH', status: 'paused', requests: 156, avatar: '/avatars/agent-6.png', color: '#EA580C' },
+]
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    const userData = localStorage.getItem('omnia_user')
-    if (userData) setUser(JSON.parse(userData))
+    setMounted(true)
   }, [])
 
-  const stats = [
-    {
-      label: 'Agents Actifs',
-      value: '8',
-      subtext: 'sur 8 agents',
-      trend: '+2',
-      icon: 'robot'
-    },
-    {
-      label: 'Workflows',
-      value: '1,247',
-      subtext: 'ce mois',
-      trend: '+18%',
-      icon: 'workflow'
-    },
-    {
-      label: 'Temps Économisé',
-      value: '156h',
-      subtext: 'ce mois',
-      trend: '+42h',
-      icon: 'clock'
-    },
-    {
-      label: 'Plan Actuel',
-      value: 'Pro',
-      subtext: '119€/mois',
-      trend: null,
-      icon: 'plan'
-    }
-  ]
-
-  const activities = [
-    { agent: 'Lucas', action: 'a généré la facture #1247', time: '5 min', avatar: agents[0].avatar },
-    { agent: 'Thomas', action: 'a publié un post LinkedIn', time: '12 min', avatar: agents[3].avatar },
-    { agent: 'Marc', action: 'a créé un rapport de trésorerie', time: '1h', avatar: agents[1].avatar },
-    { agent: 'Sophie', action: 'a envoyé une newsletter', time: '2h', avatar: agents[4].avatar },
-    { agent: 'Claire', action: 'a analysé 5 CV', time: '3h', avatar: agents[5].avatar },
-  ]
-
-  const renderIcon = (iconName: string) => {
-    switch(iconName) {
-      case 'robot':
-        return (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-        )
-      case 'workflow':
-        return (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-          </svg>
-        )
-      case 'clock':
-        return (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
-        )
-      case 'plan':
-        return (
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
-            <polyline points="2 17 12 22 22 17"/>
-            <polyline points="2 12 12 17 22 12"/>
-          </svg>
-        )
-      default:
-        return null
-    }
+  if (!mounted) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'var(--bg-primary, #fff)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid #e5e7eb',
+          borderTopColor: '#4F46E5',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite'
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    )
   }
 
   return (
     <div className="dashboard-page">
       {/* Header */}
-      <header className="page-header">
+      <div className="page-header">
         <div>
           <h1>Vue d'ensemble</h1>
-          <p>Bonjour {user?.email?.split('@')[0] || 'Nicolas'}, voici votre activité du jour</p>
+          <p>Bienvenue, Jean ! Voici un résumé de votre activité.</p>
         </div>
         <div className="header-actions">
-          <button className="btn-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-            </svg>
+          <button className="btn-secondary">
+            Exporter
           </button>
-          <Link href="/pricing">
-            <button className="btn-primary">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="16"/>
-                <line x1="8" y1="12" x2="16" y2="12"/>
-              </svg>
-              Upgrade Pro
-            </button>
-          </Link>
+          <button className="btn-primary">
+            + Activer un agent
+          </button>
         </div>
-      </header>
+      </div>
 
       {/* Stats Grid */}
-      <section className="stats-section">
-        {stats.map((stat, i) => (
-          <div key={i} className="stat-card">
-            <div className="stat-header">
-              <div className="stat-icon">{renderIcon(stat.icon)}</div>
+      <div className="stats-grid">
+        {stats.map((stat, index) => (
+          <div key={stat.label} className="stat-card">
+            <div className="stat-icon" style={{ backgroundColor: `${stat.color}15`, color: stat.color }}>
+              {index === 0 && <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>}
+              {index === 1 && <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><line x1="12" y1="7" x2="12" y2="11"/></svg>}
+              {index === 2 && <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}
+              {index === 3 && <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>}
+            </div>
+            <div className="stat-content">
+              <span className="stat-value">{stat.value}</span>
               <span className="stat-label">{stat.label}</span>
             </div>
-            <div className="stat-value">{stat.value}</div>
-            <div className="stat-footer">
-              <span className="stat-subtext">{stat.subtext}</span>
-              {stat.trend && (
-                <span className="stat-trend">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                    <line x1="12" y1="19" x2="12" y2="5"/>
-                    <polyline points="5 12 12 5 19 12"/>
-                  </svg>
-                  {stat.trend}
-                </span>
-              )}
-            </div>
+            <span className="stat-change" style={{ color: stat.color }}>
+              {stat.change}
+            </span>
           </div>
         ))}
-      </section>
+      </div>
 
-      {/* Content Grid */}
+      {/* Main Content Grid */}
       <div className="content-grid">
-        {/* Agents Card */}
-        <section className="content-card">
+        {/* Recent Activity */}
+        <div className="card activity-card">
           <div className="card-header">
-            <h2>Mes Agents IA</h2>
-            <Link href="/dashboard/agents" className="card-link">
-              Voir tout
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="5" y1="12" x2="19" y2="12"/>
-                <polyline points="12 5 19 12 12 19"/>
-              </svg>
-            </Link>
-          </div>
-          <div className="agents-list">
-            {agents.slice(0, 6).map((agent) => (
-              <div key={agent.id} className="agent-item">
-                <div className="agent-avatar-wrapper">
-                  <img src={agent.avatar} alt={agent.firstName} className="agent-avatar" />
-                  <span className="agent-status"></span>
-                </div>
-                <div className="agent-info">
-                  <span className="agent-name">{agent.firstName}</span>
-                  <span className="agent-role">{agent.name}</span>
-                </div>
-                <span className="agent-category">{agent.domain}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Activity Card */}
-        <section className="content-card">
-          <div className="card-header">
-            <h2>Activité Récente</h2>
-            <button className="card-action">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-              Aujourd'hui
-            </button>
+            <h2>Activité récente</h2>
+            <button className="btn-link">Voir tout</button>
           </div>
           <div className="activity-list">
-            {activities.map((activity, i) => (
-              <div key={i} className="activity-item">
-                <img src={activity.avatar} alt={activity.agent} className="activity-avatar" />
+            {recentActivity.map((item, index) => (
+              <div key={index} className="activity-item">
+                <div className="activity-avatar">
+                  <img src={item.avatar} alt={item.agent} />
+                </div>
                 <div className="activity-content">
-                  <div className="activity-text">
-                    <strong>{activity.agent}</strong> {activity.action}
+                  <span className="activity-agent">{item.agent}</span>
+                  <span className="activity-action">{item.action}</span>
+                </div>
+                <span className="activity-time">{item.time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Active Agents */}
+        <div className="card agents-card">
+          <div className="card-header">
+            <h2>Agents actifs</h2>
+            <button className="btn-link">Gérer</button>
+          </div>
+          <div className="agents-list">
+            {activeAgents.map((agent) => (
+              <div key={agent.name} className="agent-item">
+                <div className="agent-info">
+                  <div className="agent-avatar">
+                    <img src={agent.avatar} alt={agent.name} />
                   </div>
-                  <span className="activity-time">{activity.time} ago</span>
+                  <div>
+                    <span className="agent-name">{agent.name}</span>
+                    <span className="agent-role">{agent.role}</span>
+                  </div>
+                </div>
+                <div className="agent-stats">
+                  <span className="agent-requests">{agent.requests} req.</span>
+                  <span className={`agent-status ${agent.status}`}>
+                    {agent.status === 'active' ? 'Actif' : 'Pause'}
+                  </span>
                 </div>
               </div>
             ))}
           </div>
-        </section>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="quick-actions">
+        <h2>Actions rapides</h2>
+        <div className="actions-grid">
+          <button className="action-card">
+            <span className="action-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+            <span className="action-label">Générer une facture</span>
+          </button>
+          <button className="action-card">
+            <span className="action-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+            <span className="action-label">Créer un post</span>
+          </button>
+          <button className="action-card">
+            <span className="action-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+            <span className="action-label">Envoyer newsletter</span>
+          </button>
+          <button className="action-card">
+            <span className="action-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
+            <span className="action-label">Parler à un agent</span>
+          </button>
+        </div>
       </div>
 
       <style jsx>{`
-        /* Base */
         .dashboard-page {
-          padding: 40px;
           max-width: 1400px;
           margin: 0 auto;
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
         }
 
         /* Header */
         .page-header {
           display: flex;
           justify-content: space-between;
-          align-items: center;
+          align-items: flex-start;
+          margin-bottom: 32px;
+          flex-wrap: wrap;
+          gap: 20px;
         }
 
         .page-header h1 {
-          margin: 0 0 8px 0;
+          font-family: var(--font-display);
           font-size: 2rem;
           font-weight: 700;
-          color: #0f172a;
-          letter-spacing: -0.02em;
+          color: var(--text-primary);
+          margin-bottom: 4px;
         }
 
         .page-header p {
-          margin: 0;
-          color: #64748b;
+          color: var(--text-secondary);
           font-size: 1rem;
         }
 
         .header-actions {
           display: flex;
           gap: 12px;
-          align-items: center;
-        }
-
-        .btn-icon {
-          position: relative;
-          width: 44px;
-          height: 44px;
-          border: 1.5px solid #e2e8f0;
-          background: #fff;
-          border-radius: 10px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .btn-icon:hover {
-          border-color: #cbd5e1;
-          transform: translateY(-1px);
         }
 
         .btn-primary {
           padding: 12px 20px;
-          background: #0f172a;
-          color: #fff;
+          background: var(--accent);
+          color: white;
           border: none;
           border-radius: 10px;
-          font-size: 0.9375rem;
           font-weight: 600;
+          font-size: 0.9rem;
           cursor: pointer;
           transition: all 0.2s ease;
-          font-family: inherit;
-          display: flex;
-          align-items: center;
-          gap: 8px;
         }
 
         .btn-primary:hover {
-          background: #020617;
-          transform: translateY(-1px);
+          background: var(--accent-hover);
         }
 
-        /* Stats Section */
-        .stats-section {
+        .btn-secondary {
+          padding: 12px 20px;
+          background: var(--bg-primary);
+          color: var(--text-primary);
+          border: 1px solid var(--border-color);
+          border-radius: 10px;
+          font-weight: 500;
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+          border-color: var(--border-hover);
+        }
+
+        /* Stats */
+        .stats-grid {
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 24px;
-          margin-bottom: 0;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 20px;
+          margin-bottom: 32px;
         }
 
         .stat-card {
-          background: #fff;
-          padding: 24px;
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
           border-radius: 16px;
-          border: 1px solid #e2e8f0;
+          padding: 24px;
+          display: flex;
+          align-items: center;
+          gap: 16px;
           transition: all 0.2s ease;
         }
 
         .stat-card:hover {
+          border-color: var(--border-hover);
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-
-        .stat-header {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 12px;
         }
 
         .stat-icon {
-          width: 40px;
-          height: 40px;
-          background: #f8fafc;
-          border-radius: 10px;
+          width: 52px;
+          height: 52px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #0f172a;
+          font-size: 1.5rem;
         }
 
-        .stat-label {
-          font-size: 0.875rem;
-          color: #64748b;
-          font-weight: 500;
+        .stat-content {
+          flex: 1;
         }
 
         .stat-value {
-          font-size: 2.25rem;
+          display: block;
+          font-family: var(--font-display);
+          font-size: 1.75rem;
           font-weight: 700;
-          color: #0f172a;
-          margin-bottom: 8px;
-          letter-spacing: -0.02em;
+          color: var(--text-primary);
         }
 
-        .stat-footer {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
+        .stat-label {
+          font-size: 0.85rem;
+          color: var(--text-secondary);
         }
 
-        .stat-subtext {
-          font-size: 0.8125rem;
-          color: #94a3b8;
-        }
-
-        .stat-trend {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          font-size: 0.8125rem;
+        .stat-change {
+          font-size: 0.85rem;
           font-weight: 600;
-          color: #10b981;
         }
 
         /* Content Grid */
         .content-grid {
           display: grid;
-          grid-template-columns: 1.2fr 1fr;
+          grid-template-columns: 1fr 1fr;
           gap: 24px;
-          margin-top: 0;
+          margin-bottom: 32px;
         }
 
-        .content-card {
-          background: #fff;
+        .card {
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
           border-radius: 16px;
-          border: 1px solid #e2e8f0;
-          overflow: hidden;
+          padding: 24px;
         }
 
         .card-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 24px;
-          border-bottom: 1px solid #f1f5f9;
+          margin-bottom: 20px;
         }
 
         .card-header h2 {
-          margin: 0;
-          font-size: 1.125rem;
+          font-size: 1.1rem;
           font-weight: 600;
-          color: #0f172a;
+          color: var(--text-primary);
         }
 
-        .card-link {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 0.875rem;
-          color: #64748b;
-          text-decoration: none;
+        .btn-link {
+          background: none;
+          border: none;
+          color: var(--accent);
+          font-size: 0.9rem;
           font-weight: 500;
-          transition: color 0.2s ease;
-        }
-
-        .card-link:hover {
-          color: #0f172a;
-        }
-
-        .card-action {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 6px 12px;
-          background: #f8fafc;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
-          font-size: 0.8125rem;
-          font-weight: 500;
-          color: #64748b;
           cursor: pointer;
-          transition: all 0.2s ease;
         }
 
-        .card-action:hover {
-          background: #f1f5f9;
+        .btn-link:hover {
+          text-decoration: underline;
         }
 
-        /* Agents List */
-        .agents-list {
-          padding: 0;
-        }
-
-        .agent-item {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          padding: 16px 24px;
-          border-bottom: 1px solid #f8fafc;
-          transition: background 0.2s ease;
-        }
-
-        .agent-item:hover {
-          background: #fafbfc;
-        }
-
-        .agent-item:last-child {
-          border-bottom: none;
-        }
-
-        .agent-avatar-wrapper {
-          position: relative;
-        }
-
-        .agent-avatar {
-          width: 44px;
-          height: 44px;
-          border-radius: 10px;
-          object-fit: cover;
-        }
-
-        .agent-status {
-          position: absolute;
-          bottom: -2px;
-          right: -2px;
-          width: 12px;
-          height: 12px;
-          background: #10b981;
-          border: 2px solid #fff;
-          border-radius: 50%;
-        }
-
-        .agent-info {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          gap: 3px;
-        }
-
-        .agent-name {
-          font-weight: 600;
-          color: #0f172a;
-          font-size: 0.9375rem;
-        }
-
-        .agent-role {
-          font-size: 0.8125rem;
-          color: #64748b;
-        }
-
-        .agent-category {
-          font-size: 0.75rem;
-          color: #94a3b8;
-          padding: 4px 10px;
-          background: #f8fafc;
-          border-radius: 6px;
-          font-weight: 500;
-        }
-
-        /* Activity List */
+        /* Activity */
         .activity-list {
-          padding: 20px 24px;
           display: flex;
           flex-direction: column;
           gap: 16px;
@@ -496,70 +342,179 @@ export default function DashboardPage() {
 
         .activity-item {
           display: flex;
-          gap: 12px;
-          align-items: flex-start;
+          align-items: center;
+          gap: 14px;
         }
 
         .activity-avatar {
-          width: 40px;
-          height: 40px;
+          width: 36px;
+          height: 36px;
           border-radius: 10px;
-          object-fit: cover;
+          overflow: hidden;
           flex-shrink: 0;
+        }
+
+        .activity-avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
 
         .activity-content {
           flex: 1;
           display: flex;
           flex-direction: column;
-          gap: 4px;
         }
 
-        .activity-text {
-          font-size: 0.875rem;
-          color: #64748b;
-          line-height: 1.5;
-        }
-
-        .activity-text strong {
-          color: #0f172a;
+        .activity-agent {
           font-weight: 600;
+          font-size: 0.9rem;
+          color: var(--text-primary);
+        }
+
+        .activity-action {
+          font-size: 0.85rem;
+          color: var(--text-secondary);
         }
 
         .activity-time {
+          font-size: 0.8rem;
+          color: var(--text-muted);
+        }
+
+        /* Agents */
+        .agents-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .agent-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px;
+          background: var(--bg-secondary);
+          border-radius: 12px;
+        }
+
+        .agent-info {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .agent-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+
+        .agent-avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .agent-name {
+          display: block;
+          font-weight: 600;
+          font-size: 0.9rem;
+          color: var(--text-primary);
+        }
+
+        .agent-role {
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+        }
+
+        .agent-stats {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 2px;
+        }
+
+        .agent-requests {
+          font-size: 0.85rem;
+          color: var(--text-secondary);
+        }
+
+        .agent-status {
           font-size: 0.75rem;
-          color: #94a3b8;
+          font-weight: 500;
+        }
+
+        .agent-status.active {
+          color: #059669;
+        }
+
+        .agent-status.paused {
+          color: var(--text-muted);
+        }
+
+        /* Quick Actions */
+        .quick-actions h2 {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          margin-bottom: 16px;
+        }
+
+        .actions-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 12px;
+        }
+
+        .action-card {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 16px 20px;
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .action-card:hover {
+          border-color: var(--accent);
+          background: var(--accent-light);
+        }
+
+        .action-icon {
+          font-size: 1.25rem;
+        }
+
+        .action-label {
+          font-weight: 500;
+          font-size: 0.9rem;
+          color: var(--text-primary);
         }
 
         /* Responsive */
-        @media (max-width: 1200px) {
-          .stats-section {
-            grid-template-columns: repeat(2, 1fr);
-          }
-
+        @media (max-width: 900px) {
           .content-grid {
             grid-template-columns: 1fr;
           }
         }
 
-        @media (max-width: 768px) {
-          .dashboard-page {
-            padding: 20px;
-            gap: 24px;
-          }
-
+        @media (max-width: 600px) {
           .page-header {
             flex-direction: column;
-            align-items: flex-start;
-            gap: 16px;
           }
 
-          .stats-section {
-            grid-template-columns: 1fr;
+          .header-actions {
+            width: 100%;
           }
 
-          .page-header h1 {
-            font-size: 1.5rem;
+          .btn-primary,
+          .btn-secondary {
+            flex: 1;
           }
         }
       `}</style>

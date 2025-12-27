@@ -1,442 +1,568 @@
 'use client'
 
-import { agents } from '@/data/agents'
-import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-export default function AgentsPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+const allAgents = [
+  {
+    id: 1,
+    name: 'Lucas',
+    role: 'Agent Comptable',
+    category: 'Finance',
+    initial: 'L',
+    color: '#4F46E5',
+    status: 'active',
+    requests: 847,
+    description: 'Automatise votre comptabilité : factures, notes de frais, rapports.',
+  },
+  {
+    id: 2,
+    name: 'Marc',
+    role: 'Agent Trésorier',
+    category: 'Finance',
+    initial: 'M',
+    color: '#059669',
+    status: 'inactive',
+    requests: 0,
+    description: 'Gère votre trésorerie avec des prévisions précises.',
+  },
+  {
+    id: 3,
+    name: 'Julie',
+    role: 'Agent Investissements',
+    category: 'Finance',
+    initial: 'J',
+    color: '#0891B2',
+    status: 'inactive',
+    requests: 0,
+    description: 'Analyse vos opportunités d\'investissement.',
+  },
+  {
+    id: 4,
+    name: 'Thomas',
+    role: 'Agent Réseaux Sociaux',
+    category: 'Marketing',
+    initial: 'T',
+    color: '#7C3AED',
+    status: 'active',
+    requests: 523,
+    description: 'Crée et planifie vos contenus sur tous les réseaux.',
+  },
+  {
+    id: 5,
+    name: 'Sophie',
+    role: 'Agent Email Marketing',
+    category: 'Marketing',
+    initial: 'S',
+    color: '#DB2777',
+    status: 'active',
+    requests: 234,
+    description: 'Conçoit des campagnes email performantes.',
+  },
+  {
+    id: 6,
+    name: 'Claire',
+    role: 'Agent RH',
+    category: 'RH',
+    initial: 'C',
+    color: '#EA580C',
+    status: 'paused',
+    requests: 156,
+    description: 'Simplifie vos processus RH : recrutement, onboarding.',
+  },
+  {
+    id: 7,
+    name: 'Emma',
+    role: 'Agent Support Client',
+    category: 'Support',
+    initial: 'E',
+    color: '#2563EB',
+    status: 'active',
+    requests: 612,
+    description: 'Répond à vos clients 24/7 avec intelligence.',
+  },
+  {
+    id: 8,
+    name: 'Léa',
+    role: 'Agent Téléphonique',
+    category: 'Support',
+    initial: 'L',
+    color: '#16A34A',
+    status: 'inactive',
+    requests: 0,
+    description: 'Gère vos appels entrants et sortants.',
+  },
+]
 
-  const filteredAgents = selectedCategory === 'all'
-    ? agents
-    : agents.filter(agent => agent.category === selectedCategory)
+export default function DashboardAgentsPage() {
+  const [mounted, setMounted] = useState(false)
+  const [filter, setFilter] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const filteredAgents = allAgents.filter(agent => {
+    const matchesFilter = filter === 'all' || agent.status === filter
+    const matchesSearch = agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          agent.role.toLowerCase().includes(searchQuery.toLowerCase())
+    return matchesFilter && matchesSearch
+  })
+
+  const activeCount = allAgents.filter(a => a.status === 'active').length
+  const pausedCount = allAgents.filter(a => a.status === 'paused').length
+
+  if (!mounted) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'var(--bg-primary, #fff)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid #e5e7eb',
+          borderTopColor: '#4F46E5',
+          borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite'
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    )
+  }
 
   return (
-    <div className="dashboard-page">
+    <div className="agents-page">
       {/* Header */}
-      <header className="page-header">
+      <div className="page-header">
         <div>
-          <h1>Mes Agents IA</h1>
-          <p>Gérez et configurez vos {agents.length} agents spécialisés</p>
+          <h1>Mes Agents</h1>
+          <p>Gérez et configurez vos agents IA actifs.</p>
         </div>
-        <div className="header-actions">
-          <button className="btn-secondary">🔍 Rechercher</button>
-          <Link href="/pricing">
-            <button className="btn-primary">➕ Ajouter un agent</button>
-          </Link>
+        <div className="header-stats">
+          <div className="header-stat">
+            <span className="stat-number">{activeCount}</span>
+            <span className="stat-label">Actifs</span>
+          </div>
+          <div className="header-stat">
+            <span className="stat-number">{pausedCount}</span>
+            <span className="stat-label">En pause</span>
+          </div>
         </div>
-      </header>
+      </div>
 
-      {/* Filter Section */}
-      <section className="filter-section">
-        <div className="filter-tabs">
-          <button
-            className={`filter-tab ${selectedCategory === 'all' ? 'active' : ''}`}
-            onClick={() => setSelectedCategory('all')}
-          >
-            Tous les agents ({agents.length})
-          </button>
-          <button
-            className={`filter-tab ${selectedCategory === 'finance' ? 'active' : ''}`}
-            onClick={() => setSelectedCategory('finance')}
-          >
-            💰 Finance ({agents.filter(a => a.category === 'finance').length})
-          </button>
-          <button
-            className={`filter-tab ${selectedCategory === 'management' ? 'active' : ''}`}
-            onClick={() => setSelectedCategory('management')}
-          >
-            📊 Gestion ({agents.filter(a => a.category === 'management').length})
-          </button>
+      {/* Filters */}
+      <div className="filters-bar">
+        <div className="search-box">
+          <span className="search-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input
+            type="text"
+            placeholder="Rechercher un agent..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-      </section>
+        <div className="filter-buttons">
+          {['all', 'active', 'paused', 'inactive'].map((f) => (
+            <button
+              key={f}
+              className={`filter-btn ${filter === f ? 'active' : ''}`}
+              onClick={() => setFilter(f)}
+            >
+              {f === 'all' && 'Tous'}
+              {f === 'active' && 'Actifs'}
+              {f === 'paused' && 'En pause'}
+              {f === 'inactive' && 'Non activés'}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Agents Grid */}
-      <section className="agents-grid">
+      <div className="agents-grid">
         {filteredAgents.map((agent) => (
-          <div key={agent.id} className="agent-card">
-            <div className="agent-card-header">
-              <div className="agent-avatar-large">
-                <img src={agent.avatar} alt={agent.firstName} />
-                <span className="agent-emoji">{agent.icon}</span>
+          <div key={agent.id} className={`agent-card ${agent.status}`}>
+            {/* Card Header - Avatar + Status */}
+            <div className="agent-header">
+              <div className="agent-avatar" style={{ backgroundColor: `${agent.color}15`, color: agent.color }}>
+                {agent.initial}
               </div>
-              <div className="agent-badge">
-                <span className="status-dot"></span>
-                Actif
-              </div>
-            </div>
-
-            <div className="agent-card-body">
-              <h3>{agent.firstName}</h3>
-              <p className="agent-title">{agent.name}</p>
-              <p className="agent-description">{agent.description}</p>
-              <div className="agent-tags">
-                <span className="tag">{agent.domain}</span>
-                <span className="tag">{agent.category === 'finance' ? 'Finance' : 'Gestion'}</span>
+              <div className="agent-status-badge" data-status={agent.status}>
+                {agent.status === 'active' && 'Actif'}
+                {agent.status === 'paused' && 'Pause'}
+                {agent.status === 'inactive' && 'Non actif'}
               </div>
             </div>
 
-            <div className="agent-card-stats">
-              <div className="stat-item">
-                <span className="stat-label">Workflows</span>
-                <span className="stat-value">{Math.floor(Math.random() * 50) + 10}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Dernier activité</span>
-                <span className="stat-value">{Math.floor(Math.random() * 60)} min</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Taux succès</span>
-                <span className="stat-value">98%</span>
-              </div>
+            {/* Card Content - Name, Role, Description */}
+            <div className="agent-content">
+              <h3>{agent.name}</h3>
+              <p className="agent-role">{agent.role}</p>
+              <p className="agent-desc">{agent.description}</p>
             </div>
 
-            <div className="agent-card-footer">
-              <button className="btn-config">⚙️ Configurer</button>
-              <button
-                className="btn-chat"
-                onClick={() => window.location.href = `/chat/${agent.id}`}
-              >
-                💬 Discuter
-              </button>
+            {/* Card Footer - Stats + Actions */}
+            <div className="agent-footer">
+              {/* Stats - Always visible */}
+              <div className="agent-stats">
+                <span className="stat-value">{agent.requests}</span>
+                <span className="stat-label">requetes</span>
+              </div>
+
+              {/* Actions - Same structure for all */}
+              <div className="agent-actions">
+                {agent.status === 'active' && (
+                  <button className="btn-primary" style={{ backgroundColor: agent.color }}>
+                    Discuter
+                  </button>
+                )}
+                {agent.status === 'paused' && (
+                  <button className="btn-primary" style={{ backgroundColor: agent.color }}>
+                    Reprendre
+                  </button>
+                )}
+                {agent.status === 'inactive' && (
+                  <button className="btn-primary" style={{ backgroundColor: agent.color }}>
+                    Activer
+                  </button>
+                )}
+                <button className="btn-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         ))}
-      </section>
+      </div>
+
+      {filteredAgents.length === 0 && (
+        <div className="empty-state">
+          <span><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <p>Aucun agent trouvé</p>
+        </div>
+      )}
 
       <style jsx>{`
-        /* Variables CSS */
-        :global(:root) {
-          --dashboard-padding: 40px;
-          --section-gap: 32px;
-          --card-gap: 24px;
-          --item-gap: 16px;
-          --border-radius-lg: 16px;
-          --border-radius-md: 12px;
-          --border-radius-sm: 10px;
-          --color-primary: #0f172a;
-          --color-border: #e2e8f0;
-          --color-text-primary: #0f172a;
-          --color-text-secondary: #64748b;
-          --color-text-tertiary: #94a3b8;
-          --color-success: #10b981;
-        }
-
-        /* Base */
-        .dashboard-page {
-          padding: var(--dashboard-padding);
+        .agents-page {
           max-width: 1400px;
           margin: 0 auto;
-          display: flex;
-          flex-direction: column;
-          gap: var(--section-gap);
         }
 
         /* Header */
         .page-header {
           display: flex;
           justify-content: space-between;
-          align-items: center;
+          align-items: flex-start;
+          margin-bottom: 32px;
+          flex-wrap: wrap;
+          gap: 20px;
         }
 
         .page-header h1 {
-          margin: 0 0 8px 0;
+          font-family: var(--font-display);
           font-size: 2rem;
           font-weight: 700;
-          color: var(--color-text-primary);
-          letter-spacing: -0.02em;
+          color: var(--text-primary);
+          margin-bottom: 4px;
         }
 
         .page-header p {
-          margin: 0;
-          color: var(--color-text-secondary);
+          color: var(--text-secondary);
           font-size: 1rem;
         }
 
-        .header-actions {
+        .header-stats {
           display: flex;
-          gap: 12px;
+          gap: 24px;
         }
 
-        .btn-primary, .btn-secondary {
-          padding: 12px 20px;
-          border: none;
-          border-radius: var(--border-radius-sm);
-          font-size: 0.9375rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          font-family: inherit;
+        .header-stat {
+          text-align: center;
         }
 
-        .btn-primary {
-          background: var(--color-primary);
-          color: #fff;
+        .header-stat .stat-number {
+          display: block;
+          font-family: var(--font-display);
+          font-size: 1.75rem;
+          font-weight: 700;
+          color: var(--accent);
         }
 
-        .btn-primary:hover {
-          background: #020617;
-          transform: translateY(-1px);
+        .header-stat .stat-label {
+          font-size: 0.85rem;
+          color: var(--text-secondary);
         }
 
-        .btn-secondary {
-          background: #fff;
-          color: var(--color-text-primary);
-          border: 1.5px solid var(--color-border);
-        }
-
-        .btn-secondary:hover {
-          border-color: #cbd5e1;
-          transform: translateY(-1px);
-        }
-
-        /* Filter Section */
-        .filter-section {
-          background: #fff;
-          border-radius: var(--border-radius-lg);
-          border: 1px solid var(--color-border);
-          padding: 24px;
-        }
-
-        .filter-tabs {
-          display: flex;
-          gap: 12px;
-        }
-
-        .filter-tab {
-          padding: 10px 18px;
-          background: transparent;
-          border: 1.5px solid var(--color-border);
-          border-radius: var(--border-radius-sm);
-          font-size: 0.875rem;
-          font-weight: 500;
-          color: var(--color-text-secondary);
-          cursor: pointer;
-          transition: all 0.2s ease;
-          font-family: inherit;
-        }
-
-        .filter-tab:hover {
-          border-color: #cbd5e1;
-          background: #f8fafc;
-        }
-
-        .filter-tab.active {
-          background: var(--color-primary);
-          color: #fff;
-          border-color: var(--color-primary);
-        }
-
-        /* Agents Grid */
-        .agents-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-          gap: var(--card-gap);
-        }
-
-        .agent-card {
-          background: #fff;
-          border: 1px solid var(--color-border);
-          border-radius: var(--border-radius-lg);
-          overflow: hidden;
-          transition: all 0.2s ease;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .agent-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-        }
-
-        .agent-card-header {
-          padding: 24px;
+        /* Filters */
+        .filters-bar {
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
+          align-items: center;
+          gap: 20px;
+          margin-bottom: 28px;
+          flex-wrap: wrap;
         }
 
-        .agent-avatar-large {
-          position: relative;
-          width: 80px;
-          height: 80px;
-        }
-
-        .agent-avatar-large img {
-          width: 100%;
-          height: 100%;
-          border-radius: var(--border-radius-md);
-          object-fit: cover;
-        }
-
-        .agent-emoji {
-          position: absolute;
-          bottom: -6px;
-          right: -6px;
-          width: 32px;
-          height: 32px;
-          background: #fff;
-          border: 2px solid var(--color-border);
-          border-radius: 50%;
+        .search-box {
           display: flex;
           align-items: center;
-          justify-content: center;
+          gap: 10px;
+          padding: 12px 18px;
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          flex: 1;
+          max-width: 320px;
+        }
+
+        .search-icon {
           font-size: 1rem;
         }
 
-        .agent-badge {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 6px 12px;
-          background: #d1fae5;
-          color: #065f46;
-          border-radius: 20px;
-          font-size: 0.75rem;
-          font-weight: 600;
-        }
-
-        .status-dot {
-          width: 6px;
-          height: 6px;
-          background: var(--color-success);
-          border-radius: 50%;
-        }
-
-        .agent-card-body {
-          padding: 0 24px 20px 24px;
+        .search-box input {
           flex: 1;
+          border: none;
+          background: transparent;
+          font-size: 0.95rem;
+          color: var(--text-primary);
+          outline: none;
         }
 
-        .agent-card-body h3 {
-          margin: 0 0 4px 0;
-          font-size: 1.375rem;
-          font-weight: 700;
-          color: var(--color-text-primary);
-        }
-
-        .agent-title {
-          margin: 0 0 8px 0;
-          font-size: 0.875rem;
-          color: var(--color-text-secondary);
-          font-weight: 500;
-        }
-
-        .agent-description {
-          margin: 0 0 16px 0;
-          font-size: 0.875rem;
-          color: var(--color-text-secondary);
-          line-height: 1.5;
-        }
-
-        .agent-tags {
+        .filter-buttons {
           display: flex;
           gap: 8px;
           flex-wrap: wrap;
         }
 
-        .tag {
-          padding: 4px 10px;
-          background: #f8fafc;
-          border-radius: 6px;
-          font-size: 0.75rem;
+        .filter-btn {
+          padding: 10px 18px;
+          border: 1px solid var(--border-color);
+          border-radius: 100px;
+          background: var(--bg-primary);
+          color: var(--text-secondary);
+          font-size: 0.85rem;
           font-weight: 500;
-          color: var(--color-text-tertiary);
+          cursor: pointer;
+          transition: all 0.2s ease;
         }
 
-        .agent-card-stats {
+        .filter-btn:hover {
+          border-color: var(--border-hover);
+          color: var(--text-primary);
+        }
+
+        .filter-btn.active {
+          background: var(--accent);
+          border-color: var(--accent);
+          color: white;
+        }
+
+        /* Agents Grid */
+        .agents-grid {
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
-          padding: 20px 24px;
-          border-top: 1px solid #f1f5f9;
-          border-bottom: 1px solid #f1f5f9;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 20px;
         }
 
-        .stat-item {
+        /* Card Structure */
+        .agent-card {
           display: flex;
           flex-direction: column;
+          height: 280px;
+          background: var(--bg-primary);
+          border: 1px solid var(--border-color);
+          border-radius: 16px;
+          padding: 20px;
+          transition: all 0.2s ease;
+        }
+
+        .agent-card:hover {
+          border-color: var(--border-hover);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .agent-card.inactive {
+          opacity: 0.75;
+        }
+
+        /* Card Header */
+        .agent-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+        }
+
+        .agent-avatar {
+          width: 48px;
+          height: 48px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.25rem;
+          font-weight: 600;
+        }
+
+        .agent-status-badge {
+          padding: 5px 10px;
+          border-radius: 100px;
+          font-size: 0.7rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .agent-status-badge[data-status="active"] {
+          background: rgba(5, 150, 105, 0.1);
+          color: #059669;
+        }
+
+        .agent-status-badge[data-status="paused"] {
+          background: rgba(234, 179, 8, 0.1);
+          color: #CA8A04;
+        }
+
+        .agent-status-badge[data-status="inactive"] {
+          background: var(--bg-secondary);
+          color: var(--text-muted);
+        }
+
+        /* Card Content */
+        .agent-content {
+          flex: 1;
+          min-height: 0;
+        }
+
+        .agent-content h3 {
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: var(--text-primary);
+          margin-bottom: 2px;
+        }
+
+        .agent-role {
+          font-size: 0.85rem;
+          color: var(--text-secondary);
+          margin-bottom: 8px;
+        }
+
+        .agent-desc {
+          font-size: 0.8rem;
+          color: var(--text-muted);
+          line-height: 1.5;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        /* Card Footer */
+        .agent-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-top: 16px;
+          border-top: 1px solid var(--border-color);
+          margin-top: auto;
+        }
+
+        .agent-stats {
+          display: flex;
+          align-items: baseline;
           gap: 4px;
         }
 
-        .stat-label {
-          font-size: 0.6875rem;
-          color: var(--color-text-tertiary);
-          text-transform: uppercase;
-          font-weight: 600;
-          letter-spacing: 0.05em;
-        }
-
-        .stat-value {
-          font-size: 1rem;
+        .agent-stats .stat-value {
+          font-family: var(--font-display);
+          font-size: 1.1rem;
           font-weight: 700;
-          color: var(--color-text-primary);
+          color: var(--text-primary);
         }
 
-        .agent-card-footer {
-          padding: 20px 24px;
+        .agent-stats .stat-label {
+          font-size: 0.75rem;
+          color: var(--text-muted);
+        }
+
+        /* Actions */
+        .agent-actions {
           display: flex;
-          gap: 12px;
+          gap: 8px;
         }
 
-        .btn-config, .btn-chat {
-          flex: 1;
-          padding: 10px 16px;
+        .btn-primary {
+          padding: 10px 20px;
           border: none;
-          border-radius: var(--border-radius-sm);
-          font-size: 0.875rem;
+          border-radius: 8px;
+          color: white;
           font-weight: 600;
+          font-size: 0.85rem;
           cursor: pointer;
           transition: all 0.2s ease;
-          font-family: inherit;
+          white-space: nowrap;
         }
 
-        .btn-config {
-          background: var(--color-primary);
-          color: #fff;
+        .btn-primary:hover {
+          filter: brightness(1.1);
+          transform: translateY(-1px);
         }
 
-        .btn-config:hover {
-          background: #020617;
+        .btn-icon {
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          color: var(--text-secondary);
         }
 
-        .btn-chat {
-          background: #f8fafc;
-          color: var(--color-text-primary);
-          border: 1.5px solid var(--color-border);
+        .btn-icon:hover {
+          background: var(--bg-tertiary);
+          color: var(--text-primary);
         }
 
-        .btn-chat:hover {
-          background: #f1f5f9;
+        /* Empty State */
+        .empty-state {
+          text-align: center;
+          padding: 60px 20px;
+          color: var(--text-muted);
+        }
+
+        .empty-state span {
+          font-size: 3rem;
+          display: block;
+          margin-bottom: 16px;
+        }
+
+        .empty-state p {
+          font-size: 1rem;
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
-          .dashboard-page {
-            padding: 20px;
-            gap: 24px;
-          }
-
-          .page-header {
+        @media (max-width: 600px) {
+          .filters-bar {
             flex-direction: column;
-            align-items: flex-start;
-            gap: 16px;
+            align-items: stretch;
           }
 
-          .filter-tabs {
-            flex-direction: column;
+          .search-box {
+            max-width: none;
           }
 
-          .filter-tab {
-            width: 100%;
-          }
-
-          .agents-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .page-header h1 {
-            font-size: 1.5rem;
+          .filter-buttons {
+            justify-content: center;
           }
         }
       `}</style>
