@@ -47,8 +47,8 @@ export const webhookConfigs: WebhookConfig[] = [
   {
     agentId: 'reseaux-sociaux',
     name: 'Agent Réseaux Sociaux',
-    webhookUrl: `${N8N_BASE_URL}/webhook/reseaux-sociaux`,
-    isActive: false,
+    webhookUrl: `${N8N_BASE_URL}/webhook/4bd6ad35-7ef0-43af-9a78-d14e818abb10/chat`,
+    isActive: true,
   },
   {
     agentId: 'email-marketing',

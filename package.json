@@ -1,5 +1,5 @@
 {
-  "name": "saas-agents-ia",
+  "name": "ai-omnia-site2",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,17 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "^14.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "@google/generative-ai": "^0.24.1",
+    "next": "14.2.33",
+    "react": "^18",
+    "react-dom": "^18"
   },
   "devDependencies": {
-    "@prisma/client": "^6.18.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "playwright": "^1.57.0",
-    "prisma": "^6.18.0",
     "typescript": "^5"
   }
 }
