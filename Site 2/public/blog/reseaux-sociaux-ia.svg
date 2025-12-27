@@ -1,0 +1,89 @@
+<svg width="800" height="450" viewBox="0 0 800 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7C3AED;stop-opacity:0.08"/>
+      <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:0.15"/>
+    </linearGradient>
+    <linearGradient id="accent2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7C3AED"/>
+      <stop offset="100%" style="stop-color:#8B5CF6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="450" fill="url(#bg2)"/>
+
+  <!-- Decorative elements -->
+  <circle cx="700" cy="100" r="100" fill="#7C3AED" opacity="0.05"/>
+  <circle cx="100" cy="350" r="120" fill="#7C3AED" opacity="0.08"/>
+
+  <!-- Phone mockup -->
+  <g transform="translate(300, 60)">
+    <rect x="0" y="0" width="200" height="330" rx="30" fill="white" filter="drop-shadow(0 15px 40px rgba(124, 58, 237, 0.2))"/>
+    <rect x="8" y="8" width="184" height="314" rx="24" fill="#F9FAFB"/>
+
+    <!-- Status bar -->
+    <rect x="70" y="16" width="60" height="6" rx="3" fill="#7C3AED" opacity="0.3"/>
+
+    <!-- Post card -->
+    <rect x="20" y="40" width="160" height="180" rx="16" fill="white" filter="drop-shadow(0 4px 12px rgba(0,0,0,0.06))"/>
+
+    <!-- User avatar -->
+    <circle cx="42" cy="60" r="14" fill="url(#accent2)"/>
+    <text x="42" y="64" font-family="system-ui" font-size="10" fill="white" text-anchor="middle">AI</text>
+
+    <!-- Username -->
+    <rect x="62" y="52" width="60" height="6" rx="3" fill="#7C3AED"/>
+    <rect x="62" y="62" width="40" height="4" rx="2" fill="#7C3AED" opacity="0.3"/>
+
+    <!-- Image placeholder -->
+    <rect x="28" y="85" width="144" height="90" rx="10" fill="url(#accent2)" opacity="0.15"/>
+    <circle cx="100" cy="130" r="20" fill="url(#accent2)" opacity="0.3"/>
+    <path d="M93 130 L107 130 M100 123 L100 137" stroke="#7C3AED" stroke-width="2" stroke-linecap="round"/>
+
+    <!-- Engagement icons -->
+    <g transform="translate(28, 185)">
+      <path d="M0 8 C0 3.58 3.58 0 8 0 C10.5 0 12.7 1.2 14 3 C15.3 1.2 17.5 0 20 0 C24.42 0 28 3.58 28 8 C28 16 14 24 14 24 C14 24 0 16 0 8Z" fill="#7C3AED" opacity="0.8"/>
+      <text x="40" y="18" font-family="system-ui" font-size="12" fill="#7C3AED" font-weight="600">2.4k</text>
+
+      <circle cx="90" cy="12" r="10" stroke="#7C3AED" stroke-width="2" fill="none"/>
+      <path d="M85 12 L90 17 L100 7" stroke="#7C3AED" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <text x="105" y="18" font-family="system-ui" font-size="12" fill="#7C3AED" font-weight="600">891</text>
+    </g>
+
+    <!-- More posts indicator -->
+    <rect x="20" y="240" width="160" height="70" rx="12" fill="white" filter="drop-shadow(0 4px 12px rgba(0,0,0,0.04))"/>
+    <rect x="32" y="255" width="80" height="6" rx="3" fill="#7C3AED" opacity="0.4"/>
+    <rect x="32" y="268" width="120" height="4" rx="2" fill="#7C3AED" opacity="0.2"/>
+    <rect x="32" y="280" width="100" height="4" rx="2" fill="#7C3AED" opacity="0.2"/>
+    <rect x="32" y="292" width="60" height="4" rx="2" fill="#7C3AED" opacity="0.2"/>
+  </g>
+
+  <!-- Floating like icon -->
+  <g transform="translate(550, 150)">
+    <circle cx="30" cy="30" r="30" fill="white" filter="drop-shadow(0 8px 20px rgba(124, 58, 237, 0.25))"/>
+    <path d="M20 32 C20 26 25 22 30 22 C33 22 36 24 38 27 C40 24 43 22 46 22 C51 22 56 26 56 32 C56 42 38 52 38 52 C38 52 20 42 20 32Z" fill="url(#accent2)"/>
+  </g>
+
+  <!-- Floating share icon -->
+  <g transform="translate(160, 180)">
+    <circle cx="25" cy="25" r="25" fill="white" filter="drop-shadow(0 8px 20px rgba(124, 58, 237, 0.25))"/>
+    <path d="M25 15 L25 30 M18 22 L25 15 L32 22" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M17 28 L17 33 C17 34.1 17.9 35 19 35 L31 35 C32.1 35 33 34.1 33 33 L33 28" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Stats card -->
+  <g transform="translate(560, 280)">
+    <rect x="0" y="0" width="150" height="100" rx="16" fill="white" filter="drop-shadow(0 8px 20px rgba(124, 58, 237, 0.15))"/>
+    <text x="20" y="30" font-family="system-ui" font-size="12" fill="#7C3AED" opacity="0.7">Engagement</text>
+    <text x="20" y="55" font-family="system-ui" font-size="24" fill="#7C3AED" font-weight="700">+127%</text>
+    <rect x="20" y="70" width="110" height="8" rx="4" fill="#7C3AED" opacity="0.15"/>
+    <rect x="20" y="70" width="85" height="8" rx="4" fill="url(#accent2)"/>
+  </g>
+
+  <!-- AI sparkle -->
+  <g transform="translate(100, 100)">
+    <path d="M20 0 L24 18 L42 22 L24 26 L20 44 L16 26 L-2 22 L16 18 Z" fill="#7C3AED"/>
+    <circle cx="20" cy="22" r="5" fill="white"/>
+  </g>
+</svg>
