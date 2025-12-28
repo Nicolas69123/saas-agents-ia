@@ -1,6 +1,7 @@
 'use client'
 
 import ReactMarkdown from 'react-markdown'
+import { SocialIcon } from 'react-social-icons'
 
 interface LinkedInMockupProps {
   content: {
@@ -80,13 +81,12 @@ export default function LinkedInMockup({
           </div>
         </div>
         {/* LinkedIn Logo */}
-        <div style={{
-          color: '#0077B5',
-          fontSize: '20px',
-          fontWeight: 'bold',
-        }}>
-          in
-        </div>
+        <SocialIcon
+          network="linkedin"
+          style={{ width: 28, height: 28 }}
+          bgColor="transparent"
+          fgColor="#0077B5"
+        />
       </div>
 
       {/* Content */}
@@ -130,7 +130,7 @@ export default function LinkedInMockup({
         )}
       </div>
 
-      {/* Image */}
+      {/* Image - INSIDE the post */}
       {imageUrl && (
         <div style={{
           width: '100%',

@@ -1,6 +1,7 @@
 'use client'
 
 import ReactMarkdown from 'react-markdown'
+import { SocialIcon } from 'react-social-icons'
 
 interface FacebookMockupProps {
   content: {
@@ -80,15 +81,13 @@ export default function FacebookMockup({
             Il y a 2h · 🌐
           </div>
         </div>
-        {/* More button */}
-        <div style={{
-          fontSize: '16px',
-          color: '#65676B',
-          cursor: 'pointer',
-          padding: '4px',
-        }}>
-          •••
-        </div>
+        {/* Facebook Logo */}
+        <SocialIcon
+          network="facebook"
+          style={{ width: 24, height: 24 }}
+          bgColor="transparent"
+          fgColor="#1877F2"
+        />
       </div>
 
       {/* Content */}
@@ -129,7 +128,7 @@ export default function FacebookMockup({
         )}
       </div>
 
-      {/* Image */}
+      {/* Image - INSIDE the post */}
       {imageUrl && (
         <div style={{
           width: '100%',

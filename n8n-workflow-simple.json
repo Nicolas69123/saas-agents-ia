@@ -1,0 +1,170 @@
+{
+  "name": "Agent Social Media - Simple",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "social-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "social-chat-webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.chatInput || $json.body.message }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Tu es Thomas, expert marketing digital. Réponds UNIQUEMENT en JSON valide.\n\nPour les posts sociaux:\n{\n  \"type_contenu\": \"social_post\",\n  \"platform\": \"linkedin|instagram|twitter|facebook\",\n  \"post_content\": {\n    \"text\": \"Texte du post en markdown\",\n    \"hook\": \"Accroche\",\n    \"cta\": \"Call-to-action\"\n  },\n  \"hashtags\": [\"#tag1\"],\n  \"image_prompt\": \"Description détaillée pour l'image\",\n  \"generate_image\": true\n}\n\nPour les images seules:\n{\n  \"type_contenu\": \"image\",\n  \"prompt_ameliore\": \"Description détaillée\",\n  \"description\": \"Texte court\"\n}"
+        }
+      },
+      "id": "agent-1",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.output.generate_image }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-image",
+      "name": "If Generate Image",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"{{ $json.output.image_prompt || $json.output.prompt_ameliore }}\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"responseModalities\": [\"IMAGE\", \"TEXT\"]\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "gemini-request",
+      "name": "Generate Image Gemini",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, -100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const agentOutput = $('AI Agent').first().json.output;\nconst geminiResponse = $input.first().json;\n\n// Extract image from Gemini response\nlet imageBase64 = null;\nlet mimeType = 'image/png';\n\nif (geminiResponse.candidates?.[0]?.content?.parts) {\n  for (const part of geminiResponse.candidates[0].content.parts) {\n    if (part.inlineData) {\n      imageBase64 = part.inlineData.data;\n      mimeType = part.inlineData.mimeType || 'image/png';\n      break;\n    }\n  }\n}\n\nreturn [{\n  json: {\n    ...agentOutput,\n    image_base64: imageBase64,\n    mimeType: mimeType,\n    image_ready: !!imageBase64\n  }\n}];"
+      },
+      "id": "merge-response",
+      "name": "Merge Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, -100]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { response: $json } }}",
+        "options": {}
+      },
+      "id": "respond-with-image",
+      "name": "Respond With Image",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1100, -100]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { response: $json.output } }}",
+        "options": {}
+      },
+      "id": "respond-no-image",
+      "name": "Respond No Image",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [660, 100]
+    },
+    {
+      "parameters": {
+        "model": "gemini-2.0-flash"
+      },
+      "id": "gemini-model",
+      "name": "Gemini Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [220, 200],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "juqopekTUW4CU0nb",
+          "name": "Google Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"type_contenu\": {\"type\": \"string\"},\n    \"platform\": {\"type\": \"string\"},\n    \"post_content\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\"type\": \"string\"},\n        \"hook\": {\"type\": \"string\"},\n        \"cta\": {\"type\": \"string\"}\n      }\n    },\n    \"hashtags\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}},\n    \"image_prompt\": {\"type\": \"string\"},\n    \"generate_image\": {\"type\": \"boolean\"},\n    \"prompt_ameliore\": {\"type\": \"string\"},\n    \"description\": {\"type\": \"string\"}\n  },\n  \"required\": [\"type_contenu\"]\n}"
+      },
+      "id": "output-parser",
+      "name": "Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [220, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "AI Agent", "type": "main", "index": 0}]]
+    },
+    "AI Agent": {
+      "main": [[{"node": "If Generate Image", "type": "main", "index": 0}]]
+    },
+    "If Generate Image": {
+      "main": [
+        [{"node": "Generate Image Gemini", "type": "main", "index": 0}],
+        [{"node": "Respond No Image", "type": "main", "index": 0}]
+      ]
+    },
+    "Generate Image Gemini": {
+      "main": [[{"node": "Merge Response", "type": "main", "index": 0}]]
+    },
+    "Merge Response": {
+      "main": [[{"node": "Respond With Image", "type": "main", "index": 0}]]
+    },
+    "Gemini Model": {
+      "ai_languageModel": [[{"node": "AI Agent", "type": "ai_languageModel", "index": 0}]]
+    },
+    "Output Parser": {
+      "ai_outputParser": [[{"node": "AI Agent", "type": "ai_outputParser", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

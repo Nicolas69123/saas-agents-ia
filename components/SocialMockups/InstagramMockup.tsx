@@ -1,6 +1,7 @@
 'use client'
 
 import ReactMarkdown from 'react-markdown'
+import { SocialIcon } from 'react-social-icons'
 
 interface InstagramMockupProps {
   content: {
@@ -81,17 +82,16 @@ export default function InstagramMockup({
             {authorName}
           </div>
         </div>
-        {/* More button */}
-        <div style={{
-          fontSize: '16px',
-          color: '#262626',
-          cursor: 'pointer',
-        }}>
-          •••
-        </div>
+        {/* Instagram Logo */}
+        <SocialIcon
+          network="instagram"
+          style={{ width: 24, height: 24 }}
+          bgColor="transparent"
+          fgColor="#E1306C"
+        />
       </div>
 
-      {/* Image */}
+      {/* Image - MAIN CONTENT for Instagram */}
       {imageUrl ? (
         <div style={{
           width: '100%',
@@ -129,7 +129,7 @@ export default function InstagramMockup({
         alignItems: 'center',
         gap: '16px',
       }}>
-        <span style={{ fontSize: '24px', cursor: 'pointer' }}>🤍</span>
+        <span style={{ fontSize: '24px', cursor: 'pointer' }}>❤️</span>
         <span style={{ fontSize: '24px', cursor: 'pointer' }}>💬</span>
         <span style={{ fontSize: '24px', cursor: 'pointer' }}>📤</span>
         <span style={{ fontSize: '24px', cursor: 'pointer', marginLeft: 'auto' }}>🔖</span>

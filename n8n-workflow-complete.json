@@ -1,0 +1,463 @@
+{
+  "name": "Agent Marketing Complet - Texte + Image + Video",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "marketing-agent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "marketing-agent-webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.chatInput || $json.body.message }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Tu es Thomas, expert marketing digital et création de contenu.\n\n📜 HISTORIQUE DE LA CONVERSATION:\n{{ $json.body.history || 'Début de conversation' }}\n\n🎯 DÉTECTION TYPE DE CONTENU:\n- \"génère/crée une image\" → type_contenu: \"image\"\n- \"génère/crée une vidéo\" → type_contenu: \"video\"\n- \"post LinkedIn/Instagram/Twitter/Facebook\" → type_contenu: \"social_post\"\n- Questions/conversation → type_contenu: \"text\"\n\n📱 FORMATS PAR RÉSEAU:\n\n**LinkedIn** (professionnel, 1300 car max):\n- Accroche forte en première ligne\n- Paragraphes courts avec sauts de ligne\n- Emojis professionnels modérés\n- Call-to-action à la fin\n- 5-10 hashtags\n\n**Instagram** (visuel, 2200 car max):\n- Hook accrocheur\n- Texte conversationnel\n- Emojis expressifs\n- 20-30 hashtags\n\n**Twitter/X** (concis, 280 car):\n- Message percutant\n- 1-2 hashtags intégrés\n\n**Facebook** (storytelling):\n- Ton personnel\n- Questions pour engagement\n- 3-5 hashtags\n\n📤 FORMAT JSON OBLIGATOIRE:\n\nPour posts sociaux:\n{\n  \"type_contenu\": \"social_post\",\n  \"platform\": \"linkedin|instagram|twitter|facebook\",\n  \"post_content\": {\n    \"text\": \"Texte du post en markdown\",\n    \"hook\": \"Accroche principale\",\n    \"cta\": \"Call-to-action\"\n  },\n  \"hashtags\": [\"#tag1\", \"#tag2\"],\n  \"image_prompt\": \"Description DETAILLEE en anglais pour générer l'image. Style photographique professionnel, haute qualité, 4K.\",\n  \"generate_image\": true\n}\n\nPour images seules:\n{\n  \"type_contenu\": \"image\",\n  \"prompt_ameliore\": \"Description DETAILLEE en anglais. Professional photography, high quality, 4K, detailed lighting.\",\n  \"description\": \"Courte description\"\n}\n\nPour vidéos:\n{\n  \"type_contenu\": \"video\",\n  \"video_prompt\": \"Description détaillée de la scène vidéo en anglais. Cinematic, professional, 4K.\",\n  \"description\": \"Courte description\",\n  \"duration\": \"5-10 seconds\"\n}\n\nPour texte simple:\n{\n  \"type_contenu\": \"text\",\n  \"response\": \"Ta réponse ici\"\n}"
+        }
+      },
+      "id": "ai-agent",
+      "name": "AI Agent - Thomas",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-001",
+        "options": {}
+      },
+      "id": "gemini-chat-model",
+      "name": "Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [150, 500],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "juqopekTUW4CU0nb",
+          "name": "Google Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"type_contenu\": {\n      \"type\": \"string\",\n      \"enum\": [\"image\", \"video\", \"text\", \"social_post\"]\n    },\n    \"platform\": {\n      \"type\": \"string\",\n      \"enum\": [\"linkedin\", \"instagram\", \"twitter\", \"facebook\"]\n    },\n    \"post_content\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"text\": {\"type\": \"string\"},\n        \"hook\": {\"type\": \"string\"},\n        \"cta\": {\"type\": \"string\"}\n      }\n    },\n    \"prompt_ameliore\": {\"type\": \"string\"},\n    \"image_prompt\": {\"type\": \"string\"},\n    \"video_prompt\": {\"type\": \"string\"},\n    \"generate_image\": {\"type\": \"boolean\"},\n    \"description\": {\"type\": \"string\"},\n    \"hashtags\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"}\n    },\n    \"response\": {\"type\": \"string\"},\n    \"duration\": {\"type\": \"string\"}\n  },\n  \"required\": [\"type_contenu\"]\n}"
+      },
+      "id": "output-parser",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [350, 500]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-social",
+              "leftValue": "={{ $json.output.type_contenu }}",
+              "rightValue": "social_post",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-social-post",
+      "name": "Is Social Post?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-image",
+              "leftValue": "={{ $json.output.type_contenu }}",
+              "rightValue": "image",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-image",
+      "name": "Is Image Only?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [500, 550]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-video",
+              "leftValue": "={{ $json.output.type_contenu }}",
+              "rightValue": "video",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-video",
+      "name": "Is Video?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [500, 800]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-gen-img",
+              "leftValue": "={{ $json.output.generate_image }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-generate-image",
+      "name": "Generate Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [750, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateImage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"{{ $json.output.image_prompt || $json.output.prompt_ameliore }}\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"responseModalities\": [\"IMAGE\", \"TEXT\"]\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "generate-image-social",
+      "name": "Generate Image (Social)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1000, 100],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "juqopekTUW4CU0nb",
+          "name": "Google Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateImage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"{{ $json.output.prompt_ameliore }}\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"responseModalities\": [\"IMAGE\", \"TEXT\"]\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "generate-image-only",
+      "name": "Generate Image (Only)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [750, 550],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "juqopekTUW4CU0nb",
+          "name": "Google Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/veo3",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"{{ $json.output.video_prompt }}\"\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "generate-video",
+      "name": "Generate Video (Veo3)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [750, 800],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "fal-api-key",
+          "name": "Fal.ai API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 60,
+        "unit": "seconds"
+      },
+      "id": "wait-video",
+      "name": "Wait for Video (60s)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1000, 800],
+      "webhookId": "wait-video-webhook"
+    },
+    {
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/veo3/requests/{{ $json.request_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "get-video-result",
+      "name": "Get Video Result",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1250, 800],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "fal-api-key",
+          "name": "Fal.ai API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const agentOutput = $('AI Agent - Thomas').first().json.output;\nconst geminiResponse = $input.first().json;\n\n// Extract image from Gemini response\nlet imageBase64 = null;\nlet mimeType = 'image/png';\n\nif (geminiResponse.candidates && geminiResponse.candidates[0]?.content?.parts) {\n  for (const part of geminiResponse.candidates[0].content.parts) {\n    if (part.inlineData) {\n      imageBase64 = part.inlineData.data;\n      mimeType = part.inlineData.mimeType || 'image/png';\n      break;\n    }\n  }\n}\n\nreturn [{\n  json: {\n    ...agentOutput,\n    image_base64: imageBase64,\n    mimeType: mimeType,\n    image_ready: !!imageBase64\n  }\n}];"
+      },
+      "id": "merge-social-with-image",
+      "name": "Merge Social + Image",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "const agentOutput = $('AI Agent - Thomas').first().json.output;\nconst geminiResponse = $input.first().json;\n\n// Extract image from Gemini response\nlet imageBase64 = null;\nlet mimeType = 'image/png';\n\nif (geminiResponse.candidates && geminiResponse.candidates[0]?.content?.parts) {\n  for (const part of geminiResponse.candidates[0].content.parts) {\n    if (part.inlineData) {\n      imageBase64 = part.inlineData.data;\n      mimeType = part.inlineData.mimeType || 'image/png';\n      break;\n    }\n  }\n}\n\nreturn [{\n  json: {\n    type_contenu: 'image',\n    description: agentOutput.description,\n    prompt_ameliore: agentOutput.prompt_ameliore,\n    image_base64: imageBase64,\n    mimeType: mimeType,\n    image_ready: !!imageBase64\n  }\n}];"
+      },
+      "id": "merge-image-only",
+      "name": "Merge Image Only",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 550]
+    },
+    {
+      "parameters": {
+        "jsCode": "const agentOutput = $('AI Agent - Thomas').first().json.output;\nconst videoResponse = $input.first().json;\n\nreturn [{\n  json: {\n    type_contenu: 'video',\n    description: agentOutput.description,\n    video_prompt: agentOutput.video_prompt,\n    video_url: videoResponse.video?.url || videoResponse.url,\n    video_ready: !!(videoResponse.video?.url || videoResponse.url),\n    status: videoResponse.status\n  }\n}];"
+      },
+      "id": "merge-video",
+      "name": "Merge Video Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1500, 800]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { response: $json } }}",
+        "options": {}
+      },
+      "id": "respond-with-image",
+      "name": "Respond (With Image)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1500, 100]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { response: $json.output } }}",
+        "options": {}
+      },
+      "id": "respond-no-image",
+      "name": "Respond (No Image)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { response: $json } }}",
+        "options": {}
+      },
+      "id": "respond-image-only",
+      "name": "Respond (Image Only)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1250, 550]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { response: $json } }}",
+        "options": {}
+      },
+      "id": "respond-video",
+      "name": "Respond (Video)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1750, 800]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { response: $json.output } }}",
+        "options": {}
+      },
+      "id": "respond-text",
+      "name": "Respond (Text Only)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [750, 1050]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{"node": "AI Agent - Thomas", "type": "main", "index": 0}]]
+    },
+    "AI Agent - Thomas": {
+      "main": [
+        [
+          {"node": "Is Social Post?", "type": "main", "index": 0},
+          {"node": "Is Image Only?", "type": "main", "index": 0},
+          {"node": "Is Video?", "type": "main", "index": 0}
+        ]
+      ]
+    },
+    "Gemini Chat Model": {
+      "ai_languageModel": [[{"node": "AI Agent - Thomas", "type": "ai_languageModel", "index": 0}]]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [[{"node": "AI Agent - Thomas", "type": "ai_outputParser", "index": 0}]]
+    },
+    "Is Social Post?": {
+      "main": [
+        [{"node": "Generate Image?", "type": "main", "index": 0}],
+        [{"node": "Respond (Text Only)", "type": "main", "index": 0}]
+      ]
+    },
+    "Is Image Only?": {
+      "main": [
+        [{"node": "Generate Image (Only)", "type": "main", "index": 0}],
+        [{"node": "Respond (Text Only)", "type": "main", "index": 0}]
+      ]
+    },
+    "Is Video?": {
+      "main": [
+        [{"node": "Generate Video (Veo3)", "type": "main", "index": 0}],
+        [{"node": "Respond (Text Only)", "type": "main", "index": 0}]
+      ]
+    },
+    "Generate Image?": {
+      "main": [
+        [{"node": "Generate Image (Social)", "type": "main", "index": 0}],
+        [{"node": "Respond (No Image)", "type": "main", "index": 0}]
+      ]
+    },
+    "Generate Image (Social)": {
+      "main": [[{"node": "Merge Social + Image", "type": "main", "index": 0}]]
+    },
+    "Merge Social + Image": {
+      "main": [[{"node": "Respond (With Image)", "type": "main", "index": 0}]]
+    },
+    "Generate Image (Only)": {
+      "main": [[{"node": "Merge Image Only", "type": "main", "index": 0}]]
+    },
+    "Merge Image Only": {
+      "main": [[{"node": "Respond (Image Only)", "type": "main", "index": 0}]]
+    },
+    "Generate Video (Veo3)": {
+      "main": [[{"node": "Wait for Video (60s)", "type": "main", "index": 0}]]
+    },
+    "Wait for Video (60s)": {
+      "main": [[{"node": "Get Video Result", "type": "main", "index": 0}]]
+    },
+    "Get Video Result": {
+      "main": [[{"node": "Merge Video Result", "type": "main", "index": 0}]]
+    },
+    "Merge Video Result": {
+      "main": [[{"node": "Respond (Video)", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

@@ -1,5 +1,6 @@
 'use client'
 
+import { SocialIcon } from 'react-social-icons'
 import LinkedInMockup from './LinkedInMockup'
 import InstagramMockup from './InstagramMockup'
 import TwitterMockup from './TwitterMockup'
@@ -40,9 +41,11 @@ export default function SocialPostPreview({ content, imageUrl }: SocialPostPrevi
     facebook: '#1877F2',
   }[platform] || '#6366f1'
 
+  const networkName = platform === 'twitter' ? 'x' : platform
+
   return (
     <div style={{ marginTop: '8px' }}>
-      {/* Platform badge */}
+      {/* Platform badge with real icon */}
       <div style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -55,10 +58,12 @@ export default function SocialPostPreview({ content, imageUrl }: SocialPostPrevi
         fontWeight: 600,
         marginBottom: '12px',
       }}>
-        {platform === 'linkedin' && '💼'}
-        {platform === 'instagram' && '📸'}
-        {platform === 'twitter' && '𝕏'}
-        {platform === 'facebook' && '👥'}
+        <SocialIcon
+          network={networkName}
+          style={{ width: 18, height: 18 }}
+          bgColor="transparent"
+          fgColor="white"
+        />
         <span>Aperçu {platformLabel}</span>
       </div>
 

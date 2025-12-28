@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Configuration des webhooks n8n
+// Configuration du webhook n8n
 const N8N_BASE_URL = process.env.N8N_URL || 'http://localhost:5678'
 
+// Workflow n8n par agent (celui qui fonctionne)
 const webhookConfigs: Record<string, { url: string; active: boolean }> = {
   'reseaux-sociaux': {
-    // Chat Trigger - répond immédiatement, images générées en async
     url: `${N8N_BASE_URL}/webhook/4bd6ad35-7ef0-43af-9a78-d14e818abb10/chat`,
     active: true,
   },
-  'comptable': {
-    url: `${N8N_BASE_URL}/webhook/comptable`,
-    active: false,
-  },
-  // Ajouter d'autres agents ici
 }
 
 export async function POST(request: NextRequest) {
@@ -30,10 +25,9 @@ export async function POST(request: NextRequest) {
 
     const config = webhookConfigs[agentId]
 
-    // Si webhook actif, appeler n8n
+    // Si webhook n8n actif, l'appeler
     if (config?.active) {
       try {
-        // Formater l'historique pour le contexte
         const formattedHistory = history?.map((msg: { role: string; content: string }) =>
           `${msg.role === 'user' ? 'Utilisateur' : 'Assistant'}: ${msg.content}`
         ).join('\n') || ''
@@ -48,11 +42,9 @@ export async function POST(request: NextRequest) {
             chatInput: message,
             message: message,
             agentId,
-            // Envoyer l'historique pour le contexte
             history: formattedHistory,
             historyArray: history || [],
           }),
-          // Timeout plus long pour la génération d'images (60s)
           signal: AbortSignal.timeout(60000),
         })
 
@@ -60,18 +52,24 @@ export async function POST(request: NextRequest) {
           const data = await n8nResponse.json()
           let response = data.response || data.output || data.text || data.message
 
-          // Parser pour détecter une demande d'image
           let parsedContent = null
-          try {
-            let jsonStr = response
-            const jsonMatch = response.match(/```json\n?([\s\S]*?)```/)
-            if (jsonMatch) jsonStr = jsonMatch[1]
-            parsedContent = JSON.parse(jsonStr.trim())
-          } catch {}
 
-          // Si contenu structuré détecté
+          // Si response est déjà un objet (n8n le parse automatiquement)
+          if (typeof response === 'object' && response !== null) {
+            parsedContent = response
+          } else if (typeof response === 'string') {
+            try {
+              let jsonStr = response
+              const jsonMatch = response.match(/```json\n?([\s\S]*?)```/)
+              if (jsonMatch) jsonStr = jsonMatch[1]
+              parsedContent = JSON.parse(jsonStr.trim())
+            } catch {
+              // Pas de JSON, réponse texte normale
+            }
+          }
+
+          // Si contenu structuré avec image à générer
           if (parsedContent?.type_contenu) {
-            // Générer l'image si demandé (image ou social_post avec generate_image)
             const shouldGenerateImage =
               parsedContent.type_contenu === 'image' ||
               (parsedContent.type_contenu === 'social_post' && parsedContent.generate_image)
@@ -79,22 +77,18 @@ export async function POST(request: NextRequest) {
             const imagePrompt = parsedContent.prompt_ameliore || parsedContent.image_prompt
 
             if (shouldGenerateImage && imagePrompt) {
+              console.log('Generating image with prompt:', imagePrompt.slice(0, 100))
               try {
                 const geminiKey = process.env.GEMINI_API_KEY || ''
                 const geminiResp = await fetch(
-                  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent`,
+                  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${geminiKey}`,
                   {
                     method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'x-goog-api-key': geminiKey
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      contents: [{
-                        parts: [{ text: imagePrompt }]
-                      }],
+                      contents: [{ parts: [{ text: imagePrompt }] }],
                       generationConfig: {
-                        responseModalities: ['IMAGE']
+                        responseModalities: ['IMAGE', 'TEXT']
                       }
                     }),
                     signal: AbortSignal.timeout(60000),
@@ -103,24 +97,25 @@ export async function POST(request: NextRequest) {
 
                 if (geminiResp.ok) {
                   const imgData = await geminiResp.json()
-                  // Extraire l'image base64 de la réponse Gemini
-                  const imagePart = imgData.candidates?.[0]?.content?.parts?.find(
-                    (p: { inlineData?: { data: string; mimeType: string } }) => p.inlineData
-                  )
-                  if (imagePart?.inlineData) {
-                    parsedContent.image_base64 = imagePart.inlineData.data
-                    parsedContent.mimeType = imagePart.inlineData.mimeType
-                    parsedContent.image_ready = true
+                  const parts = imgData.candidates?.[0]?.content?.parts || []
+                  for (const part of parts) {
+                    if (part.inlineData) {
+                      parsedContent.image_base64 = part.inlineData.data
+                      parsedContent.mimeType = part.inlineData.mimeType || 'image/png'
+                      parsedContent.image_ready = true
+                      console.log('Image generated successfully!')
+                      break
+                    }
                   }
                 } else {
-                  console.error('Gemini API error:', await geminiResp.text())
+                  const errorText = await geminiResp.text()
+                  console.error('Gemini API error:', geminiResp.status, errorText)
                 }
               } catch (err) {
                 console.error('Gemini image error:', err)
               }
             }
 
-            // Retourner l'objet structuré pour tous les types (texte, image, video, social_post, etc.)
             return NextResponse.json({
               success: true,
               response: parsedContent,
@@ -128,7 +123,7 @@ export async function POST(request: NextRequest) {
             })
           }
 
-          // Fallback: retourner la réponse brute si pas de JSON structuré
+          // Fallback: retourner la réponse brute
           return NextResponse.json({
             success: true,
             response: response,
@@ -142,10 +137,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Fallback si webhook non disponible
+    // Dernier fallback
     return NextResponse.json({
       success: true,
-      response: `Je traite votre demande : "${message}"\n\n(Agent en cours d'intégration)`,
+      response: `Je traite votre demande : "${message}"\n\n(Agent en cours de configuration)`,
       agentId,
     })
 

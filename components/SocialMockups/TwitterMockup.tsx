@@ -1,6 +1,7 @@
 'use client'
 
 import ReactMarkdown from 'react-markdown'
+import { SocialIcon } from 'react-social-icons'
 
 interface TwitterMockupProps {
   content: {
@@ -126,7 +127,7 @@ export default function TwitterMockup({
             )}
           </div>
 
-          {/* Image */}
+          {/* Image - INSIDE the tweet */}
           {imageUrl && (
             <div style={{
               marginTop: '12px',
@@ -182,13 +183,12 @@ export default function TwitterMockup({
         </div>
 
         {/* X Logo */}
-        <div style={{
-          fontSize: '18px',
-          fontWeight: 900,
-          color: '#000',
-        }}>
-          𝕏
-        </div>
+        <SocialIcon
+          network="x"
+          style={{ width: 24, height: 24 }}
+          bgColor="transparent"
+          fgColor="#000"
+        />
       </div>
     </div>
   )
