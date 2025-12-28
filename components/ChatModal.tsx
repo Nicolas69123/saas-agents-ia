@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
+import ReactMarkdown from 'react-markdown'
+import SocialPostPreview, { SocialPostContent } from './SocialMockups'
 
 interface Message {
   id: string
@@ -9,19 +11,25 @@ interface Message {
   content: string
   timestamp: Date
   richContent?: RichContent
-  imageData?: {
-    base64: string
-    mimeType: string
-  }
+  imageUrl?: string
 }
 
 interface RichContent {
-  type_contenu: 'image' | 'video' | 'texte' | 'conversation'
+  type_contenu: 'image' | 'video' | 'texte' | 'conversation' | 'social_post'
   prompt_ameliore?: string
   description?: string
   hashtags?: string[] | string
   keywords?: string[]
   response?: string
+  // Social post specific fields
+  platform?: 'linkedin' | 'instagram' | 'twitter' | 'facebook'
+  post_content?: {
+    text: string
+    hook?: string
+    cta?: string
+  }
+  image_prompt?: string
+  generate_image?: boolean
 }
 
 interface ChatModalProps {
@@ -119,11 +127,18 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
       timestamp: new Date(),
     }
 
-    setMessages(prev => [...prev, userMessage])
+    const updatedMessages = [...messages, userMessage]
+    setMessages(updatedMessages)
     setInput('')
     setIsTyping(true)
 
     try {
+      // Préparer l'historique des messages pour le contexte
+      const chatHistory = updatedMessages.slice(-10).map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }))
+
       // Appeler l'API n8n via notre backend
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -132,6 +147,7 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
           agentId: selectedAgent.agentId,
           message: content,
           sessionId: `session-${selectedAgent.agentId}-${Date.now()}`,
+          history: chatHistory,
         }),
       })
 
@@ -140,24 +156,43 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
 
       let text: string
       let richContent: RichContent | undefined
-      let imageData: { base64: string; mimeType: string } | undefined
+      let imageUrl: string | undefined
 
       // Vérifier si la réponse est déjà un objet JSON
       if (typeof rawResponse === 'object' && rawResponse !== null) {
         // Réponse structurée de n8n
         richContent = rawResponse as RichContent
-        text = rawResponse.description || rawResponse.prompt_ameliore || 'Contenu généré avec succès !'
 
-        // Ajouter les hashtags si présents
-        if (rawResponse.hashtags && Array.isArray(rawResponse.hashtags)) {
+        // Gérer les différents types de contenu
+        if (richContent.type_contenu === 'social_post' && richContent.post_content) {
+          text = richContent.post_content.text || 'Post social généré !'
+        } else {
+          text = rawResponse.description || rawResponse.prompt_ameliore || 'Contenu généré avec succès !'
+        }
+
+        // Ajouter les hashtags si présents (sauf pour social_post qui les affiche dans le mockup)
+        if (rawResponse.hashtags && Array.isArray(rawResponse.hashtags) && richContent.type_contenu !== 'social_post') {
           text += '\n\n' + rawResponse.hashtags.join(' ')
         }
 
-        // Vérifier si l'image est incluse
+        // Sauvegarder l'image si incluse et récupérer l'URL
         if (rawResponse.image_base64) {
-          imageData = {
-            base64: rawResponse.image_base64,
-            mimeType: rawResponse.mimeType || 'image/png'
+          try {
+            const saveResponse = await fetch('/api/media', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                base64: rawResponse.image_base64,
+                mimeType: rawResponse.mimeType || 'image/png',
+                name: `generated-${Date.now()}.png`
+              })
+            })
+            const saveData = await saveResponse.json()
+            if (saveData.success && saveData.file?.url) {
+              imageUrl = saveData.file.url
+            }
+          } catch (e) {
+            console.error('Erreur sauvegarde image:', e)
           }
         }
       } else {
@@ -173,7 +208,7 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
         content: text,
         timestamp: new Date(),
         richContent,
-        imageData,
+        imageUrl,
       }
       setMessages(prev => [...prev, aiMessage])
     } catch (error) {
@@ -422,98 +457,152 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
                     {/* Affichage du contenu riche si disponible */}
                     {message.richContent ? (
                       <div>
-                        {/* Badge type de contenu */}
-                        <div style={{
-                          display: 'inline-block',
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '0.25rem',
-                          background: message.richContent.type_contenu === 'image' ? '#4CAF50' :
-                                     message.richContent.type_contenu === 'video' ? '#2196F3' :
-                                     message.richContent.type_contenu === 'texte' ? '#FF9800' : '#9E9E9E',
-                          color: 'white',
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                          textTransform: 'uppercase',
-                          marginBottom: '0.5rem',
-                        }}>
-                          {message.richContent.type_contenu === 'image' && '🖼️ '}
-                          {message.richContent.type_contenu === 'video' && '🎬 '}
-                          {message.richContent.type_contenu === 'texte' && '📝 '}
-                          {message.richContent.type_contenu}
-                        </div>
+                        {/* Social Post Mockup */}
+                        {message.richContent.type_contenu === 'social_post' && message.richContent.post_content ? (
+                          <SocialPostPreview
+                            content={message.richContent as SocialPostContent}
+                            imageUrl={message.imageUrl}
+                          />
+                        ) : (
+                          <>
+                            {/* Badge type de contenu */}
+                            <div style={{
+                              display: 'inline-block',
+                              padding: '0.25rem 0.5rem',
+                              borderRadius: '0.25rem',
+                              background: message.richContent.type_contenu === 'image' ? '#4CAF50' :
+                                         message.richContent.type_contenu === 'video' ? '#2196F3' :
+                                         message.richContent.type_contenu === 'texte' ? '#FF9800' : '#9E9E9E',
+                              color: 'white',
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              textTransform: 'uppercase',
+                              marginBottom: '0.5rem',
+                            }}>
+                              {message.richContent.type_contenu === 'image' && '🖼️ '}
+                              {message.richContent.type_contenu === 'video' && '🎬 '}
+                              {message.richContent.type_contenu === 'texte' && '📝 '}
+                              {message.richContent.type_contenu}
+                            </div>
 
-                        {/* Description */}
-                        <p style={{ margin: '0.5rem 0', fontWeight: 500 }}>
-                          {message.richContent.description}
-                        </p>
+                            {/* Description avec rendu Markdown */}
+                            {message.richContent.description && (
+                              <div style={{ margin: '0.5rem 0' }} className="markdown-content">
+                                <ReactMarkdown
+                                  components={{
+                                    h1: ({ children }) => <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: '8px 0' }}>{children}</h3>,
+                                    h2: ({ children }) => <h4 style={{ fontSize: '1rem', fontWeight: 600, margin: '6px 0' }}>{children}</h4>,
+                                    h3: ({ children }) => <h5 style={{ fontSize: '0.95rem', fontWeight: 600, margin: '4px 0' }}>{children}</h5>,
+                                    p: ({ children }) => <p style={{ margin: '6px 0' }}>{children}</p>,
+                                    ul: ({ children }) => <ul style={{ margin: '6px 0', paddingLeft: '1.2rem' }}>{children}</ul>,
+                                    li: ({ children }) => <li style={{ margin: '3px 0' }}>{children}</li>,
+                                    strong: ({ children }) => <strong style={{ fontWeight: 600 }}>{children}</strong>,
+                                  }}
+                                >
+                                  {message.richContent.description}
+                                </ReactMarkdown>
+                              </div>
+                            )}
 
-                        {/* Placeholder image si type image */}
-                        {message.richContent.type_contenu === 'image' && (
-                          <div style={{
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                            borderRadius: '0.5rem',
-                            padding: '2rem',
-                            textAlign: 'center',
-                            margin: '0.75rem 0',
-                            color: 'white',
-                          }}>
-                            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎨</div>
-                            <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.9 }}>
-                              Image en cours de génération...
-                            </p>
-                            <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', opacity: 0.7 }}>
-                              Elle sera disponible dans votre galerie
-                            </p>
-                          </div>
-                        )}
+                            {/* Image générée */}
+                            {message.imageUrl ? (
+                              <div style={{
+                                borderRadius: '0.5rem',
+                                overflow: 'hidden',
+                                margin: '0.75rem 0',
+                              }}>
+                                <img
+                                  src={message.imageUrl}
+                                  alt="Image générée"
+                                  style={{
+                                    width: '100%',
+                                    height: 'auto',
+                                    display: 'block',
+                                  }}
+                                />
+                              </div>
+                            ) : message.richContent.type_contenu === 'image' && (
+                              <div style={{
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                borderRadius: '0.5rem',
+                                padding: '2rem',
+                                textAlign: 'center',
+                                margin: '0.75rem 0',
+                                color: 'white',
+                              }}>
+                                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🎨</div>
+                                <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.9 }}>
+                                  Image en cours de génération...
+                                </p>
+                                <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', opacity: 0.7 }}>
+                                  Elle sera disponible dans votre galerie
+                                </p>
+                              </div>
+                            )}
 
-                        {/* Prompt amélioré */}
-                        {message.richContent.prompt_ameliore && (
-                          <div style={{
-                            background: 'rgba(0,0,0,0.05)',
-                            borderRadius: '0.375rem',
-                            padding: '0.5rem 0.75rem',
-                            fontSize: '0.85rem',
-                            marginTop: '0.5rem',
-                            fontStyle: 'italic',
-                            borderLeft: '3px solid var(--accent)',
-                          }}>
-                            {message.richContent.prompt_ameliore}
-                          </div>
-                        )}
+                            {/* Prompt amélioré */}
+                            {message.richContent.prompt_ameliore && (
+                              <div style={{
+                                background: 'rgba(0,0,0,0.05)',
+                                borderRadius: '0.375rem',
+                                padding: '0.5rem 0.75rem',
+                                fontSize: '0.85rem',
+                                marginTop: '0.5rem',
+                                fontStyle: 'italic',
+                                borderLeft: '3px solid var(--accent)',
+                              }}>
+                                {message.richContent.prompt_ameliore}
+                              </div>
+                            )}
 
-                        {/* Hashtags */}
-                        {message.richContent.hashtags && (
-                          <div style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '0.25rem',
-                            marginTop: '0.75rem',
-                          }}>
-                            {(Array.isArray(message.richContent.hashtags)
-                              ? message.richContent.hashtags
-                              : message.richContent.hashtags.split(/\s+/)
-                            ).map((tag, i) => (
-                              <span
-                                key={i}
-                                style={{
-                                  background: 'var(--accent)',
-                                  color: 'white',
-                                  padding: '0.15rem 0.4rem',
-                                  borderRadius: '0.25rem',
-                                  fontSize: '0.7rem',
-                                  fontWeight: 500,
-                                }}
-                              >
-                                {tag.startsWith('#') ? tag : `#${tag}`}
-                              </span>
-                            ))}
-                          </div>
+                            {/* Hashtags */}
+                            {message.richContent.hashtags && (
+                              <div style={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '0.25rem',
+                                marginTop: '0.75rem',
+                              }}>
+                                {(Array.isArray(message.richContent.hashtags)
+                                  ? message.richContent.hashtags
+                                  : message.richContent.hashtags.split(/\s+/)
+                                ).map((tag, i) => (
+                                  <span
+                                    key={i}
+                                    style={{
+                                      background: 'var(--accent)',
+                                      color: 'white',
+                                      padding: '0.15rem 0.4rem',
+                                      borderRadius: '0.25rem',
+                                      fontSize: '0.7rem',
+                                      fontWeight: 500,
+                                    }}
+                                  >
+                                    {tag.startsWith('#') ? tag : `#${tag}`}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                     ) : (
-                      /* Affichage texte normal */
-                      <span style={{ whiteSpace: 'pre-wrap' }}>{message.content}</span>
+                      /* Affichage texte normal avec Markdown */
+                      <div className="markdown-content">
+                        <ReactMarkdown
+                          components={{
+                            h1: ({ children }) => <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: '8px 0' }}>{children}</h3>,
+                            h2: ({ children }) => <h4 style={{ fontSize: '1rem', fontWeight: 600, margin: '6px 0' }}>{children}</h4>,
+                            h3: ({ children }) => <h5 style={{ fontSize: '0.95rem', fontWeight: 600, margin: '4px 0' }}>{children}</h5>,
+                            p: ({ children }) => <p style={{ margin: '4px 0' }}>{children}</p>,
+                            ul: ({ children }) => <ul style={{ margin: '6px 0', paddingLeft: '1.2rem' }}>{children}</ul>,
+                            li: ({ children }) => <li style={{ margin: '2px 0' }}>{children}</li>,
+                            strong: ({ children }) => <strong style={{ fontWeight: 600 }}>{children}</strong>,
+                          }}
+                        >
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
                     )}
                   </div>
                 </div>

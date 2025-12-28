@@ -111,10 +111,7 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
-  imageData?: {
-    base64: string
-    mimeType: string
-  }
+  imageUrl?: string  // URL de l'image sauvegardée (au lieu de base64 pour éviter quota localStorage)
 }
 
 interface Conversation {
@@ -322,15 +319,22 @@ function ChatPageContent() {
       textareaRef.current.style.height = 'auto'
     }
 
-    // Call n8n API via backend
+    // Call n8n API via backend - envoyer l'historique pour le contexte
     try {
+      // Préparer l'historique des messages (sans les images base64 pour réduire la taille)
+      const chatHistory = updatedConv.messages.slice(-10).map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }))
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           agentId: selectedAgent.agentId,
           message: inputValue,
-          sessionId: `session-${selectedAgent.agentId}-${Date.now()}`,
+          sessionId: `session-${selectedAgent.agentId}-${currentConversation.id}`,
+          history: chatHistory,
         }),
       })
 
@@ -338,7 +342,7 @@ function ChatPageContent() {
 
       // Extraire le texte de la réponse (peut être un objet structuré ou une string)
       let responseText: string
-      let imageData: { base64: string; mimeType: string } | undefined
+      let imageUrl: string | undefined  // Stocker URL au lieu de base64 pour éviter quota localStorage
       const rawResponse = data.response
 
       if (typeof rawResponse === 'object' && rawResponse !== null) {
@@ -350,11 +354,25 @@ function ChatPageContent() {
           responseText += '\n\n' + rawResponse.hashtags.join(' ')
         }
 
-        // Extraire l'image si présente
+        // Extraire l'image si présente et la sauvegarder
         if (rawResponse.image_base64) {
-          imageData = {
-            base64: rawResponse.image_base64,
-            mimeType: rawResponse.mimeType || 'image/png'
+          // Sauvegarder l'image dans /public/media et récupérer l'URL
+          try {
+            const saveResponse = await fetch('/api/media', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                base64: rawResponse.image_base64,
+                mimeType: rawResponse.mimeType || 'image/png',
+                name: `generated-${Date.now()}.png`
+              })
+            })
+            const saveData = await saveResponse.json()
+            if (saveData.success && saveData.file?.url) {
+              imageUrl = saveData.file.url  // Stocker l'URL, pas la base64
+            }
+          } catch (saveError) {
+            console.error('Erreur sauvegarde image:', saveError)
           }
         }
       } else {
@@ -366,7 +384,7 @@ function ChatPageContent() {
         role: 'assistant',
         content: responseText,
         timestamp: new Date(),
-        imageData
+        imageUrl
       }
 
       const finalConv = {
@@ -627,10 +645,10 @@ function ChatPageContent() {
                 <div className="msg-content">
                   <div className="msg-bubble">
                     {message.content}
-                    {message.imageData && (
+                    {message.imageUrl && (
                       <div className="msg-image" style={{ marginTop: '12px' }}>
                         <img
-                          src={`data:${message.imageData.mimeType};base64,${message.imageData.base64}`}
+                          src={message.imageUrl}
                           alt="Image générée"
                           style={{
                             maxWidth: '100%',

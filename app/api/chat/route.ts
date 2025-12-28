@@ -19,7 +19,7 @@ const webhookConfigs: Record<string, { url: string; active: boolean }> = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { agentId, message, sessionId } = body
+    const { agentId, message, sessionId, history } = body
 
     if (!agentId || !message) {
       return NextResponse.json(
@@ -33,6 +33,11 @@ export async function POST(request: NextRequest) {
     // Si webhook actif, appeler n8n
     if (config?.active) {
       try {
+        // Formater l'historique pour le contexte
+        const formattedHistory = history?.map((msg: { role: string; content: string }) =>
+          `${msg.role === 'user' ? 'Utilisateur' : 'Assistant'}: ${msg.content}`
+        ).join('\n') || ''
+
         const n8nResponse = await fetch(config.url, {
           method: 'POST',
           headers: {
@@ -43,6 +48,9 @@ export async function POST(request: NextRequest) {
             chatInput: message,
             message: message,
             agentId,
+            // Envoyer l'historique pour le contexte
+            history: formattedHistory,
+            historyArray: history || [],
           }),
           // Timeout plus long pour la génération d'images (60s)
           signal: AbortSignal.timeout(60000),
@@ -63,8 +71,14 @@ export async function POST(request: NextRequest) {
 
           // Si contenu structuré détecté
           if (parsedContent?.type_contenu) {
-            // Si image demandée, la générer avec Gemini 2.5 Flash Image
-            if (parsedContent.type_contenu === 'image') {
+            // Générer l'image si demandé (image ou social_post avec generate_image)
+            const shouldGenerateImage =
+              parsedContent.type_contenu === 'image' ||
+              (parsedContent.type_contenu === 'social_post' && parsedContent.generate_image)
+
+            const imagePrompt = parsedContent.prompt_ameliore || parsedContent.image_prompt
+
+            if (shouldGenerateImage && imagePrompt) {
               try {
                 const geminiKey = process.env.GEMINI_API_KEY || ''
                 const geminiResp = await fetch(
@@ -77,7 +91,7 @@ export async function POST(request: NextRequest) {
                     },
                     body: JSON.stringify({
                       contents: [{
-                        parts: [{ text: parsedContent.prompt_ameliore }]
+                        parts: [{ text: imagePrompt }]
                       }],
                       generationConfig: {
                         responseModalities: ['IMAGE']
@@ -106,7 +120,7 @@ export async function POST(request: NextRequest) {
               }
             }
 
-            // Retourner l'objet structuré pour tous les types (texte, image, video, etc.)
+            // Retourner l'objet structuré pour tous les types (texte, image, video, social_post, etc.)
             return NextResponse.json({
               success: true,
               response: parsedContent,
