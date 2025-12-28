@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import Header from '@/components/Header'
+import SocialPostPreview, { SocialPostContent } from '@/components/SocialMockups'
 
 const agents = [
   { id: 1, name: 'Lucas', role: 'Comptable', category: 'Finance', avatar: '/avatars/agent-1.png', color: '#4F46E5', gradient: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)', agentId: 'comptable' },
@@ -112,6 +113,7 @@ interface Message {
   content: string
   timestamp: Date
   imageUrl?: string  // URL de l'image sauvegardée (au lieu de base64 pour éviter quota localStorage)
+  socialPost?: SocialPostContent  // Pour les posts réseaux sociaux avec mockup
 }
 
 interface Conversation {
@@ -343,15 +345,22 @@ function ChatPageContent() {
       // Extraire le texte de la réponse (peut être un objet structuré ou une string)
       let responseText: string
       let imageUrl: string | undefined  // Stocker URL au lieu de base64 pour éviter quota localStorage
+      let socialPost: SocialPostContent | undefined  // Pour les mockups réseaux sociaux
       const rawResponse = data.response
 
       if (typeof rawResponse === 'object' && rawResponse !== null) {
-        // Réponse structurée de n8n (type_contenu, description, hashtags, etc.)
-        responseText = rawResponse.description || rawResponse.prompt_ameliore || 'Contenu généré !'
+        // Vérifier si c'est un post social
+        if (rawResponse.type_contenu === 'social_post' && rawResponse.post_content) {
+          socialPost = rawResponse as SocialPostContent
+          responseText = rawResponse.post_content.text || 'Post social généré !'
+        } else {
+          // Réponse structurée de n8n (type_contenu, description, hashtags, etc.)
+          responseText = rawResponse.description || rawResponse.prompt_ameliore || 'Contenu généré !'
 
-        // Ajouter les hashtags si présents
-        if (rawResponse.hashtags && Array.isArray(rawResponse.hashtags)) {
-          responseText += '\n\n' + rawResponse.hashtags.join(' ')
+          // Ajouter les hashtags si présents
+          if (rawResponse.hashtags && Array.isArray(rawResponse.hashtags)) {
+            responseText += '\n\n' + rawResponse.hashtags.join(' ')
+          }
         }
 
         // Extraire l'image si présente et la sauvegarder
@@ -384,7 +393,8 @@ function ChatPageContent() {
         role: 'assistant',
         content: responseText,
         timestamp: new Date(),
-        imageUrl
+        imageUrl,
+        socialPost
       }
 
       const finalConv = {
@@ -644,19 +654,29 @@ function ChatPageContent() {
                 )}
                 <div className="msg-content">
                   <div className="msg-bubble">
-                    {message.content}
-                    {message.imageUrl && (
-                      <div className="msg-image" style={{ marginTop: '12px' }}>
-                        <img
-                          src={message.imageUrl}
-                          alt="Image générée"
-                          style={{
-                            maxWidth: '100%',
-                            borderRadius: '12px',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                          }}
-                        />
-                      </div>
+                    {/* Afficher le mockup social si disponible */}
+                    {message.socialPost ? (
+                      <SocialPostPreview
+                        content={message.socialPost}
+                        imageUrl={message.imageUrl}
+                      />
+                    ) : (
+                      <>
+                        {message.content}
+                        {message.imageUrl && (
+                          <div className="msg-image" style={{ marginTop: '12px' }}>
+                            <img
+                              src={message.imageUrl}
+                              alt="Image générée"
+                              style={{
+                                maxWidth: '100%',
+                                borderRadius: '12px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                              }}
+                            />
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                   <span className="msg-time">

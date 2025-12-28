@@ -154,6 +154,14 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
       const data = await response.json()
       const rawResponse = data.response || `Je suis ${selectedAgent.name}. Je traite votre demande...`
 
+      // DEBUG
+      console.log('=== DEBUG CHAT ===')
+      console.log('data:', data)
+      console.log('rawResponse:', rawResponse)
+      console.log('type:', typeof rawResponse)
+      console.log('type_contenu:', rawResponse?.type_contenu)
+      console.log('post_content:', rawResponse?.post_content)
+
       let text: string
       let richContent: RichContent | undefined
       let imageUrl: string | undefined
