@@ -9,6 +9,10 @@ interface Message {
   content: string
   timestamp: Date
   richContent?: RichContent
+  imageData?: {
+    base64: string
+    mimeType: string
+  }
 }
 
 interface RichContent {
@@ -134,8 +138,34 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
       const data = await response.json()
       const rawResponse = data.response || `Je suis ${selectedAgent.name}. Je traite votre demande...`
 
-      // Parser la réponse pour extraire le contenu riche
-      const { text, richContent } = parseAIResponse(rawResponse)
+      let text: string
+      let richContent: RichContent | undefined
+      let imageData: { base64: string; mimeType: string } | undefined
+
+      // Vérifier si la réponse est déjà un objet JSON
+      if (typeof rawResponse === 'object' && rawResponse !== null) {
+        // Réponse structurée de n8n
+        richContent = rawResponse as RichContent
+        text = rawResponse.description || rawResponse.prompt_ameliore || 'Contenu généré avec succès !'
+
+        // Ajouter les hashtags si présents
+        if (rawResponse.hashtags && Array.isArray(rawResponse.hashtags)) {
+          text += '\n\n' + rawResponse.hashtags.join(' ')
+        }
+
+        // Vérifier si l'image est incluse
+        if (rawResponse.image_base64) {
+          imageData = {
+            base64: rawResponse.image_base64,
+            mimeType: rawResponse.mimeType || 'image/png'
+          }
+        }
+      } else {
+        // Réponse texte simple - parser pour extraire le contenu riche
+        const parsed = parseAIResponse(rawResponse)
+        text = parsed.text
+        richContent = parsed.richContent
+      }
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -143,6 +173,7 @@ export default function ChatModal({ isOpen, onClose }: ChatModalProps) {
         content: text,
         timestamp: new Date(),
         richContent,
+        imageData,
       }
       setMessages(prev => [...prev, aiMessage])
     } catch (error) {

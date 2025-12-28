@@ -111,6 +111,10 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
+  imageData?: {
+    base64: string
+    mimeType: string
+  }
 }
 
 interface Conversation {
@@ -332,11 +336,37 @@ function ChatPageContent() {
 
       const data = await response.json()
 
+      // Extraire le texte de la réponse (peut être un objet structuré ou une string)
+      let responseText: string
+      let imageData: { base64: string; mimeType: string } | undefined
+      const rawResponse = data.response
+
+      if (typeof rawResponse === 'object' && rawResponse !== null) {
+        // Réponse structurée de n8n (type_contenu, description, hashtags, etc.)
+        responseText = rawResponse.description || rawResponse.prompt_ameliore || 'Contenu généré !'
+
+        // Ajouter les hashtags si présents
+        if (rawResponse.hashtags && Array.isArray(rawResponse.hashtags)) {
+          responseText += '\n\n' + rawResponse.hashtags.join(' ')
+        }
+
+        // Extraire l'image si présente
+        if (rawResponse.image_base64) {
+          imageData = {
+            base64: rawResponse.image_base64,
+            mimeType: rawResponse.mimeType || 'image/png'
+          }
+        }
+      } else {
+        responseText = rawResponse || `Je suis ${selectedAgent.name}. Je traite votre demande...`
+      }
+
       const aiMessage: Message = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: data.response || `Je suis ${selectedAgent.name}. Je traite votre demande...`,
-        timestamp: new Date()
+        content: responseText,
+        timestamp: new Date(),
+        imageData
       }
 
       const finalConv = {
@@ -597,6 +627,19 @@ function ChatPageContent() {
                 <div className="msg-content">
                   <div className="msg-bubble">
                     {message.content}
+                    {message.imageData && (
+                      <div className="msg-image" style={{ marginTop: '12px' }}>
+                        <img
+                          src={`data:${message.imageData.mimeType};base64,${message.imageData.base64}`}
+                          alt="Image générée"
+                          style={{
+                            maxWidth: '100%',
+                            borderRadius: '12px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                   <span className="msg-time">
                     {message.timestamp.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
