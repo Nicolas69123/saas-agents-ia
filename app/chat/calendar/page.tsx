@@ -6,6 +6,20 @@ import Header from '@/components/Header'
 import SocialPostPreview, { SocialPostContent } from '@/components/SocialMockups'
 
 // ═══════════════════════════════════════════════════════════════
+// UUID HELPER (compatible HTTP & HTTPS)
+// ═══════════════════════════════════════════════════════════════
+const generateUUID = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return generateUUID()
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0
+    const v = c === 'x' ? r : (r & 0x3 | 0x8)
+    return v.toString(16)
+  })
+}
+
+// ═══════════════════════════════════════════════════════════════
 // TYPES & INTERFACES
 // ═══════════════════════════════════════════════════════════════
 
@@ -398,7 +412,7 @@ export default function CalendarPage() {
     if (!newPost.platform || !newPost.content || !newPost.scheduledDate) return
 
     const post: ScheduledPost = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       platform: newPost.platform,
       content: newPost.content as ScheduledPost['content'],
       imageUrl: newPost.imageUrl,

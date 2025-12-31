@@ -20,6 +20,22 @@ const agents = [
 ]
 
 // ═══════════════════════════════════════════════════════════════
+// UUID HELPER (compatible HTTP & HTTPS)
+// ═══════════════════════════════════════════════════════════════
+const generateUUID = (): string => {
+  // Use crypto.randomUUID if available (HTTPS), otherwise fallback
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return generateUUID()
+  }
+  // Fallback for HTTP contexts
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0
+    const v = c === 'x' ? r : (r & 0x3 | 0x8)
+    return v.toString(16)
+  })
+}
+
+// ═══════════════════════════════════════════════════════════════
 // LOCALSTORAGE KEYS & HELPERS
 // ═══════════════════════════════════════════════════════════════
 const STORAGE_KEYS = {
@@ -265,7 +281,7 @@ function ChatPageContent() {
 
   const handleNewConversation = () => {
     const newConv: Conversation = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       agentId: selectedAgent.id,
       title: 'Nouvelle conversation',
       preview: '',
@@ -296,7 +312,7 @@ function ChatPageContent() {
     if (!inputValue.trim() || !currentConversation) return
 
     const userMessage: Message = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       role: 'user',
       content: inputValue,
       timestamp: new Date()
@@ -496,7 +512,7 @@ function ChatPageContent() {
       }
 
       const aiMessage: Message = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         role: 'assistant',
         content: responseText,
         timestamp: new Date(),
@@ -519,7 +535,7 @@ function ChatPageContent() {
     } catch (error) {
       console.error('Erreur chat:', error)
       const errorMessage: Message = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         role: 'assistant',
         content: `Désolé, une erreur s'est produite. Réessayez plus tard.`,
         timestamp: new Date()
@@ -553,7 +569,7 @@ function ChatPageContent() {
       const url = URL.createObjectURL(file)
 
       const media: MediaFile = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         name: file.name,
         type: file.type,
         size: file.size,
