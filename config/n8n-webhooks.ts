@@ -46,8 +46,8 @@ export const webhookConfigs: WebhookConfig[] = [
   },
   {
     agentId: 'reseaux-sociaux',
-    name: 'Agent Réseaux Sociaux',
-    webhookUrl: `${N8N_BASE_URL}/webhook/4bd6ad35-7ef0-43af-9a78-d14e818abb10/chat`,
+    name: 'Agent Réseaux Sociaux (Thomas)',
+    webhookUrl: `${N8N_BASE_URL}/webhook/marketing-v2`,
     isActive: true,
   },
   {
@@ -58,9 +58,9 @@ export const webhookConfigs: WebhookConfig[] = [
   },
   {
     agentId: 'ressources-humaines',
-    name: 'Agent RH',
-    webhookUrl: `${N8N_BASE_URL}/webhook/agent-rh-chat`,
-    isActive: true, // ✅ Activé avec workflow créé
+    name: 'Agent RH (Sophie)',
+    webhookUrl: `${N8N_BASE_URL}/webhook/rh`,
+    isActive: true, // ✅ Connecté à Dell n8n
   },
   {
     agentId: 'support-client',

@@ -25,7 +25,7 @@ const agents = [
 const generateUUID = (): string => {
   // Use crypto.randomUUID if available (HTTPS), otherwise fallback
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return generateUUID()
+    return crypto.randomUUID()
   }
   // Fallback for HTTP contexts
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
