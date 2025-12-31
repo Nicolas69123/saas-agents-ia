@@ -61,3 +61,6 @@ next-env.d.ts
 # n8n-workflows/*.json
 .playwright-mcp/
 .next/
+demo-videos/
+n8n-workflows-backup/
+public/media/

@@ -10,30 +10,57 @@ if (!existsSync(MEDIA_DIR)) {
   mkdirSync(MEDIA_DIR, { recursive: true })
 }
 
+// File type detection
+const IMAGE_EXTENSIONS = /\.(png|jpg|jpeg|gif|webp)$/i
+const VIDEO_EXTENSIONS = /\.(mp4|webm|mov|avi)$/i
+const ALL_MEDIA_EXTENSIONS = /\.(png|jpg|jpeg|gif|webp|mp4|webm|mov|avi)$/i
+
 // GET - List all media files
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const typeFilter = searchParams.get('type') // 'image', 'video', or null for all
+
     const files = await readdir(MEDIA_DIR)
     const mediaFiles = await Promise.all(
       files
-        .filter(file => /\.(png|jpg|jpeg|gif|webp)$/i.test(file))
+        .filter(file => ALL_MEDIA_EXTENSIONS.test(file))
         .map(async (file) => {
           const filePath = join(MEDIA_DIR, file)
           const stats = await stat(filePath)
+          const isVideo = VIDEO_EXTENSIONS.test(file)
+
           return {
             id: file.replace(/\.[^/.]+$/, ''),
             name: file,
             url: `/media/${file}`,
             size: stats.size,
+            type: isVideo ? 'video' : 'image',
             createdAt: stats.birthtime.toISOString(),
           }
         })
     )
 
-    // Sort by creation date (newest first)
-    mediaFiles.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    // Filter by type if specified
+    let filtered = mediaFiles
+    if (typeFilter === 'image') {
+      filtered = mediaFiles.filter(f => f.type === 'image')
+    } else if (typeFilter === 'video') {
+      filtered = mediaFiles.filter(f => f.type === 'video')
+    }
 
-    return NextResponse.json({ success: true, files: mediaFiles })
+    // Sort by creation date (newest first)
+    filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+    return NextResponse.json({
+      success: true,
+      files: filtered,
+      stats: {
+        total: mediaFiles.length,
+        images: mediaFiles.filter(f => f.type === 'image').length,
+        videos: mediaFiles.filter(f => f.type === 'video').length
+      }
+    })
   } catch (error) {
     console.error('Error listing media:', error)
     return NextResponse.json({ success: false, error: 'Failed to list media' }, { status: 500 })

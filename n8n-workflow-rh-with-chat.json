@@ -1,0 +1,2922 @@
+{
+  "name": "Agent RH : A UTILISER SUR LE SITE WEB",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1AN1_80uXL51rmcAEwDcxdzROQqxi9fkB",
+            "mode": "list",
+            "cachedResultName": "Mes CV",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1AN1_80uXL51rmcAEwDcxdzROQqxi9fkB"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -928,
+        224
+      ],
+      "id": "741b1f25-c3be-40c2-a04b-a4a6a6186881",
+      "name": "Search files and folders2",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "fy33TmNGg2zJVgbB",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -704,
+        224
+      ],
+      "id": "c0bbf414-852e-4bce-8a81-ac87c6e65312",
+      "name": "TELECHARGER CV4",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "fy33TmNGg2zJVgbB",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "id": "06f3c09c-d665-46a5-981c-6254123f16ea",
+      "name": "Extract from File4",
+      "type": "n8n-nodes-base.extractFromFile",
+      "position": [
+        -528,
+        224
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.text }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "Educational qualification",
+              "description": "Analysez ce TEXTE et extrayez toutes les informations",
+              "required": true
+            },
+            {
+              "name": "Job History",
+              "description": "=Analysez ce TEXTE {{ $json.text }} et extrayez toutes les informations ",
+              "required": true
+            },
+            {
+              "name": "Skills",
+              "description": "Extrayez le maximum d'informations, même les détails qui peuvent sembler secondaires. Soyez précis et exhaustif.",
+              "required": true
+            },
+            {
+              "name": "Nom ",
+              "description": "Nom du candidat figurant sur son CV",
+              "required": true
+            },
+            {
+              "name": "Prenom du candidat",
+              "description": "Prénom du candidat figurant sur son CV",
+              "required": true
+            },
+            {
+              "name": "Téléphone",
+              "type": "number",
+              "description": "Numeros de téléphone du candidat figurant sur son CV",
+              "required": true
+            },
+            {
+              "name": "Email",
+              "description": "Email du candidat figurant sur son CV",
+              "required": true
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "=Vous êtes un expert en extraction d'informations depuis des CV. Analysez le CV fourni et extrayez TOUTES les informations disponibles. Retournez les champs suivantes : 1. Informations personnelles\n\nNom et prénom\n\nAdresse\n\nNuméro de téléphone\n\nAdresse e-mail\n\nLien LinkedIn, portfolio ou site web\n\nPhoto (parfois)\n\n2. Titre et résumé\n\nIntitulé du poste recherché ou du profil professionnel\n\nRésumé de carrière ou objectif professionnel\n\n3. Expériences professionnelles\n\nIntitulé du poste\n\nNom de l’entreprise / organisation\n\nLieu (ville, pays)\n\nPériode (dates de début et fin)\n\nMissions, responsabilités, réalisations\n\nType de contrat (CDI, CDD, stage, freelance, etc.)\n\n4. Formation\n\nDiplôme obtenu\n\nNom de l’établissement\n\nLieu\n\nDates (début et fin)\n\nSpécialisation ou mention\n\n5. Compétences\n\nCompétences techniques (informatique, outils, logiciels, langages, méthodes)\n\nCompétences linguistiques (niveaux : courant, intermédiaire, etc.)\n\nCompétences relationnelles ou comportementales (soft skills)\n\n6. Certifications et formations complémentaires\n\nCertifications reconnues (ex. TOEIC, PMP, ITIL, etc.)\n\nFormations en ligne (MOOCs, etc.)\n\n7. Projets et réalisations\n\nProjets académiques ou professionnels\n\nContributions open-source\n\nPublications, conférences, brevets\n\n8. Centres d’intérêt\n\nLoisirs et activités personnelles\n\nEngagement associatif ou bénévolat\n\n9. Autres informations éventuelles\n\nMobilité géographique (disponible pour déménager ou voyager)\n\nDisponibilité (immédiate, préavis de X mois)\n\nPermis de conduire et d'autres si besoin. utilisez des chaînes vides si l'information n'est pas présente) . \nExtrayez le maximum d'informations, même les détails qui peuvent sembler secondaires. Soyez précis et exhaustif. \nN'oublie jamais d'afficher Le nom et prénom "
+        }
+      },
+      "id": "f5038012-2897-4ec4-bce2-0c0a569b76d9",
+      "name": "Qualifications1",
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "position": [
+        -336,
+        224
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "854ccc0b-8193-4493-8da6-05673e867226",
+              "name": "output['Educational qualification']",
+              "value": "={{ $json.output['Educational qualification'] }}",
+              "type": "string"
+            },
+            {
+              "id": "c9bc8089-f480-4e66-84e6-a3f75eae940c",
+              "name": "output['Job History']",
+              "value": "={{ $json.output['Job History'] }}",
+              "type": "string"
+            },
+            {
+              "id": "be9e1b30-0056-4bdb-9b4a-0709e37cb71b",
+              "name": "output.Skills",
+              "value": "={{ $json.output.Skills }}",
+              "type": "string"
+            },
+            {
+              "id": "6cf8a422-9d98-4e91-9637-eab6a78c1229",
+              "name": "output['Nom et prenom en entier']",
+              "value": "={{ $json.output['Prenom du candidat'] }} {{ $json.output['Nom '] }}",
+              "type": "string"
+            },
+            {
+              "id": "44b2401f-54a6-48cf-ac30-93b2130788f9",
+              "name": "output.telephone",
+              "value": "={{ $json.output['Téléphone'] }}",
+              "type": "string"
+            },
+            {
+              "id": "71b71846-ae95-4107-bb83-4fb15f9ac031",
+              "name": "output.Email",
+              "value": "={{ $json.output.Email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        176,
+        112
+      ],
+      "id": "f4178142-ab70-434a-ad63-4367b6d572ab",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "content": "## Intelligence et Scoring",
+        "height": 800,
+        "width": 1260,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        5504,
+        3056
+      ],
+      "id": "1b9e6081-5276-41d4-814a-0ddef81491ab",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appG37cQKJDHb8XM8",
+          "mode": "list",
+          "cachedResultName": "Analyse RH",
+          "cachedResultUrl": "https://airtable.com/appG37cQKJDHb8XM8"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblAUdNSF2pBfTS8k",
+          "mode": "list",
+          "cachedResultName": "RH : OmnIA",
+          "cachedResultUrl": "https://airtable.com/appG37cQKJDHb8XM8/tblAUdNSF2pBfTS8k"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Upload CV Airtable').item.json.fields.Attachments[0].id }}",
+            "Pr�nom": "={{ $json.output.candidat.prenom }}",
+            "Nom": "={{ $json.output.candidat.nom }}",
+            "Email": "={{ $json.output.candidat.email }}",
+            "Score": "=Global : {{ $json.output.fit_score.global }}\n\nDetail : \nExp�rience : {{ $json.output.fit_score.detail.experience }}\nComp�tences Techniques : {{ $json.output.fit_score.detail.competences_techniques }}\nR�alisations : {{ $json.output.fit_score.detail.realisations }}\nFormation : {{ $json.output.fit_score.detail.formation }}",
+            "Statut": "Revue en Cours",
+            "Contenu Email": "={{ $('Extract from File1').item.json.text }}",
+            "R�sum�": "=Ann�e d'exp�rience : {{ $json.output.resume.annees_experience }}\nR�le actuel : {{ $json.output.resume.role_actuel }}\nR�alisations cl�s : \n{{ $json.output.resume.realisations_cles[0] }}\n{{ $json.output.resume.realisations_cles[1] }}\n{{ $json.output.resume.realisations_cles[2] }}\nComp�tences techniques : \n{{ $json.output.resume.competences_techniques[0] }}\n{{ $json.output.resume.competences_techniques[1] }}\n{{ $json.output.resume.competences_techniques[2] }}\n",
+            "CV": "={{ $('Set Array for Airtable').item.json.PDF }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Pr�nom",
+              "displayName": "Pr�nom",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Nom",
+              "displayName": "Nom",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Contenu Email",
+              "displayName": "Contenu Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "R�sum�",
+              "displayName": "R�sum�",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "CV",
+              "displayName": "CV",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Statut",
+              "displayName": "Statut",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Revue en Cours",
+                  "value": "Revue en Cours"
+                },
+                {
+                  "name": "NOK",
+                  "value": "NOK"
+                },
+                {
+                  "name": "OK",
+                  "value": "OK"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Description Poste",
+              "displayName": "Description Poste",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Titre Poste (from Description Poste)",
+              "displayName": "Titre Poste (from Description Poste)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Description Poste (from Description Poste)",
+              "displayName": "Description Poste (from Description Poste)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        6176,
+        3168
+      ],
+      "id": "1f2e4823-acc0-4596-a73f-8bc287516f86",
+      "name": "Airtable4",
+      "alwaysOutputData": true,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        5808,
+        3648
+      ],
+      "id": "b1ee71d3-da2a-4843-b399-77624eff37b8",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "3FJxMR48eXdAZOyy",
+          "name": "OpenRouter account 3"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        3248,
+        3712
+      ],
+      "id": "4c2dd3d4-0ead-49e5-9d49-d376fcf3226a",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "3FJxMR48eXdAZOyy",
+          "name": "OpenRouter account 3"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3984,
+        3616
+      ],
+      "id": "93c3dfec-283d-45a4-96e0-0e61f03a79ed",
+      "name": "Ne rien faire"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appG37cQKJDHb8XM8",
+          "mode": "list",
+          "cachedResultName": "Analyse RH",
+          "cachedResultUrl": "https://airtable.com/appG37cQKJDHb8XM8"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblmabagQwsbDvl9N",
+          "mode": "list",
+          "cachedResultName": "Description",
+          "cachedResultUrl": "https://airtable.com/appG37cQKJDHb8XM8/tblmabagQwsbDvl9N"
+        },
+        "filterByFormula": "{Statut} = 'Poste Ouvert'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        5712,
+        3296
+      ],
+      "id": "4c0b9ce0-1f71-4315-a848-a6dc002020e4",
+      "name": "Airtable1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appG37cQKJDHb8XM8",
+          "mode": "list",
+          "cachedResultName": "Analyse RH",
+          "cachedResultUrl": "https://airtable.com/appG37cQKJDHb8XM8"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblAUdNSF2pBfTS8k",
+          "mode": "list",
+          "cachedResultName": "RH : OmnIA",
+          "cachedResultUrl": "https://airtable.com/appG37cQKJDHb8XM8/tblAUdNSF2pBfTS8k"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Attachments": "={{ $json.PDF }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Assignee",
+              "displayName": "Assignee",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Todo",
+                  "value": "Todo"
+                },
+                {
+                  "name": "In progress",
+                  "value": "In progress"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Attachments",
+              "displayName": "Attachments",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Attachment Summary",
+              "displayName": "Attachment Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        5136,
+        3184
+      ],
+      "id": "6bee60ce-8941-4e41-8dee-e9074af623d2",
+      "name": "Upload CV Airtable",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "=attachment_0",
+        "name": "=",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1AN1_80uXL51rmcAEwDcxdzROQqxi9fkB",
+          "mode": "list",
+          "cachedResultName": "Mes CV",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1AN1_80uXL51rmcAEwDcxdzROQqxi9fkB"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        4560,
+        3184
+      ],
+      "id": "96a5ff81-5d89-4216-ba01-626d77e7e8d7",
+      "name": "Upload CV Gdrive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "fy33TmNGg2zJVgbB",
+          "name": "Google Drive account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "## Gestion documentaire / Transformation de l'Input en Donn�es Structur�es",
+        "height": 800,
+        "width": 1300
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        4176,
+        3056
+      ],
+      "id": "8803d9ee-2ec7-47ef-b4b5-b84858661a6a",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Tri Automatique des Email Entrants",
+        "height": 800,
+        "width": 1240,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2912,
+        3056
+      ],
+      "id": "676e5fca-6010-4356-a2fa-a933519684b3",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        5504,
+        3296
+      ],
+      "id": "175e1d58-ef82-4419-941c-5eda98d4c244",
+      "name": "Merge1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "attachment_0",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f080824e-4237-4959-af6a-74b9d9a3c8ea",
+                    "leftValue": "attachment_0",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "allMatchingOutputs": true
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        4192,
+        3360
+      ],
+      "id": "07ec11c4-f89d-4d67-8d0f-43892068b167",
+      "name": "Switch",
+      "alwaysOutputData": true,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "attachment_0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        4720,
+        3440
+      ],
+      "id": "33061d33-d701-493f-9ffb-05e9ad004dec",
+      "name": "Extract from File1"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n \"candidat\": {\n   \"prenom\": \"string\",\n   \"nom\":\"string\",\n   \"email\": \"string\",\n   \"adresse\": \"string\",\n   \"telephone\": \"string\"\n },\n \"resume\": {\n   \"annees_experience\": \"number\",\n   \"role_actuel\": \"string\", \n   \"realisations_cles\": [\"string\"],\n   \"competences_techniques\": [\"string\"]\n },\n \"fit_score\": {\n   \"global\": \"number\",\n   \"detail\": {\n     \"experience\": \"number\",\n     \"competences_techniques\": \"number\", \n     \"realisations\": \"number\",\n     \"formation\": \"number\"\n   },\n   \"raisonnement\": [\"string\"]\n }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        6160,
+        3584
+      ],
+      "id": "ce80f7b8-8e2e-4333-8475-be536d6e064a",
+      "name": "Structured Output Parser",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        5984,
+        3664
+      ],
+      "id": "a7f7b4d4-ff71-446f-933c-8101bf1a1f5b",
+      "name": "OpenAI Chat Model1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyse les informations actuelles de la candidature re�ue et attribue une note entre 0 et 10 � ce candidat, 0 signifiant qu'il ne convient pas pour le poste, 10 signifiant qu'il est exceptionnel pour le poste.\nIl y aura un score global et plusieurs scores de d�tails, � renseigner selon la structure json demand�e pour l'output.\nLe poste actuellement ouvert est : {{ $json['Description Poste'] }}\nVoir les informations extraites du PDF : {{ $('Extract from File1').item.json.text }}\n\nFournis �galement quelques informations cl�s expliquant pourquoi ce candidat convient bien au poste",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Tu es un assistant RH utile. \nTon objectif est d'analyser le CV du candidat et de d�terminer si le candidat est un bon candidat pour le poste.",
+          "maxIterations": 1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        6000,
+        3296
+      ],
+      "id": "1a9081f7-469c-4162-923e-2aa5bcb42530",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "disabled": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "918ace56-02a1-4bb7-8238-ee1b49241eca",
+              "name": "PDF",
+              "value": "={{ [{ \"url\" : $('Upload CV Gdrive').item.json.webContentLink}] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4912,
+        3184
+      ],
+      "id": "73d5e914-2bf0-438b-8438-868218f74f0e",
+      "name": "Set Array for Airtable",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        4752,
+        3184
+      ],
+      "id": "cfa3bf32-1bcf-4ca8-ba74-e81ca46088a6",
+      "name": "Share link",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "fy33TmNGg2zJVgbB",
+          "name": "Google Drive account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appG37cQKJDHb8XM8",
+          "mode": "list",
+          "cachedResultName": "Analyse RH",
+          "cachedResultUrl": "https://airtable.com/appG37cQKJDHb8XM8"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblAUdNSF2pBfTS8k",
+          "mode": "list",
+          "cachedResultName": "RH : OmnIA",
+          "cachedResultUrl": "https://airtable.com/appG37cQKJDHb8XM8/tblAUdNSF2pBfTS8k"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.output.candidat.prenom }} {{ $json.output.candidat.nom }}",
+            "Notes": "={{ $json.output.fit_score.global }}",
+            "id": "={{ $('Upload CV Airtable').item.json.fields.Attachments[0].id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Assignee",
+              "displayName": "Assignee",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Todo",
+                  "value": "Todo"
+                },
+                {
+                  "name": "In progress",
+                  "value": "In progress"
+                },
+                {
+                  "name": "Done",
+                  "value": "Done"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Attachments",
+              "displayName": "Attachments",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Attachment Summary",
+              "displayName": "Attachment Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        6368,
+        3088
+      ],
+      "id": "10a408c0-e01a-40f9-bf42-4755744755bc",
+      "name": "Airtable",
+      "alwaysOutputData": true,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {},
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        2976,
+        3488
+      ],
+      "id": "871b20f2-22b4-4b66-ac11-c3ad119a2f75",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "IJO3Tul6QvTPWIjr",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.text }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Postule",
+              "description": "Le candidat postule � un poste dans l'organisation"
+            },
+            {
+              "category": "Ne postule pas",
+              "description": "Ce candidat ne postule pas � un emploi"
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "Classe le texte fourni par l'utilisateur dans l'une des cat�gories suivantes : {categories}, et utilise les instructions de formatage indiqu�es ci-dessous. Ne donne pas d'explications, et affiche uniquement le json."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1,
+      "position": [
+        3344,
+        3488
+      ],
+      "id": "c6aee6d6-d3f5-4bb2-92fb-e7623b8591b5",
+      "name": "Text Classifier",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        976,
+        64
+      ],
+      "id": "7db0f729-7e93-4304-a8ed-800cd909517d",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Tu es un expert RH spécialisé dans l’évaluation des candidatures.  \nOn te fournit :  \n1. Les informations d’une offre d’emploi :\n\n{{ $json['Nom de l\\'entreprise'] }}\n{{ $json['Secteur d\\'activité'] }}\n{{ $json['Taille de l\\'entreprise'] }}\n{{ $json['Intitulé du poste '] }}\n{{ $json['Niveau d\\'études requis '] }}\n{{ $json['Expérience requise '] }}\n{{ $json['Compétences techniques recherchées '] }}\n{{ $json['Soft skills recherchés '] }}\n{{ $json['Langues requises'] }}\n{{ $json['Disponibilité pour débuter'] }}\n{{ $json['Localisation préférée '] }}\n\n2. Les informations d’un candidat (issues de son CV) :\n{{ $json.output['Educational qualification'] }}\n{{ $json.output['Job History'] }}\n{{ $json.output.Skills }}\n{{ $json.output['Nom et prenom en entier'] }}\n{{ $json.output.Email }}\n{{ $json.output.telephone }}\n\n🎯 **Ta mission :**\nAnalyser le degré de compatibilité entre le candidat et l’offre et produire un **score de matching chiffré et exploitable numériquement.**\n\n---\n\n### ⚙️ **Critères d’évaluation (note sur 10 pour chaque critère) :**\n1. **Compétences techniques** : correspondance entre les compétences demandées dans l’offre et celles du candidat.  \n2. **Expérience professionnelle** : adéquation du niveau et de la durée d’expérience.  \n3. **Formation & niveau d’études** : comparaison entre le diplôme requis et celui du candidat.  \n4. **Langues** : adéquation entre les langues demandées et maîtrisées.  \n5. **Soft skills** : comparaison des qualités personnelles demandées et celles mises en avant par le candidat.  \n6. **Localisation & mobilité** : proximité géographique avec le lieu de travail ou compatibilité avec le mode de travail demandé.  \n7. **Disponibilité** : cohérence entre la disponibilité du candidat et les besoins de l’entreprise.  \n8. **Motivation & projet professionnel** : adéquation entre les ambitions du candidat et le poste proposé.\n\n---\n\n### ⚖️ **Pondération :**\n- Compétences techniques : 25%  \n- Expérience : 20%  \n- Formation & niveau d’études : 15%  \n- Langues : 10%  \n- Soft skills : 10%  \n- Localisation & mobilité : 10%  \n- Disponibilité : 5%  \n- Motivation & projet professionnel : 5%\n\n---\n\n### 🧩 **IMPORTANT — CONTRAINTES DE SORTIE**\n⚠️ **Tous les scores (y compris `score_global` et les sous-scores) doivent obligatoirement être de type nombre (`number`)**  \n→ Aucune valeur numérique ne doit être placée entre guillemets.  \n→ Exemple correct : `\"score_global\": 78`  \n→ Exemple incorrect : `\"score_global\": \"78\"` ❌  \nCes nombres doivent pouvoir être utilisés dans des calculs (tri, moyenne, comparaison, etc.).\n\nLe `score_global` est calculé sur 100 selon la pondération ci-dessus.\n\n---\n\n### 📦 **FORMAT DE SORTIE JSON STRICT (et typé) :**\n```json\n{\n  \"score_global\": 0, \n  \"details\": {\n    \"competences\": 0,\n    \"experience\": 0,\n    \"formation\": 0,\n    \"langues\": 0,\n    \"soft_skills\": 0,\n    \"localisation\": 0,\n    \"disponibilite\": 0,\n    \"motivation\": 0\n  },\n  \"candidat\": {\n    \"prenom\": \"\",\n    \"nom\": \"\",\n    \"email\": \"\",\n    \"telephone\": \"\"\n  },\n  \"entreprise\": {\n    \"nom_entreprise\": \"\",\n    \"intitule_poste\": \"\",\n    \"localisation_preferee\": \"\",\n    \"disponibilite_debut\": \"\"\n  },\n  \"consideration\": \"Résumé expliquant les points forts et les écarts entre le profil du candidat et le poste proposé.\"\n}\n",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        1136,
+        112
+      ],
+      "id": "1bbac6a0-3c9b-4a29-9841-bbe423972d42",
+      "name": "Basic LLM Chain",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserAutofixing",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        288
+      ],
+      "id": "8027ddc6-3024-47eb-b382-0d917478c993",
+      "name": "Auto-fixing Output Parser"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"score_global\": { \"type\": \"number\" },\n    \"details\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"competences\": { \"type\": \"number\" },\n        \"experience\": { \"type\": \"number\" },\n        \"formation\": { \"type\": \"number\" },\n        \"langues\": { \"type\": \"number\" },\n        \"soft_skills\": { \"type\": \"number\" },\n        \"localisation\": { \"type\": \"number\" },\n        \"disponibilite\": { \"type\": \"number\" },\n        \"motivation\": { \"type\": \"number\" }\n      },\n      \"required\": [\n        \"competences\",\n        \"experience\",\n        \"formation\",\n        \"langues\",\n        \"soft_skills\",\n        \"localisation\",\n        \"disponibilite\",\n        \"motivation\"\n      ]\n    },\n    \"candidat\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"prenom\": { \"type\": \"string\" },\n        \"nom\": { \"type\": \"string\" },\n        \"email\": { \"type\": \"string\" },\n        \"telephone\": { \"type\": \"number\" }\n      },\n      \"required\": [\"prenom\", \"nom\", \"email\"]\n    },\n    \"entreprise\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"nom_entreprise\": { \"type\": \"string\" },\n        \"intitule_poste\": { \"type\": \"string\" },\n        \"localisation_preferee\": { \"type\": \"string\" },\n        \"disponibilite_debut\": { \"type\": \"string\" }\n      },\n      \"required\": [\"nom_entreprise\", \"intitule_poste\", \"localisation_preferee\", \"disponibilite_debut\"]\n    },\n    \"consideration\": { \"type\": \"string\" }\n  },\n  \"required\": [\"score_global\", \"details\", \"candidat\", \"entreprise\", \"consideration\"]\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1200,
+        400
+      ],
+      "id": "371263da-41a5-4bf4-92cb-c0b831a97094",
+      "name": "Structured Output Parser8"
+    },
+    {
+      "parameters": {
+        "content": "## Matchigvia LLM",
+        "height": 864,
+        "width": 1504
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "788c222f-1777-41e0-9b65-b30dce2f3448",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1216,
+        320
+      ],
+      "id": "285b0d72-e93b-4756-b07f-38e5105ac822",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output['Educational qualification'] }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "id": "4f8377df-55ef-4127-9e17-c6f5e34dda3e"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f080824e-4237-4959-af6a-74b9d9a3c8ea",
+                    "leftValue": "={{ $json.output['Educational qualification'] }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "allMatchingOutputs": true
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        432,
+        64
+      ],
+      "id": "05ae0107-86e8-4cff-ba6f-68f74be2a0e7",
+      "name": "Switch1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.0-flash-exp:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        160,
+        656
+      ],
+      "id": "ee94bf8b-1221-4223-a962-8540fb979868",
+      "name": "OpenRouter Chat Model4",
+      "credentials": {
+        "openRouterApi": {
+          "id": "UKFCyUE4bAe7W3q0",
+          "name": "OpenRouter account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "42f47bdd-b14e-46b0-836e-dc9ba1deda32",
+              "leftValue": "={{ $json.output.score_global }}",
+              "rightValue": 40,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1552,
+        112
+      ],
+      "id": "e9130940-7b3d-4315-810e-927f464365e6",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1ljL5xeXa1Mk0EeXPdqYp5BcNB5K9uRthb4SQUSt7KN8/edit?usp=drivesdk",
+          "__regex": "https:\\/\\/(?:drive|docs)\\.google\\.com(?:\\/.*|)\\/d\\/([0-9a-zA-Z\\-_]+)(?:\\/.*|)"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ljL5xeXa1Mk0EeXPdqYp5BcNB5K9uRthb4SQUSt7KN8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "PRENOM",
+              "displayName": "PRENOM",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "NOM",
+              "displayName": "NOM",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "EMAIL",
+              "displayName": "EMAIL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "TELEPHONE",
+              "displayName": "TELEPHONE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "SCORE",
+              "displayName": "SCORE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "INTITULE DE POSTE",
+              "displayName": "INTITULE DE POSTE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ETAT",
+              "displayName": "ETAT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2576,
+        96
+      ],
+      "id": "a3bd33b9-1a5e-49e7-9639-7502ba2375ae",
+      "name": "Bd Candidat.Entretien",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NDc4GB6NjacxXP7e",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d87df48a-9a7d-433b-9a2a-95644f04a3d1",
+              "name": "PRENOM",
+              "value": "={{ $json.output.candidat.prenom }}",
+              "type": "string"
+            },
+            {
+              "id": "d04dc006-fd9d-4845-bd83-140df9414692",
+              "name": "NOM",
+              "value": "={{ $json.output.candidat.nom }}",
+              "type": "string"
+            },
+            {
+              "id": "5db7789a-07a0-4a2a-b119-564e9e68f869",
+              "name": "EMAIL",
+              "value": "={{ $json.output.candidat.email }}",
+              "type": "string"
+            },
+            {
+              "id": "ea9c6918-1c32-4335-a964-88de641f8cce",
+              "name": "TELEPHONE",
+              "value": "={{ $json.output.candidat.telephone }}",
+              "type": "number"
+            },
+            {
+              "id": "42ed5437-0539-4854-b213-0b1e40f52df1",
+              "name": "SCORE",
+              "value": "={{ $json.output.score_global }}",
+              "type": "number"
+            },
+            {
+              "id": "ad75379c-8044-40df-8fd6-73556c51269c",
+              "name": "INTITULE DE POSTE",
+              "value": "={{ $json.output.entreprise.intitule_poste }}",
+              "type": "string"
+            },
+            {
+              "id": "19fb0812-4f46-463b-9eca-c8d3a7aab967",
+              "name": "ETAT",
+              "value": "Entretien confirmé",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2352,
+        96
+      ],
+      "id": "7792f761-cd12-46e7-97b7-1f08b19bae9b",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "content": "## Tri Automatique des Email Entrants",
+        "height": 864,
+        "width": 1240,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1280,
+        16
+      ],
+      "id": "99dddc78-646e-4266-adfa-26b7e7f75396",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Tri Automatique des Email Entrants",
+        "height": 864,
+        "width": 1240,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        -320
+      ],
+      "id": "47a77e2b-f7f0-4789-806a-77d95c73f9b5",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        3184,
+        3488
+      ],
+      "id": "ae646460-7d86-4618-bf57-2dc223b06924",
+      "name": "Get many messages",
+      "webhookId": "3e1375a6-dc73-42b4-80a1-b3b1affc0ed7",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "IJO3Tul6QvTPWIjr",
+          "name": "Gmail account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        448
+      ],
+      "id": "2979ba70-070a-41bb-a1da-0a8761e3756f",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "SPPrz7GUbBOJXeaj",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        944,
+        592
+      ],
+      "id": "33e68de0-f24e-45e0-9638-14f849910b5b",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "SPPrz7GUbBOJXeaj",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1ljL5xeXa1Mk0EeXPdqYp5BcNB5K9uRthb4SQUSt7KN8/edit?usp=drivesdk",
+          "__regex": "https:\\/\\/(?:drive|docs)\\.google\\.com(?:\\/.*|)\\/d\\/([0-9a-zA-Z\\-_]+)(?:\\/.*|)"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ljL5xeXa1Mk0EeXPdqYp5BcNB5K9uRthb4SQUSt7KN8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "PRENOM",
+              "displayName": "PRENOM",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "NOM",
+              "displayName": "NOM",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "EMAIL",
+              "displayName": "EMAIL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "TELEPHONE",
+              "displayName": "TELEPHONE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "SCORE",
+              "displayName": "SCORE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "INTITULE DE POSTE",
+              "displayName": "INTITULE DE POSTE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ETAT",
+              "displayName": "ETAT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date De L'entretien ",
+              "displayName": "Date De L'entretien ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Heure de l'Entretien",
+              "displayName": "Heure de l'Entretien",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        3648,
+        3328
+      ],
+      "id": "287390d9-ccf8-4c06-a833-35238dda2c09",
+      "name": "Bd Candidat.Entretien1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NDc4GB6NjacxXP7e",
+          "name": "Google Sheets account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "2"
+      },
+      "id": "4427dae9-5304-4f3b-bc9e-f1a31d284afc",
+      "name": "Window Buffer Memory2",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "position": [
+        1648,
+        432
+      ],
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this Google Calendar tool when you are asked to create an event.",
+        "calendar": {
+          "__rl": true,
+          "value": "moinahalima2023@gmail.com",
+          "mode": "list",
+          "cachedResultName": "moinahalima2023@gmail.com"
+        },
+        "start": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+        "useDefaultReminders": false,
+        "additionalFields": {
+          "attendees": [],
+          "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Description', ``, 'string') }}",
+          "summary": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Summary', ``, 'string') }}"
+        }
+      },
+      "id": "9cee75d0-eda4-417a-9e22-d2ea86191262",
+      "name": "Google Calendar - Create events2",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "position": [
+        2160,
+        336
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kSCW33hHFagZWCCS",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1840,
+        336
+      ],
+      "id": "e100184c-62c3-4845-88a9-594d85385237",
+      "name": "Google Gemini Chat Model4",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "SPPrz7GUbBOJXeaj",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1ljL5xeXa1Mk0EeXPdqYp5BcNB5K9uRthb4SQUSt7KN8/edit?usp=drivesdk",
+          "__regex": "https:\\/\\/(?:drive|docs)\\.google\\.com(?:\\/.*|)\\/d\\/([0-9a-zA-Z\\-_]+)(?:\\/.*|)"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 191047094,
+          "mode": "list",
+          "cachedResultName": "Candidat Non accepté",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ljL5xeXa1Mk0EeXPdqYp5BcNB5K9uRthb4SQUSt7KN8/edit#gid=191047094"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "output"
+          ],
+          "schema": [
+            {
+              "id": "PRENOM",
+              "displayName": "PRENOM",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "NOM",
+              "displayName": "NOM",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "EMAIL",
+              "displayName": "EMAIL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "TELEPHONE",
+              "displayName": "TELEPHONE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "SCORE",
+              "displayName": "SCORE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "INTITULE DE POSTE",
+              "displayName": "INTITULE DE POSTE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Raison du réfus",
+              "displayName": "Raison du réfus",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2032,
+        128
+      ],
+      "id": "3bc16417-1e31-4b0d-9142-e078ff376fb1",
+      "name": "Bd Candidat.Non.Accepte",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NDc4GB6NjacxXP7e",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d87df48a-9a7d-433b-9a2a-95644f04a3d1",
+              "name": "PRENOM",
+              "value": "={{ $json.output.candidat.prenom }}",
+              "type": "string"
+            },
+            {
+              "id": "d04dc006-fd9d-4845-bd83-140df9414692",
+              "name": "NOM",
+              "value": "={{ $json.output.candidat.nom }}",
+              "type": "string"
+            },
+            {
+              "id": "5db7789a-07a0-4a2a-b119-564e9e68f869",
+              "name": "EMAIL",
+              "value": "={{ $json.output.candidat.email }}",
+              "type": "string"
+            },
+            {
+              "id": "ea9c6918-1c32-4335-a964-88de641f8cce",
+              "name": "TELEPHONE",
+              "value": "={{ $json.output.candidat.telephone }}",
+              "type": "number"
+            },
+            {
+              "id": "42ed5437-0539-4854-b213-0b1e40f52df1",
+              "name": "SCORE",
+              "value": "={{ $json.output.score_global }}",
+              "type": "number"
+            },
+            {
+              "id": "ad75379c-8044-40df-8fd6-73556c51269c",
+              "name": "INTITULE DE POSTE",
+              "value": "={{ $json.output.entreprise.intitule_poste }}",
+              "type": "string"
+            },
+            {
+              "id": "19fb0812-4f46-463b-9eca-c8d3a7aab967",
+              "name": "Raison du réfus",
+              "value": "={{ $json.output.consideration }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1808,
+        128
+      ],
+      "id": "f51a812b-7948-40fe-8161-f11e94d873cf",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Tu es un Agent IA spécialisé dans la création automatique d’entretiens dans Google Calendar.",
+        "options": {
+          "systemMessage": "=\n\nTu es un Agent IA spécialisé dans la création automatique d’entretiens sur Google Calendar.\n\n💥 ATTENTION : il est absolument obligatoire que tu CRÉES l’événement sur Google Calendar.\nLe simple fait de générer un JSON n’est pas suffisant. L’événement doit être réellement ajouté au calendrier.\n\n⚠️ Vérification préalable\n\nAvant de créer un événement :\n\nRegarde le calendrier Google existant pour identifier les créneaux disponibles.\n\nNe jamais créer un événement qui se chevauche avec un événement déjà existant.\n\nAjuste automatiquement la date ou l’heure si nécessaire pour éviter tout conflit.\n\n📅 Planification des entretiens\n\ndate actuel : {{ DateTime.local().toFormat('cccc d LLLL yyyy') }}.\nL’entretien doit être exactement 3 jours après la date actuelle.\n\nHeure de début entre 10:00 et 16:00.\n\nDurée : 1h30.\n\nChoisis une heure cohérente (ex : 10:00, 14:30).\n\nDates et heures en ISO 8601 : YYYY-MM-DDTHH:mm:ss\n\n🧾 Gestion de plusieurs candidats\n\nSi l’entrée contient plusieurs candidats, tu dois créer un événement séparé pour chaque candidat.\n\nChaque événement doit contenir le titre, description, date, heure et lieu corrects.\n\n🔹 Format strict du JSON\n\nChaque événement doit être renvoyé ainsi :\n\n{\n  \"tool\": \"googleCalendarCreate\",\n  \"parameters\": {\n    \"summary\": \"\",\n    \"description\": \"\",\n    \"start\": \"\",\n    \"end\": \"\",\n    \"location\": \"\"\n  }\n}\n\n\n🧾 Contenu de l’événement\n\nLes données nécessaires proviennent de l’entrée n8n :\n\nNom : {{ $json.output.candidat.nom }}\n\nPrénom : {{ $json.output.candidat.prenom }}\n\nEmail : {{ $json.output.candidat.email }}\n\nTéléphone : {{ $json.output.candidat.telephone }}\n\nPoste : {{ $json.output.entreprise.intitule_poste }}\n\nEntreprise : {{ $json.output.entreprise.nom_entreprise }}\n\nLieu : {{ $json.output.entreprise.localisation_preferee }}\n\nTitre (summary)\nEntretien – {{ $json.output.candidat.prenom }} {{ $json.output.candidat.nom }} – {{ $json.output.entreprise.intitule_poste }}\n\nDescription (description)\n\nDoit contenir :\n\nEntretien de 1h30\nNom : {{ $json.output.candidat.nom }}\nPrénom : {{ $json.output.candidat.prenom }}\nEmail : {{ $json.output.candidat.email }}\nTéléphone : {{ $json.output.candidat.telephone }}\nPoste : {{ $json.output.entreprise.intitule_poste }}\nEntreprise : {{ $json.output.entreprise.nom_entreprise }}\nLieu : {{ $json.output.entreprise.localisation_preferee }}\nDate : (à définir par toi)\nHeure : (à définir par toi)\n\n⚠️ Règles OBLIGATOIRES\n\nTu dois absolument créer l’événement sur Google Calendar.\n\nSi l’entrée contient plusieurs candidats, tu dois créer un événement séparé pour chaque candidat avec le titre, description, date et heure appropriés.\n\nToujours renvoyer un JSON strictement conforme.\n\nNe jamais ajouter de champs que l’outil ne supporte pas.\n\nSi un champ est manquant, ignore-le.\n\n💡 Points essentiels à retenir\n\nVérifie le calendrier avant toute création pour éviter les chevauchements.\n\nCrée réellement les événements sur Google Calendar. La génération du JSON seule ne suffit pas.\n\nChaque candidat doit avoir son propre événement.\n\nIgnore les champs manquants mais ne crée jamais d’événement incomplet.\n\n\n\n📧 Nouvelle instruction – Envoi de mail de confirmation\n\nUne fois que tous les événements ont été créés sur Google Calendar, tu dois envoyer un email de confirmation à chaque candidat.\nLe mail doit utiliser ce template HTML :\n\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Confirmation de votre entretien</title>\n  <style>\n    body {\n      font-family: Arial, sans-serif;\n      background-color: #f8f9fa;\n      margin: 0;\n      padding: 0;\n    }\n    .container {\n      max-width: 600px;\n      margin: 40px auto;\n      background-color: #ffffff;\n      padding: 30px;\n      border-radius: 8px;\n      box-shadow: 0 4px 6px rgba(0,0,0,0.1);\n    }\n    h2 {\n      color: #333333;\n      font-size: 22px;\n    }\n    p {\n      color: #555555;\n      font-size: 16px;\n      line-height: 1.5;\n    }\n    .details {\n      background-color: #f1f3f5;\n      padding: 15px;\n      border-radius: 5px;\n      margin: 20px 0;\n    }\n    .details p {\n      margin: 5px 0;\n    }\n    .footer {\n      font-size: 14px;\n      color: #888888;\n      text-align: center;\n      margin-top: 30px;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <h2>Confirmation de votre entretien</h2>\n    <p>Bonjour {{ $json.output.candidat.prenom }} {{ $json.output.candidat.nom }},</p>\n    <p>Nous vous confirmons votre entretien pour le poste de <strong>{{ $json.output.entreprise.intitule_poste }}</strong>.</p>\n\n    <div class=\"details\">\n      <p><strong>Date et heure :</strong> {{ date_heure_de_l_evenement }}</p>\n      <p><strong>Lieu :</strong> {{ $json.output.entreprise.localisation_preferee }}</p>\n    </div>\n\n    <p>Merci de bien vouloir être présent(e) à l'heure indiquée et de préparer vos documents nécessaires.</p>\n\n    <p>Cordialement,<br>{{ $json.output.entreprise.nom_entreprise }}</p>\n\n    <div class=\"footer\">\n      <p>Ce message est généré automatiquement. Veuillez ne pas répondre directement à cet email.</p>\n    </div>\n  </div>\n</body>\n</html>\n\n\n\nInstructions supplémentaires :\n\nRemplace {{ date_heure_de_l_evenement }} par la date et l’heure exactes de l’entretien.\n\nChaque candidat reçoit son propre mail personnalisé.\n\nL’envoi du mail doit se faire après la création effective de l’événement sur Google Calendar, pas avant.\n\nGestion de plusieurs candidats :\n\nSi l’entrée contient plusieurs candidats, tu dois gérer les deux candidats et non l'un et laisser l'autre, et tu dois générer un objet JSON complet séparé pour chaque candidat.\n\nChaque objet JSON doit contenir tous les champs obligatoires : summary, description, start, end et location.\n\nNe jamais laisser un candidat avec une sortie vide.\n\nVérifie que les horaires ne se chevauchent pas entre les différents candidats avant de générer les événements.\n\nRetourne une liste JSON contenant un objet pour chaque candidat, même s’il n’y a qu’un seul candidat.\n\nExemple de structure attendue pour deux candidats :\n\n[\n  { \"tool\": \"googleCalendarCreate\", \"parameters\": { ... } },\n  { \"tool\": \"googleCalendarCreate\", \"parameters\": { ... } }\n]\n"
+        }
+      },
+      "id": "1d5fd729-cf14-40e7-a2a9-0a54b6f766e6",
+      "name": "Calendar AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        2096,
+        -64
+      ],
+      "typeVersion": 1.7
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool when you’re asked to retrieve events data.",
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "moinahalima2023@gmail.com",
+          "mode": "list",
+          "cachedResultName": "moinahalima2023@gmail.com"
+        },
+        "options": {
+          "timeMin": "={{ $fromAI('start_date') }}",
+          "timeMax": "={{ $fromAI('end_date') }}"
+        }
+      },
+      "id": "28de6bdb-a269-49ff-98dc-4af4d8ba3713",
+      "name": "Google Calendar - Get Events1",
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "position": [
+        2000,
+        336
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kSCW33hHFagZWCCS",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.output.candidat.email }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {
+          "appendAttribution": false,
+          "ccList": "ismamaliha80@gmail.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.1,
+      "position": [
+        2336,
+        336
+      ],
+      "id": "4a42bb70-e665-4ab3-be8a-794bbaf0f262",
+      "name": "Send a message in Gmail",
+      "webhookId": "b781a3fb-fc24-413c-8d5c-abb3b2d7c718",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "IJO3Tul6QvTPWIjr",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Agent  audio ( retella i )",
+        "height": 656,
+        "width": 1200,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2816,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "f4fdba86-b4a9-4b09-8878-01407eb06665",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.retallai.com/v2/create-phone-call",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer "
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from_number\": \"Add Virtual Number\",\n  \"to_number\": \"{{ $json.TELEPHONE }}\",\n  \"retell_tlm_dynamic_variables\": {\n    \"name\": \"{{ $json.PRENOM }}\",\n    \"email\": \"{{ $json.EMAIL }}\",\n    \"phone number\": \"{{ $json.TELEPHONE }}\",\n    \"intitulé de poste pour l'entretien\": \"{{ $json['INTITULE DE POSTE'] }}\"\n  },\n  \"override_agent_id\": \"Add Your Agent ID\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2624,
+        352
+      ],
+      "id": "ad268054-3919-4c42-a492-3f177404e318",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1rTGarR7kkn7hOHLVMVTZaushHiNjB3rPM52CQDV7u_Y",
+          "mode": "list",
+          "cachedResultName": "BD ENTREPRISES",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTGarR7kkn7hOHLVMVTZaushHiNjB3rPM52CQDV7u_Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1rTGarR7kkn7hOHLVMVTZaushHiNjB3rPM52CQDV7u_Y/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        704,
+        144
+      ],
+      "id": "4514e456-63e3-41bd-85d7-697ad9c4196f",
+      "name": "Get row(s) in sheet",
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NDc4GB6NjacxXP7e",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        160,
+        528
+      ],
+      "id": "31fc71bd-0048-46ef-aac9-9e9e6b0c7791",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "SPPrz7GUbBOJXeaj",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        640,
+        480
+      ],
+      "id": "19b3965b-1c84-4f84-bc9d-1f0f25c98d87",
+      "name": "Google Gemini Chat Model3",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "SPPrz7GUbBOJXeaj",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "agent-rh-chat",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-chat-entry",
+      "name": "🌐 Webhook - Chat Entry",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1200,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Tu es Sophie, experte RH. Tu as accès à un système d'analyse de CV automatique.\n\n📜 HISTORIQUE:\n{{ $json.body.history || \"Nouvelle conversation\" }}\n\nMESSAGE:\n{{ $json.body.chatInput || $json.body.message }}\n\n🎯 FONCTIONNALITÉS DISPONIBLES:\n1. **Analyse de CV automatique** : Si l'utilisateur mentionne \"analyse ce CV\" ou upload un fichier\n2. **Conseil RH** : Fiches de poste, onboarding, questions d'entretien\n3. **Aide recrutement** : Process, sourcing, évaluation candidats\n\n🔍 SI L'UTILISATEUR DEMANDE D'ANALYSER UN CV:\n- Réponds que le système va analyser le CV uploadé\n- Le workflow existant va extraire: formation, expérience, compétences, coordonnées\n- Tu recevras ensuite les résultats pour les présenter\n\n📤 FORMAT RÉPONSE:\n```json\n{\n  \"type_demande\": \"chat|analyse_cv|conseil_rh\",\n  \"response\": \"Ta réponse en MARKDOWN\",\n  \"action\": \"trigger_cv_analysis|none\",\n  \"recommandations\": []\n}\n```\n\n💼 Style: Expert RH bienveillant avec 10+ ans d'expérience."
+        }
+      },
+      "id": "ai-agent-chat",
+      "name": "🤖 AI Agent - Conversation RH",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        -900,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "id": "trigger-cv",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "trigger_cv_analysis",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "router-action",
+      "name": "🔀 Router - Action Type",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -600,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "respond-chat",
+      "name": "📤 Respond - Chat",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -300,
+        500
+      ]
+    }
+  ],
+  "pinData": {
+    "Calendar AI Agent": [
+      {
+        "json": {
+          "output": "```json\n[\n  {\n    \"tool\": \"googleCalendarCreate\",\n    \"parameters\": {\n      \"summary\": \"Entretien – Ismael Moina Halima – Team Leader Industrialisation / Manufacturing - Colomiers\",\n      \"description\": \"Entretien de 1h30\\nNom : Moina Halima\\nPrénom : Ismael\\nEmail : moinahalima2023@gmail.com\\nTéléphone : 745137905\\nPoste : Team Leader Industrialisation / Manufacturing - Colomiers\\nEntreprise : Sopra Steria\\nLieu : Colomiers\\nDate : 2025-11-29\\nHeure : 10:00\",\n      \"start\": \"2025-11-29T10:00:00\",\n      \"end\": \"2025-11-29T11:30:00\",\n      \"location\": \"Colomiers\"\n    }\n  }\n]\n```"
+        }
+      },
+      {
+        "json": {
+          "output": "[\n  {\n    \"tool\": \"googleCalendarCreate\",\n    \"parameters\": {\n      \"summary\": \"Entretien – Ismael Moina Halima – Team Leader Industrialisation / Manufacturing - Colomiers\",\n      \"description\": \"Entretien de 1h30\\nNom : Moina Halima\\nPrénom : Ismael\\nEmail : moinahalima2023@gmail.com\\nTéléphone : 745137905\\nPoste : Team Leader Industrialisation / Manufacturing - Colomiers\\nEntreprise : Sopra Steria\\nLieu : Colomiers\\nDate : 2025-11-29\\nHeure : 14:00\",\n      \"start\": \"2025-11-29T14:00:00\",\n      \"end\": \"2025-11-29T15:30:00\",\n      \"location\": \"Colomiers\"\n    }\n  },\n  {\n    \"tool\": \"sendEmail\",\n    \"parameters\": {\n      \"to\": \"moinahalima2023@gmail.com\",\n      \"subject\": \"Confirmation de votre entretien\",\n      \"body\": \"<!DOCTYPE html>\\n<html>\\n<head>\\n  <meta charset=\\\"UTF-8\\\">\\n  <title>Confirmation de votre entretien</title>\\n  <style>\\n    body {\\n      font-family: Arial, sans-serif;\\n      background-color: #f8f9fa;\\n      margin: 0;\\n      padding: 0;\\n    }\\n    .container {\\n      max-width: 600px;\\n      margin: 40px auto;\\n      background-color: #ffffff;\\n      padding: 30px;\\n      border-radius: 8px;\\n      box-shadow: 0 4px 6px rgba(0,0,0,0.1);\\n    }\\n    h2 {\\n      color: #333333;\\n      font-size: 22px;\\n    }\\n    p {\\n      color: #555555;\\n      font-size: 16px;\\n      line-height: 1.5;\\n    }\\n    .details {\\n      background-color: #f1f3f5;\\n      padding: 15px;\\n      border-radius: 5px;\\n      margin: 20px 0;\\n    }\\n    .details p {\\n      margin: 5px 0;\\n    }\\n    .footer {\\n      font-size: 14px;\\n      color: #888888;\\n      text-align: center;\\n      margin-top: 30px;\\n    }\\n  </style>\\n</head>\\n<body>\\n  <div class=\\\"container\\\">\\n    <h2>Confirmation de votre entretien</h2>\\n    <p>Bonjour Ismael Moina Halima,</p>\\n    <p>Nous vous confirmons votre entretien pour le poste de <strong>Team Leader Industrialisation / Manufacturing - Colomiers</strong>.</p>\\n\\n    <div class=\\\"details\\\">\\n      <p><strong>Date et heure :</strong> 29 November 2025 à 14:00 - 15:30</p>\\n      <p><strong>Lieu :</strong> Colomiers</p>\\n    </div>\\n\\n    <p>Merci de bien vouloir être présent(e) à l'heure indiquée et de préparer vos documents nécessaires.</p>\\n\\n    <p>Cordialement,<br>Sopra Steria</p>\\n\\n    <div class=\\\"footer\\\">\\n      <p>Ce message est généré automatiquement. Veuillez ne pas répondre directement à cet email.</p>\\n    </div>\\n  </div>\\n</body>\\n</html>\"\n    }\n  }\n]"
+        }
+      }
+    ],
+    "Qualifications1": [
+      {
+        "json": {
+          "output": {
+            "Educational qualification": "Formations: BTS Communication (2025 - 2027), Licence : LM (2024 - 2025), Bac général - Littéraire (2023 - 2024), Baccalauréat, DALF : Langue française (Alliance française de Moroni).",
+            "Job History": "Expériences: Assistant Marketing & Communication (11/2023 - 05/2024) chez AAFP (vision pro), Comores. Missions: Soutien dans la création de supports commerciaux (brochures, présentations), Participation à des campagnes emailing, Organisation de salons et événements. Conseillère de Vente et Relation Client (05/2024 - 08/2024) chez Maman Aïcha shop, Comores. Missions: Accueillir et conseiller les clients, Fidéliser la clientèle grâce à un suivi personnalisé et un service après-vente de qualité, Gérer les encaissements et le suivi des commandes.",
+            "Skills": "Compétences techniques: Gestion et animation des réseaux sociaux (Instagram, Facebook, TikTok, LinkedIn), Création de supports de communication, Canva, Photoshop. Compétences linguistiques: DALF : Langue française. Centres d’intérêts: Lecture, Voyage, Football, Photographie.",
+            "Nom ": "NASMAT",
+            "Prenom du candidat": "Abdoul Bastoi",
+            "Téléphone": 33759493953,
+            "Email": "nasmaabdoulbastoi@gmail.com"
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      },
+      {
+        "json": {
+          "output": {
+            "Educational qualification": "Formations:\n2023 - 2026: Ia School - Bachelor 2 (IA & Management)\n2025 - 2026: Ynov Campus - Bachelor 3 IA & DATA",
+            "Job History": "À LA RECHERCHE D’UNE ALTERNANCE EN IA/ AUTOMATISATION / DATA\n\nExpériences:\n06/2024 - 08/2024: Stage - EFCI, Développeuse Web\n  - Conception de la maquette d'un site web (UI/UX Design)\n  - Développement backend (PHP)\n  - Frontend (HTML, CSS, JavaScript)\n  - Gestion des données via MySQL.\n\n01/07/2025 - 09/2025: STAGE - EPSILONN, Technicienne en IA & Automatisation\n  - Conception et déploiement de workflows automatisés.\n  - Création des scripts automatisés.\n  - Mettre à jour régulièrement les modèles avec de nouvelles données.\n  - Identifier les tâches répétitives et chronophages pouvant être automatisées.\n\nProjets personnels:\n02/2025 - 03/2025: Projet personnel - Reconnaissance faciale et détection d’émotions en temps réel\n  - Intégration d’une caméra pour la capture vidéo en direct.\n  - Mise en place d’un algorithme de détection faciale et classification des émotions (joie, tristesse, etc.) via apprentissage profond.\n\n05/2025 - 6/2025: Projet personnel - Développement d’un bras robotisé intelligent\n  - Conception d’un bras robotisé 6 axes combinant vision par ordinateur, IA embarquée (TensorFlow Lite), et commande via Arduino pour l’automatisation de tâches (tri, saisie, déplacement).\n  - Modélisation 3D (Fusion 360), simulation (RoboDK) et intégration de capteurs intelligents.\n  - Interface Python et orchestration des actions via Make.",
+            "Skills": "COMPÉTENCES:\nLangues: Français, Anglais\nCompétences techniques: Python (Pandas, TensorFlow, NumPy, Matplotlib, Scikit-learn), SQL, MYSQL, R, JavaScript, C, C++, CNN & RNN Modèle LSTM, Supervisés & Non Supervisés, Gestion de projet, Power BI, Make, Arduino, OpenCV, TensorFlow Lite, Fusion 360, RoboDK, servomoteurs, conception de systèmes intelligents, n8n.\n\nCENTRES D’INTÉRÊT:\nLecture, Cuisine",
+            "Nom ": "Moina Halima",
+            "Prenom du candidat": "Ismael",
+            "Téléphone": 745137905,
+            "Email": "moinahalima2023@gmail.com"
+          }
+        },
+        "pairedItem": {
+          "item": 1
+        }
+      }
+    ],
+    "Merge": [
+      {
+        "json": {
+          "row_number": 2,
+          "Nom de l'entreprise": "Google",
+          "Secteur d'activité": "Technologie",
+          "Taille de l'entreprise": "Grande (10k+ employés)",
+          "Intitulé du poste ": "Ingénieur logiciel",
+          "Niveau d'études requis ": "Bac+5 (Master)",
+          "Expérience requise ": "2-5 ans",
+          "Compétences techniques recherchées ": "Programmation Java, Python, SQL",
+          "Soft skills recherchés ": "Communication, créativité",
+          "Langues requises": "Anglais courant",
+          "Disponibilité pour débuter": "1 mois",
+          "Localisation préférée ": "Paris",
+          "output": {
+            "Educational qualification": "Formations: BTS Communication (2025 - 2027), Licence : LM (2024 - 2025), Bac général - Littéraire (2023 - 2024), Baccalauréat, DALF : Langue française (Alliance française de Moroni).",
+            "Job History": "Expériences: Assistant Marketing & Communication (11/2023 - 05/2024) chez AAFP (vision pro), Comores. Missions: Soutien dans la création de supports commerciaux (brochures, présentations), Participation à des campagnes emailing, Organisation de salons et événements. Conseillère de Vente et Relation Client (05/2024 - 08/2024) chez Maman Aïcha shop, Comores. Missions: Accueillir et conseiller les clients, Fidéliser la clientèle grâce à un suivi personnalisé et un service après-vente de qualité, Gérer les encaissements et le suivi des commandes.",
+            "Skills": "Compétences techniques: Gestion et animation des réseaux sociaux (Instagram, Facebook, TikTok, LinkedIn), Création de supports de communication, Canva, Photoshop. Compétences linguistiques: DALF : Langue française. Centres d’intérêts: Lecture, Voyage, Football, Photographie.",
+            "Nom et prenom en entier": "Abdoul Bastoi NASMAT",
+            "telephone": "33759493953",
+            "Email": "nasmaabdoulbastoi@gmail.com"
+          }
+        },
+        "binary": {},
+        "pairedItem": [
+          {
+            "item": 0
+          },
+          {
+            "item": 0,
+            "input": 1
+          }
+        ]
+      },
+      {
+        "json": {
+          "row_number": 2,
+          "Nom de l'entreprise": "Google",
+          "Secteur d'activité": "Technologie",
+          "Taille de l'entreprise": "Grande (10k+ employés)",
+          "Intitulé du poste ": "Ingénieur logiciel",
+          "Niveau d'études requis ": "Bac+5 (Master)",
+          "Expérience requise ": "2-5 ans",
+          "Compétences techniques recherchées ": "Programmation Java, Python, SQL",
+          "Soft skills recherchés ": "Communication, créativité",
+          "Langues requises": "Anglais courant",
+          "Disponibilité pour débuter": "1 mois",
+          "Localisation préférée ": "Paris",
+          "output": {
+            "Educational qualification": "Formations:\n2023 - 2026: Ia School - Bachelor 2 (IA & Management)\n2025 - 2026: Ynov Campus - Bachelor 3 IA & DATA",
+            "Job History": "À LA RECHERCHE D’UNE ALTERNANCE EN IA/ AUTOMATISATION / DATA\n\nExpériences:\n06/2024 - 08/2024: Stage - EFCI, Développeuse Web\n  - Conception de la maquette d'un site web (UI/UX Design)\n  - Développement backend (PHP)\n  - Frontend (HTML, CSS, JavaScript)\n  - Gestion des données via MySQL.\n\n01/07/2025 - 09/2025: STAGE - EPSILONN, Technicienne en IA & Automatisation\n  - Conception et déploiement de workflows automatisés.\n  - Création des scripts automatisés.\n  - Mettre à jour régulièrement les modèles avec de nouvelles données.\n  - Identifier les tâches répétitives et chronophages pouvant être automatisées.\n\nProjets personnels:\n02/2025 - 03/2025: Projet personnel - Reconnaissance faciale et détection d’émotions en temps réel\n  - Intégration d’une caméra pour la capture vidéo en direct.\n  - Mise en place d’un algorithme de détection faciale et classification des émotions (joie, tristesse, etc.) via apprentissage profond.\n\n05/2025 - 6/2025: Projet personnel - Développement d’un bras robotisé intelligent\n  - Conception d’un bras robotisé 6 axes combinant vision par ordinateur, IA embarquée (TensorFlow Lite), et commande via Arduino pour l’automatisation de tâches (tri, saisie, déplacement).\n  - Modélisation 3D (Fusion 360), simulation (RoboDK) et intégration de capteurs intelligents.\n  - Interface Python et orchestration des actions via Make.",
+            "Skills": "COMPÉTENCES:\nLangues: Français, Anglais\nCompétences techniques: Python (Pandas, TensorFlow, NumPy, Matplotlib, Scikit-learn), SQL, MYSQL, R, JavaScript, C, C++, CNN & RNN Modèle LSTM, Supervisés & Non Supervisés, Gestion de projet, Power BI, Make, Arduino, OpenCV, TensorFlow Lite, Fusion 360, RoboDK, servomoteurs, conception de systèmes intelligents, n8n.\n\nCENTRES D’INTÉRÊT:\nLecture, Cuisine",
+            "Nom et prenom en entier": "Ismael Moina Halima",
+            "telephone": "745137905",
+            "Email": "moinahalima2023@gmail.com"
+          }
+        },
+        "binary": {},
+        "pairedItem": [
+          {
+            "item": 0
+          },
+          {
+            "item": 1,
+            "input": 1
+          }
+        ]
+      },
+      {
+        "json": {
+          "row_number": 3,
+          "Nom de l'entreprise": "Capgemini",
+          "Secteur d'activité": "Informatique/Consulting",
+          "Taille de l'entreprise": "Grande (10k+ employés)",
+          "Intitulé du poste ": "Consultant IT",
+          "Niveau d'études requis ": "Bac +5",
+          "Expérience requise ": "1-4 ans",
+          "Compétences techniques recherchées ": "SQL, cloud, gestion de projet",
+          "Soft skills recherchés ": "Adaptabilité, communication",
+          "Langues requises": "Français/Anglais",
+          "Disponibilité pour débuter": "1 mois",
+          "Localisation préférée ": "Paris",
+          "output": {
+            "Educational qualification": "Formations: BTS Communication (2025 - 2027), Licence : LM (2024 - 2025), Bac général - Littéraire (2023 - 2024), Baccalauréat, DALF : Langue française (Alliance française de Moroni).",
+            "Job History": "Expériences: Assistant Marketing & Communication (11/2023 - 05/2024) chez AAFP (vision pro), Comores. Missions: Soutien dans la création de supports commerciaux (brochures, présentations), Participation à des campagnes emailing, Organisation de salons et événements. Conseillère de Vente et Relation Client (05/2024 - 08/2024) chez Maman Aïcha shop, Comores. Missions: Accueillir et conseiller les clients, Fidéliser la clientèle grâce à un suivi personnalisé et un service après-vente de qualité, Gérer les encaissements et le suivi des commandes.",
+            "Skills": "Compétences techniques: Gestion et animation des réseaux sociaux (Instagram, Facebook, TikTok, LinkedIn), Création de supports de communication, Canva, Photoshop. Compétences linguistiques: DALF : Langue française. Centres d’intérêts: Lecture, Voyage, Football, Photographie.",
+            "Nom et prenom en entier": "Abdoul Bastoi NASMAT",
+            "telephone": "33759493953",
+            "Email": "nasmaabdoulbastoi@gmail.com"
+          }
+        },
+        "binary": {},
+        "pairedItem": [
+          {
+            "item": 1
+          },
+          {
+            "item": 0,
+            "input": 1
+          }
+        ]
+      },
+      {
+        "json": {
+          "row_number": 3,
+          "Nom de l'entreprise": "Capgemini",
+          "Secteur d'activité": "Informatique/Consulting",
+          "Taille de l'entreprise": "Grande (10k+ employés)",
+          "Intitulé du poste ": "Consultant IT",
+          "Niveau d'études requis ": "Bac +5",
+          "Expérience requise ": "1-4 ans",
+          "Compétences techniques recherchées ": "SQL, cloud, gestion de projet",
+          "Soft skills recherchés ": "Adaptabilité, communication",
+          "Langues requises": "Français/Anglais",
+          "Disponibilité pour débuter": "1 mois",
+          "Localisation préférée ": "Paris",
+          "output": {
+            "Educational qualification": "Formations:\n2023 - 2026: Ia School - Bachelor 2 (IA & Management)\n2025 - 2026: Ynov Campus - Bachelor 3 IA & DATA",
+            "Job History": "À LA RECHERCHE D’UNE ALTERNANCE EN IA/ AUTOMATISATION / DATA\n\nExpériences:\n06/2024 - 08/2024: Stage - EFCI, Développeuse Web\n  - Conception de la maquette d'un site web (UI/UX Design)\n  - Développement backend (PHP)\n  - Frontend (HTML, CSS, JavaScript)\n  - Gestion des données via MySQL.\n\n01/07/2025 - 09/2025: STAGE - EPSILONN, Technicienne en IA & Automatisation\n  - Conception et déploiement de workflows automatisés.\n  - Création des scripts automatisés.\n  - Mettre à jour régulièrement les modèles avec de nouvelles données.\n  - Identifier les tâches répétitives et chronophages pouvant être automatisées.\n\nProjets personnels:\n02/2025 - 03/2025: Projet personnel - Reconnaissance faciale et détection d’émotions en temps réel\n  - Intégration d’une caméra pour la capture vidéo en direct.\n  - Mise en place d’un algorithme de détection faciale et classification des émotions (joie, tristesse, etc.) via apprentissage profond.\n\n05/2025 - 6/2025: Projet personnel - Développement d’un bras robotisé intelligent\n  - Conception d’un bras robotisé 6 axes combinant vision par ordinateur, IA embarquée (TensorFlow Lite), et commande via Arduino pour l’automatisation de tâches (tri, saisie, déplacement).\n  - Modélisation 3D (Fusion 360), simulation (RoboDK) et intégration de capteurs intelligents.\n  - Interface Python et orchestration des actions via Make.",
+            "Skills": "COMPÉTENCES:\nLangues: Français, Anglais\nCompétences techniques: Python (Pandas, TensorFlow, NumPy, Matplotlib, Scikit-learn), SQL, MYSQL, R, JavaScript, C, C++, CNN & RNN Modèle LSTM, Supervisés & Non Supervisés, Gestion de projet, Power BI, Make, Arduino, OpenCV, TensorFlow Lite, Fusion 360, RoboDK, servomoteurs, conception de systèmes intelligents, n8n.\n\nCENTRES D’INTÉRÊT:\nLecture, Cuisine",
+            "Nom et prenom en entier": "Ismael Moina Halima",
+            "telephone": "745137905",
+            "Email": "moinahalima2023@gmail.com"
+          }
+        },
+        "binary": {},
+        "pairedItem": [
+          {
+            "item": 1
+          },
+          {
+            "item": 1,
+            "input": 1
+          }
+        ]
+      },
+      {
+        "json": {
+          "row_number": 4,
+          "Nom de l'entreprise": "L’Oréal",
+          "Secteur d'activité": "Cosmétique",
+          "Taille de l'entreprise": "Grande ",
+          "Intitulé du poste ": "Chef de produit marketing",
+          "Niveau d'études requis ": "Bac+5 (Marketing/Commerce)",
+          "Expérience requise ": "2-4 ans",
+          "Compétences techniques recherchées ": "Marketing digital, CRM, SEO/SEA",
+          "Soft skills recherchés ": "Créativité, leadership, esprit d’équipe",
+          "Langues requises": "Français/Anglais",
+          "Disponibilité pour débuter": "1 mois",
+          "Localisation préférée ": "Lyon",
+          "output": {
+            "Educational qualification": "Formations: BTS Communication (2025 - 2027), Licence : LM (2024 - 2025), Bac général - Littéraire (2023 - 2024), Baccalauréat, DALF : Langue française (Alliance française de Moroni).",
+            "Job History": "Expériences: Assistant Marketing & Communication (11/2023 - 05/2024) chez AAFP (vision pro), Comores. Missions: Soutien dans la création de supports commerciaux (brochures, présentations), Participation à des campagnes emailing, Organisation de salons et événements. Conseillère de Vente et Relation Client (05/2024 - 08/2024) chez Maman Aïcha shop, Comores. Missions: Accueillir et conseiller les clients, Fidéliser la clientèle grâce à un suivi personnalisé et un service après-vente de qualité, Gérer les encaissements et le suivi des commandes.",
+            "Skills": "Compétences techniques: Gestion et animation des réseaux sociaux (Instagram, Facebook, TikTok, LinkedIn), Création de supports de communication, Canva, Photoshop. Compétences linguistiques: DALF : Langue française. Centres d’intérêts: Lecture, Voyage, Football, Photographie.",
+            "Nom et prenom en entier": "Abdoul Bastoi NASMAT",
+            "telephone": "33759493953",
+            "Email": "nasmaabdoulbastoi@gmail.com"
+          }
+        },
+        "binary": {},
+        "pairedItem": [
+          {
+            "item": 2
+          },
+          {
+            "item": 0,
+            "input": 1
+          }
+        ]
+      },
+      {
+        "json": {
+          "row_number": 4,
+          "Nom de l'entreprise": "L’Oréal",
+          "Secteur d'activité": "Cosmétique",
+          "Taille de l'entreprise": "Grande ",
+          "Intitulé du poste ": "Chef de produit marketing",
+          "Niveau d'études requis ": "Bac+5 (Marketing/Commerce)",
+          "Expérience requise ": "2-4 ans",
+          "Compétences techniques recherchées ": "Marketing digital, CRM, SEO/SEA",
+          "Soft skills recherchés ": "Créativité, leadership, esprit d’équipe",
+          "Langues requises": "Français/Anglais",
+          "Disponibilité pour débuter": "1 mois",
+          "Localisation préférée ": "Lyon",
+          "output": {
+            "Educational qualification": "Formations:\n2023 - 2026: Ia School - Bachelor 2 (IA & Management)\n2025 - 2026: Ynov Campus - Bachelor 3 IA & DATA",
+            "Job History": "À LA RECHERCHE D’UNE ALTERNANCE EN IA/ AUTOMATISATION / DATA\n\nExpériences:\n06/2024 - 08/2024: Stage - EFCI, Développeuse Web\n  - Conception de la maquette d'un site web (UI/UX Design)\n  - Développement backend (PHP)\n  - Frontend (HTML, CSS, JavaScript)\n  - Gestion des données via MySQL.\n\n01/07/2025 - 09/2025: STAGE - EPSILONN, Technicienne en IA & Automatisation\n  - Conception et déploiement de workflows automatisés.\n  - Création des scripts automatisés.\n  - Mettre à jour régulièrement les modèles avec de nouvelles données.\n  - Identifier les tâches répétitives et chronophages pouvant être automatisées.\n\nProjets personnels:\n02/2025 - 03/2025: Projet personnel - Reconnaissance faciale et détection d’émotions en temps réel\n  - Intégration d’une caméra pour la capture vidéo en direct.\n  - Mise en place d’un algorithme de détection faciale et classification des émotions (joie, tristesse, etc.) via apprentissage profond.\n\n05/2025 - 6/2025: Projet personnel - Développement d’un bras robotisé intelligent\n  - Conception d’un bras robotisé 6 axes combinant vision par ordinateur, IA embarquée (TensorFlow Lite), et commande via Arduino pour l’automatisation de tâches (tri, saisie, déplacement).\n  - Modélisation 3D (Fusion 360), simulation (RoboDK) et intégration de capteurs intelligents.\n  - Interface Python et orchestration des actions via Make.",
+            "Skills": "COMPÉTENCES:\nLangues: Français, Anglais\nCompétences techniques: Python (Pandas, TensorFlow, NumPy, Matplotlib, Scikit-learn), SQL, MYSQL, R, JavaScript, C, C++, CNN & RNN Modèle LSTM, Supervisés & Non Supervisés, Gestion de projet, Power BI, Make, Arduino, OpenCV, TensorFlow Lite, Fusion 360, RoboDK, servomoteurs, conception de systèmes intelligents, n8n.\n\nCENTRES D’INTÉRÊT:\nLecture, Cuisine",
+            "Nom et prenom en entier": "Ismael Moina Halima",
+            "telephone": "745137905",
+            "Email": "moinahalima2023@gmail.com"
+          }
+        },
+        "binary": {},
+        "pairedItem": [
+          {
+            "item": 2
+          },
+          {
+            "item": 1,
+            "input": 1
+          }
+        ]
+      }
+    ]
+  },
+  "connections": {
+    "Search files and folders2": {
+      "main": [
+        [
+          {
+            "node": "TELECHARGER CV4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TELECHARGER CV4": {
+      "main": [
+        [
+          {
+            "node": "Extract from File4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qualifications1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File4": {
+      "main": [
+        [
+          {
+            "node": "Qualifications1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload CV Airtable": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload CV Gdrive": {
+      "main": [
+        [
+          {
+            "node": "Share link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Airtable1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Upload CV Gdrive",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Airtable4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Array for Airtable": {
+      "main": [
+        [
+          {
+            "node": "Upload CV Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share link": {
+      "main": [
+        [
+          {
+            "node": "Set Array for Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get many messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ne rien faire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auto-fixing Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser8": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Auto-fixing Output Parser",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Calendar AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Bd Candidat.Entretien",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Qualifications1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser8",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Auto-fixing Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar - Create events2": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Calendar AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Bd Candidat.Non.Accepte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar - Get Events1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "OpenRouter Chat Model4": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model3": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "🌐 Webhook - Chat Entry": {
+      "main": [
+        [
+          {
+            "node": "🤖 AI Agent - Conversation RH",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 AI Agent - Conversation RH": {
+      "main": [
+        [
+          {
+            "node": "🔀 Router - Action Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔀 Router - Action Type": {
+      "main": [
+        [
+          {
+            "node": "Search files and folders2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📤 Respond - Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "ce9144df-03de-4523-a4c3-6dacfc1f2f3c",
+  "meta": {
+    "instanceId": "7da48531f20623e8ae2d8be423b956af7deeb8d55d0079c7a3bb652eca5248c7"
+  },
+  "tags": []
+}

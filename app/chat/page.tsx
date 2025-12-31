@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, Suspense, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
 import Header from '@/components/Header'
 import SocialPostPreview, { SocialPostContent } from '@/components/SocialMockups'
 
@@ -113,6 +114,7 @@ interface Message {
   content: string
   timestamp: Date
   imageUrl?: string  // URL de l'image sauvegardée (au lieu de base64 pour éviter quota localStorage)
+  videoUrl?: string  // URL de la vidéo générée par Veo
   socialPost?: SocialPostContent  // Pour les posts réseaux sociaux avec mockup
 }
 
@@ -345,17 +347,22 @@ function ChatPageContent() {
       // Extraire le texte de la réponse (peut être un objet structuré ou une string)
       let responseText: string
       let imageUrl: string | undefined  // Stocker URL au lieu de base64 pour éviter quota localStorage
+      let videoUrl: string | undefined  // URL de la vidéo générée par Veo
       let socialPost: SocialPostContent | undefined  // Pour les mockups réseaux sociaux
       const rawResponse = data.response
 
       if (typeof rawResponse === 'object' && rawResponse !== null) {
+        // Vérifier si c'est une conversation
+        if (rawResponse.type_contenu === 'conversation' && rawResponse.response) {
+          responseText = rawResponse.response
+        }
         // Vérifier si c'est un post social
-        if (rawResponse.type_contenu === 'social_post' && rawResponse.post_content) {
+        else if (rawResponse.type_contenu === 'social_post' && rawResponse.post_content) {
           socialPost = rawResponse as SocialPostContent
           responseText = rawResponse.post_content.text || 'Post social généré !'
         } else {
           // Réponse structurée de n8n (type_contenu, description, hashtags, etc.)
-          responseText = rawResponse.description || rawResponse.prompt_ameliore || 'Contenu généré !'
+          responseText = rawResponse.response || rawResponse.description || rawResponse.prompt_ameliore || 'Contenu généré !'
 
           // Ajouter les hashtags si présents
           if (rawResponse.hashtags && Array.isArray(rawResponse.hashtags)) {
@@ -365,6 +372,7 @@ function ChatPageContent() {
 
         // Extraire l'image si présente et la sauvegarder
         if (rawResponse.image_base64) {
+          console.log('🖼️ Image base64 détectée, taille:', rawResponse.image_base64.length)
           // Sauvegarder l'image dans /public/media et récupérer l'URL
           try {
             const saveResponse = await fetch('/api/media', {
@@ -377,15 +385,114 @@ function ChatPageContent() {
               })
             })
             const saveData = await saveResponse.json()
+            console.log('📁 Réponse sauvegarde:', saveData)
             if (saveData.success && saveData.file?.url) {
               imageUrl = saveData.file.url  // Stocker l'URL, pas la base64
+              console.log('✅ Image sauvegardée:', imageUrl)
+
+              // Si c'est un post social, sauvegarder aussi vers /api/posts pour la bibliothèque
+              if (socialPost && socialPost.platform) {
+                try {
+                  const postResponse = await fetch('/api/posts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      platform: socialPost.platform,
+                      content: {
+                        text: socialPost.post_content?.text || '',
+                        hashtags: socialPost.hashtags || []
+                      },
+                      mediaUrl: saveData.file.url,
+                      mediaType: 'image',
+                      status: 'draft'
+                    })
+                  })
+                  const postData = await postResponse.json()
+                  if (postData.success) {
+                    console.log('📱 Post social sauvegardé:', postData.post?.id)
+                  }
+                } catch (postError) {
+                  console.error('⚠️ Erreur sauvegarde post:', postError)
+                }
+              }
+            } else {
+              console.error('❌ Échec sauvegarde:', saveData)
             }
           } catch (saveError) {
-            console.error('Erreur sauvegarde image:', saveError)
+            console.error('❌ Erreur sauvegarde image:', saveError)
+          }
+        } else {
+          console.log('⚠️ Pas d\'image base64 dans la réponse, clés:', Object.keys(rawResponse))
+        }
+
+        // Extraire la vidéo locale si présente
+        if (rawResponse.video_local_url) {
+          // Vidéo téléchargée et sauvegardée localement
+          videoUrl = rawResponse.video_local_url
+          console.log('🎬 Vidéo locale détectée:', videoUrl)
+
+          // Si c'est un post social avec vidéo, sauvegarder vers /api/posts
+          if (socialPost && socialPost.platform) {
+            try {
+              const postResponse = await fetch('/api/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  platform: socialPost.platform,
+                  content: {
+                    text: socialPost.post_content?.text || '',
+                    hashtags: socialPost.hashtags || []
+                  },
+                  mediaUrl: rawResponse.video_local_url,
+                  mediaType: 'video',
+                  status: 'draft'
+                })
+              })
+              const postData = await postResponse.json()
+              if (postData.success) {
+                console.log('📱 Post vidéo social sauvegardé:', postData.post?.id)
+              }
+            } catch (postError) {
+              console.error('⚠️ Erreur sauvegarde post vidéo:', postError)
+            }
           }
         }
+
+        // Debug: afficher toutes les clés pour comprendre la structure
+        console.log('📦 Structure réponse:', Object.keys(rawResponse), 'video_local_url:', rawResponse.video_local_url, 'video_ready:', rawResponse.video_ready)
       } else {
         responseText = rawResponse || `Je suis ${selectedAgent.name}. Je traite votre demande...`
+      }
+
+      // Nettoyer socialPost pour ne PAS stocker les données volumineuses (base64)
+      const cleanedSocialPost = socialPost ? {
+        ...socialPost,
+        image_base64: undefined,  // Ne pas stocker en localStorage (trop gros)
+        video_base64: undefined,
+      } : undefined
+
+      // Si c'est un post social SANS média (texte seul), le sauvegarder quand même
+      if (socialPost && socialPost.platform && !imageUrl && !videoUrl) {
+        try {
+          const postResponse = await fetch('/api/posts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              platform: socialPost.platform,
+              content: {
+                text: socialPost.post_content?.text || '',
+                hashtags: socialPost.hashtags || []
+              },
+              status: 'draft'
+            })
+          })
+          const postData = await postResponse.json()
+          if (postData.success) {
+            console.log('📝 Post texte sauvegardé:', postData.post?.id)
+          }
+        } catch (postError) {
+          console.error('⚠️ Erreur sauvegarde post texte:', postError)
+        }
       }
 
       const aiMessage: Message = {
@@ -394,7 +501,8 @@ function ChatPageContent() {
         content: responseText,
         timestamp: new Date(),
         imageUrl,
-        socialPost
+        videoUrl,
+        socialPost: cleanedSocialPost
       }
 
       const finalConv = {
@@ -548,6 +656,15 @@ function ChatPageContent() {
         </div>
 
         <div className="sidebar-footer">
+          <Link href="/chat/calendar" className="sidebar-link">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            Calendrier
+          </Link>
           <Link href="/chat/medias" className="sidebar-link">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -659,10 +776,28 @@ function ChatPageContent() {
                       <SocialPostPreview
                         content={message.socialPost}
                         imageUrl={message.imageUrl}
+                        videoUrl={message.videoUrl}
+                        onContentChange={(newContent) => {
+                          // Update the message with new content
+                          if (currentConversation) {
+                            const updatedMessages = currentConversation.messages.map(m =>
+                              m.id === message.id ? { ...m, socialPost: newContent } : m
+                            )
+                            const updatedConv = { ...currentConversation, messages: updatedMessages }
+                            setCurrentConversation(updatedConv)
+                            const updatedConversations = conversations.map(c =>
+                              c.id === updatedConv.id ? updatedConv : c
+                            )
+                            setConversations(updatedConversations)
+                            saveAgentConversations(selectedAgent.id, updatedConversations)
+                          }
+                        }}
                       />
                     ) : (
                       <>
-                        {message.content}
+                        <div className="markdown-content">
+                          <ReactMarkdown>{message.content}</ReactMarkdown>
+                        </div>
                         {message.imageUrl && (
                           <div className="msg-image" style={{ marginTop: '12px' }}>
                             <img
@@ -670,6 +805,24 @@ function ChatPageContent() {
                               alt="Image générée"
                               style={{
                                 maxWidth: '100%',
+                                borderRadius: '12px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                              }}
+                            />
+                          </div>
+                        )}
+                        {message.videoUrl && (
+                          <div className="msg-video" style={{ marginTop: '12px' }}>
+                            <video
+                              src={message.videoUrl}
+                              controls
+                              autoPlay
+                              muted
+                              loop
+                              playsInline
+                              style={{
+                                maxWidth: '100%',
+                                maxHeight: '400px',
                                 borderRadius: '12px',
                                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                               }}
@@ -1276,6 +1429,152 @@ function ChatPageContent() {
           background: var(--text-tertiary);
           border-radius: 50%;
           animation: typing 1.4s ease-in-out infinite;
+        }
+
+        /* Markdown Styles */
+        .markdown-content {
+          line-height: 1.7;
+        }
+
+        .markdown-content :global(h1) {
+          font-size: 1.5rem;
+          font-weight: 700;
+          margin: 16px 0 12px 0;
+          color: var(--text-primary);
+        }
+
+        .markdown-content :global(h2) {
+          font-size: 1.25rem;
+          font-weight: 600;
+          margin: 14px 0 10px 0;
+          color: var(--text-primary);
+        }
+
+        .markdown-content :global(h3) {
+          font-size: 1.1rem;
+          font-weight: 600;
+          margin: 12px 0 8px 0;
+          color: var(--text-primary);
+        }
+
+        .markdown-content :global(h4),
+        .markdown-content :global(h5),
+        .markdown-content :global(h6) {
+          font-size: 1rem;
+          font-weight: 600;
+          margin: 10px 0 6px 0;
+          color: var(--text-primary);
+        }
+
+        .markdown-content :global(p) {
+          margin: 0 0 12px 0;
+        }
+
+        .markdown-content :global(p:last-child) {
+          margin-bottom: 0;
+        }
+
+        .markdown-content :global(strong) {
+          font-weight: 600;
+          color: var(--text-primary);
+        }
+
+        .markdown-content :global(em) {
+          font-style: italic;
+        }
+
+        .markdown-content :global(ul),
+        .markdown-content :global(ol) {
+          margin: 8px 0 12px 0;
+          padding-left: 24px;
+        }
+
+        .markdown-content :global(li) {
+          margin: 4px 0;
+        }
+
+        .markdown-content :global(ul li) {
+          list-style-type: disc;
+        }
+
+        .markdown-content :global(ol li) {
+          list-style-type: decimal;
+        }
+
+        .markdown-content :global(code) {
+          background: rgba(0, 0, 0, 0.06);
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+          font-size: 0.85em;
+        }
+
+        .message.user .markdown-content :global(code) {
+          background: rgba(255, 255, 255, 0.2);
+        }
+
+        .markdown-content :global(pre) {
+          background: rgba(0, 0, 0, 0.06);
+          padding: 12px 16px;
+          border-radius: 8px;
+          overflow-x: auto;
+          margin: 12px 0;
+        }
+
+        .message.user .markdown-content :global(pre) {
+          background: rgba(255, 255, 255, 0.15);
+        }
+
+        .markdown-content :global(pre code) {
+          background: transparent;
+          padding: 0;
+        }
+
+        .markdown-content :global(blockquote) {
+          border-left: 3px solid var(--agent-color, #4F46E5);
+          margin: 12px 0;
+          padding: 8px 16px;
+          background: rgba(0, 0, 0, 0.03);
+          border-radius: 0 8px 8px 0;
+        }
+
+        .message.user .markdown-content :global(blockquote) {
+          border-left-color: rgba(255, 255, 255, 0.5);
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        .markdown-content :global(hr) {
+          border: none;
+          border-top: 1px solid var(--border);
+          margin: 16px 0;
+        }
+
+        .markdown-content :global(a) {
+          color: var(--agent-color, #4F46E5);
+          text-decoration: underline;
+        }
+
+        .message.user .markdown-content :global(a) {
+          color: white;
+        }
+
+        .markdown-content :global(table) {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 12px 0;
+          font-size: 0.9em;
+        }
+
+        .markdown-content :global(th),
+        .markdown-content :global(td) {
+          border: 1px solid var(--border);
+          padding: 8px 12px;
+          text-align: left;
+        }
+
+        .markdown-content :global(th) {
+          background: rgba(0, 0, 0, 0.04);
+          font-weight: 600;
         }
 
         .msg-bubble.typing .dot:nth-child(2) {

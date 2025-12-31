@@ -1,0 +1,85 @@
+{
+  "name": "Agent Marketing - Gemini 2025 (Texte + Image + Vidéo)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "agent-marketing-2025",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "agent-marketing-2025"
+    },
+    {
+      "parameters": {
+        "jsCode": "const message = $input.first().json.body.chatInput || $input.first().json.body.message || '';\nconst msgLower = message.toLowerCase();\n\n// Détecter la plateforme\nlet platform = 'linkedin';\nif (msgLower.includes('instagram')) platform = 'instagram';\nif (msgLower.includes('twitter') || msgLower.includes('x ')) platform = 'twitter';\nif (msgLower.includes('facebook')) platform = 'facebook';\n\n// Détecter le type de contenu\nlet typeContenu = 'social_post';\nif (msgLower.includes('vidéo') || msgLower.includes('video')) typeContenu = 'video';\nelse if (msgLower.includes('juste') && (msgLower.includes('texte') || msgLower.includes('text'))) typeContenu = 'text';\n\n// Détecter si image demandée\nconst wantsImage = msgLower.includes('image') || msgLower.includes('photo') || msgLower.includes('visuel') || (!msgLower.includes('vidéo') && !msgLower.includes('video') && typeContenu === 'social_post');\n\n// Créer le prompt pour Gemini\nconst prompt = `Tu es Thomas, expert marketing digital.\n\nMessage utilisateur: \"${message}\"\n\nRéponds UNIQUEMENT avec ce JSON valide (aucun texte avant/après):\n{\n  \"type_contenu\": \"${typeContenu}\",\n  \"platform\": \"${platform}\",\n  \"post_content\": {\n    \"text\": \"Texte du post ${platform} en markdown avec emojis\",\n    \"hook\": \"Accroche percutante\",\n    \"cta\": \"Call-to-action\"\n  },\n  \"hashtags\": [\"#tag1\", \"#tag2\", \"#tag3\"],\n  \"image_prompt\": \"${wantsImage ? 'DETAILED English description for professional 4K image that matches the post perfectly' : ''}\",\n  \"generate_image\": ${wantsImage}\n}`;\n\nreturn [{ json: { prompt, platform, typeContenu, wantsImage } }];"
+      },
+      "id": "analyze-request",
+      "name": "Analyze Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDFoxITJ29qzBiSfpQoYtS20FcJD4NcN6I",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"contents\": [{\"parts\": [{\"text\": $json.prompt}]}]} }}",
+        "options": {}
+      },
+      "id": "gen-content",
+      "name": "Generate Content (Gemini 2.0 Flash)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const geminiResp = $input.first().json;\nconst text = geminiResp.candidates?.[0]?.content?.parts?.[0]?.text || '';\n\nlet parsed = null;\ntry {\n  const match = text.match(/\\{[\\s\\S]*\\}/);\n  if (match) parsed = JSON.parse(match[0]);\n} catch (e) {\n  console.error('Parse error:', e);\n  parsed = { type_contenu: 'text', post_content: { text: text } };\n}\n\nreturn [{ json: parsed }];"
+      },
+      "id": "parse-json",
+      "name": "Parse JSON Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { response: $json } }}",
+        "options": {}
+      },
+      "id": "respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [880, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Analyze Request", "type": "main", "index": 0 }]]
+    },
+    "Analyze Request": {
+      "main": [[{ "node": "Generate Content (Gemini 2.0 Flash)", "type": "main", "index": 0 }]]
+    },
+    "Generate Content (Gemini 2.0 Flash)": {
+      "main": [[{ "node": "Parse JSON Response", "type": "main", "index": 0 }]]
+    },
+    "Parse JSON Response": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "id": "agent-marketing-gemini-2025"
+}

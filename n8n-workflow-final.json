@@ -1,0 +1,147 @@
+{
+  "name": "Agent Marketing FINAL - Texte + Image + Video",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "marketing-final",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $input.first().json.body.chatInput || $input.first().json.body.message || '';\nconst msgLower = msg.toLowerCase();\n\n// Détecter plateforme\nlet platform = 'linkedin';\nif (msgLower.includes('instagram')) platform = 'instagram';\nif (msgLower.includes('twitter') || msgLower.includes('x ')) platform = 'twitter';\nif (msgLower.includes('facebook')) platform = 'facebook';\n\n// Détecter type de contenu\nlet typeContenu = 'social_post';\nif (msgLower.includes('vidéo') || msgLower.includes('video')) typeContenu = 'video';\nelse if (msgLower.includes('juste') && (msgLower.includes('texte') || msgLower.includes('text'))) typeContenu = 'text';\n\n// Détecter si image demandée\nconst wantsImage = msgLower.includes('image') || msgLower.includes('photo') || msgLower.includes('visuel') || (!msgLower.includes('vidéo') && !msgLower.includes('video') && typeContenu === 'social_post');\n\nconst prompt = `Tu es Thomas, expert marketing digital.\n\nMessage utilisateur: \"${msg}\"\n\nRéponds UNIQUEMENT avec ce JSON valide (aucun texte avant/après):\n{\n  \"type_contenu\": \"${typeContenu}\",\n  \"platform\": \"${platform}\",\n  \"post_content\": {\n    \"text\": \"Texte du post ${platform} en markdown avec emojis\",\n    \"hook\": \"Accroche percutante\",\n    \"cta\": \"Call-to-action\"\n  },\n  \"hashtags\": [\"#tag1\", \"#tag2\", \"#tag3\"],\n  \"image_prompt\": \"${wantsImage ? 'DETAILED English description for professional 4K image that matches the post perfectly' : ''}\",\n  \"video_prompt\": \"${typeContenu === 'video' ? 'DETAILED English cinematic video description, 5-10 seconds, professional 4K' : ''}\",\n  \"generate_image\": ${wantsImage},\n  \"generate_video\": ${typeContenu === 'video'}\n}`;\n\nreturn [{json: {prompt, platform, typeContenu, wantsImage}}];"
+      },
+      "id": "analyze",
+      "name": "Analyze Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDFoxITJ29qzBiSfpQoYtS20FcJD4NcN6I",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"contents\": [{\"parts\": [{\"text\": \"{{ $json.prompt }}\"}]}]}",
+        "options": {}
+      },
+      "id": "gen-text",
+      "name": "Generate Content (Gemini)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const geminiResp = $input.first().json;\nconst text = geminiResp.candidates?.[0]?.content?.parts?.[0]?.text || '';\n\nlet parsed = null;\ntry {\n  const match = text.match(/\\{[\\s\\S]*\\}/);\n  if (match) parsed = JSON.parse(match[0]);\n} catch (e) {\n  console.error('Parse error:', e);\n  parsed = {type_contenu: 'text', response: text};\n}\n\nreturn [{json: parsed}];"
+      },
+      "id": "parse",
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [{
+            "id": "img",
+            "leftValue": "={{ $json.generate_image }}",
+            "rightValue": true,
+            "operator": {"type": "boolean", "operation": "equals"}
+          }]
+        }
+      },
+      "id": "if-img",
+      "name": "Need Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=AIzaSyDFoxITJ29qzBiSfpQoYtS20FcJD4NcN6I",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"contents\": [{\"parts\": [{\"text\": \"{{ $json.image_prompt }}\"}]}], \"generationConfig\": {\"responseModalities\": [\"IMAGE\", \"TEXT\"]}}",
+        "options": {"timeout": 60000}
+      },
+      "id": "gen-img",
+      "name": "Generate Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1080, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const content = $('Parse JSON').first().json;\nconst imgResp = $input.first().json;\n\nlet imageBase64 = null;\nlet mimeType = 'image/png';\n\nif (imgResp.candidates?.[0]?.content?.parts) {\n  for (const part of imgResp.candidates[0].content.parts) {\n    if (part.inlineData) {\n      imageBase64 = part.inlineData.data;\n      mimeType = part.inlineData.mimeType || 'image/png';\n      break;\n    }\n  }\n}\n\nreturn [{json: {...content, image_base64: imageBase64, mimeType, image_ready: !!imageBase64}}];"
+      },
+      "id": "merge-img",
+      "name": "Add Image to Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1300, 200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "conditions": [{
+            "id": "vid",
+            "leftValue": "={{ $json.generate_video }}",
+            "rightValue": true,
+            "operator": {"type": "boolean", "operation": "equals"}
+          }]
+        }
+      },
+      "id": "if-vid",
+      "name": "Need Video?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1520, 250]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {response: $json} }}",
+        "options": {}
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1740, 250]
+    }
+  ],
+  "connections": {
+    "Webhook": {"main": [[{"node": "Analyze Request"}]]},
+    "Analyze Request": {"main": [[{"node": "Generate Content (Gemini)"}]]},
+    "Generate Content (Gemini)": {"main": [[{"node": "Parse JSON"}]]},
+    "Parse JSON": {"main": [[{"node": "Need Image?"}]]},
+    "Need Image?": {
+      "main": [
+        [{"node": "Generate Image"}],
+        [{"node": "Need Video?"}]
+      ]
+    },
+    "Generate Image": {"main": [[{"node": "Add Image to Content"}]]},
+    "Add Image to Content": {"main": [[{"node": "Need Video?"}]]},
+    "Need Video?": {
+      "main": [
+        [{"node": "Respond"}],
+        [{"node": "Respond"}]
+      ]
+    }
+  },
+  "settings": {"executionOrder": "v1"}
+}

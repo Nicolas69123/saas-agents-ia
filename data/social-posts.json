@@ -1,0 +1,124 @@
+[
+  {
+    "id": "post-1767177559107-i4am2wv1p",
+    "platform": "twitter",
+    "content": {
+      "text": "🚀 Découvrez notre nouvelle plateforme d'automatisation IA ! Simplifiez vos tâches marketing en quelques clics.",
+      "hashtags": []
+    },
+    "mediaUrl": "/media/generated-1767126172849.png",
+    "mediaType": "image",
+    "status": "draft",
+    "createdAt": "2025-12-31T10:39:19.107Z"
+  },
+  {
+    "id": "post-1767177559494-jmg4dnxgi",
+    "platform": "twitter",
+    "content": {
+      "text": "🚀 Découvrez notre nouvelle plateforme d'automatisation IA ! Simplifiez vos tâches marketing en quelques clics.",
+      "hashtags": []
+    },
+    "mediaUrl": "/media/generated-1767126172849.png",
+    "mediaType": "image",
+    "status": "published",
+    "externalId": "2006314216483914055",
+    "publishedAt": "2025-12-31T10:39:19.494Z",
+    "createdAt": "2025-12-31T10:39:19.494Z"
+  },
+  {
+    "id": "post-1767178750599-wjxxrlnxm",
+    "platform": "tiktok",
+    "content": {
+      "text": "Plus de motivation qu'un lundi matin ? 🤯 Pas possible ! 💥 Brûle les calories, dépasse tes limites et deviens la meilleure version de toi-même. 💪 #Musculation #Motivation #Fitness #NoPainNoGain",
+      "hashtags": [
+        "#musculation",
+        "#motivation",
+        "#fitness",
+        "#nopainnogain",
+        "#transformationphysique",
+        "#gymlife"
+      ]
+    },
+    "mediaUrl": "/media/video-1767178750518.mp4",
+    "mediaType": "video",
+    "status": "draft",
+    "createdAt": "2025-12-31T10:59:10.599Z"
+  },
+  {
+    "id": "post-1767178795469-lgdgi7und",
+    "platform": "twitter",
+    "content": {
+      "text": "Les événements extrêmes se multiplient et leurs impacts sont dévastateurs. Il est urgent d'agir pour renforcer la résilience de nos communautés et investir dans des solutions durables. Face à l'urgence climatique, chaque action compte.",
+      "hashtags": [
+        "#ChangementClimatique",
+        "#Resilience",
+        "#Environnement",
+        "#UrgenceClimatique",
+        "#SolutionsDurables"
+      ]
+    },
+    "mediaUrl": "/media/generated-1767178795415.png",
+    "mediaType": "image",
+    "status": "draft",
+    "createdAt": "2025-12-31T10:59:55.469Z"
+  },
+  {
+    "id": "post-1767180006099-4x8lkdsap",
+    "platform": "twitter",
+    "content": {
+      "text": "test\n",
+      "hashtags": []
+    },
+    "status": "draft",
+    "createdAt": "2025-12-31T11:20:06.099Z"
+  },
+  {
+    "id": "post-1767180006417-v59sgbjsf",
+    "platform": "twitter",
+    "content": {
+      "text": "test\n",
+      "hashtags": []
+    },
+    "status": "published",
+    "externalId": "2006324479635447886",
+    "publishedAt": "2025-12-31T11:20:06.417Z",
+    "createdAt": "2025-12-31T11:20:06.417Z"
+  },
+  {
+    "id": "post-1767181946225-tcrz6s8os",
+    "platform": "twitter",
+    "content": {
+      "text": "Unlock the power of AI with [Your Company Name]! Our platform helps you streamline tasks, gain valuable insights, and drive innovation. Ready to transform your business?",
+      "hashtags": [
+        "#AI",
+        "#ArtificialIntelligence",
+        "#Innovation",
+        "#MachineLearning",
+        "#BusinessIntelligence"
+      ]
+    },
+    "mediaUrl": "/media/generated-1767181946032.png",
+    "mediaType": "image",
+    "status": "draft",
+    "createdAt": "2025-12-31T11:52:26.225Z"
+  },
+  {
+    "id": "post-1767183099081-dro2ukkyl",
+    "platform": "twitter",
+    "content": {
+      "text": "Unlock the power of AI for your business! Our platform offers cutting-edge solutions for data analysis, automation, and personalized experiences. Stop guessing, start knowing. Learn how AI can transform your operations!",
+      "hashtags": [
+        "#AI",
+        "#ArtificialIntelligence",
+        "#MachineLearning",
+        "#Innovation",
+        "#BusinessIntelligence",
+        "#Tech"
+      ]
+    },
+    "mediaUrl": "/media/generated-1767183098869.png",
+    "mediaType": "image",
+    "status": "draft",
+    "createdAt": "2025-12-31T12:11:39.081Z"
+  }
+]

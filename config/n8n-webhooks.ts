@@ -59,8 +59,8 @@ export const webhookConfigs: WebhookConfig[] = [
   {
     agentId: 'ressources-humaines',
     name: 'Agent RH',
-    webhookUrl: `${N8N_BASE_URL}/webhook/ressources-humaines`,
-    isActive: false,
+    webhookUrl: `${N8N_BASE_URL}/webhook/agent-rh-chat`,
+    isActive: true, // ✅ Activé avec workflow créé
   },
   {
     agentId: 'support-client',

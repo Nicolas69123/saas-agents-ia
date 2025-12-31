@@ -1,0 +1,535 @@
+{
+  "name": "Agent Marketing - With Social Posting",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "marketing-working",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "marketing-working-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const userMessage = $input.first().json.body.chatInput || $input.first().json.body.message || '';\nconst msgLower = userMessage.toLowerCase();\n\n// Détecter la plateforme\nlet platform = 'linkedin';\nif (msgLower.includes('instagram')) platform = 'instagram';\nif (msgLower.includes('twitter') || msgLower.includes('x ')) platform = 'twitter';\nif (msgLower.includes('facebook')) platform = 'facebook';\nif (msgLower.includes('tiktok')) platform = 'tiktok';\nif (msgLower.includes('youtube')) platform = 'youtube';\n\n// Détecter si poster automatiquement\nconst shouldPost = msgLower.includes('publie') || msgLower.includes('poste') || msgLower.includes('publish') || msgLower.includes('post it');\n\n// Détecter si vidéo demandée\nconst wantsVideo = msgLower.includes('vidéo') || msgLower.includes('video') || msgLower.includes('reel') || msgLower.includes('clip') || msgLower.includes('tiktok');\n\n// Détecter si image demandée (par défaut si pas de vidéo)\nconst wantsImage = !wantsVideo && (msgLower.includes('image') || msgLower.includes('photo') || msgLower.includes('visuel') || true);\n\n// Créer le prompt pour Gemini\nconst mediaType = wantsVideo ? 'video' : 'image';\nconst prompt = `Tu es un expert marketing digital. Génère un post ${platform} professionnel sur: \"${userMessage}\".\n\nRéponds UNIQUEMENT avec ce JSON valide (pas de markdown, pas de texte avant/après):\n{\n  \"type_contenu\": \"social_post\",\n  \"platform\": \"${platform}\",\n  \"post_content\": {\n    \"text\": \"Le texte complet du post avec emojis et mise en forme markdown\",\n    \"hook\": \"L'accroche principale\",\n    \"cta\": \"Le call-to-action\"\n  },\n  \"hashtags\": [\"#tag1\", \"#tag2\", \"#tag3\"],\n  \"image_prompt\": \"${wantsImage ? 'Detailed English description for professional 4K image generation that perfectly matches this post content' : ''}\",\n  \"video_prompt\": \"${wantsVideo ? 'Detailed English description for professional 8-second video generation that perfectly matches this post content. Include camera movements, lighting, and style.' : ''}\",\n  \"generate_image\": ${wantsImage},\n  \"generate_video\": ${wantsVideo}\n}`;\n\nreturn [{\n  json: {\n    prompt: prompt,\n    platform: platform,\n    userMessage: userMessage,\n    wantsVideo: wantsVideo,\n    wantsImage: wantsImage,\n    shouldPost: shouldPost\n  }\n}];"
+      },
+      "id": "prepare-prompt",
+      "name": "Prepare Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDFoxITJ29qzBiSfpQoYtS20FcJD4NcN6I",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({contents: [{parts: [{text: $json.prompt}]}]}) }}",
+        "options": {}
+      },
+      "id": "generate-text",
+      "name": "Generate Text",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const geminiResp = $input.first().json;\nconst prepareData = $('Prepare Prompt').first().json;\nconst text = geminiResp.candidates?.[0]?.content?.parts?.[0]?.text || '';\n\n// Parser le JSON\nlet parsedContent = null;\ntry {\n  const jsonMatch = text.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) {\n    parsedContent = JSON.parse(jsonMatch[0]);\n  }\n} catch (e) {\n  console.error('Erreur parsing:', e);\n}\n\nif (!parsedContent) {\n  parsedContent = {\n    type_contenu: 'text',\n    response: 'Erreur de parsing'\n  };\n}\n\n// Ajouter shouldPost depuis Prepare Prompt\nparsedContent.shouldPost = prepareData.shouldPost;\n\nreturn [{\n  json: parsedContent\n}];"
+      },
+      "id": "parse-json",
+      "name": "Parse JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "id": "has-video",
+              "leftValue": "={{ $json.generate_video }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "if-video",
+      "name": "Should Generate Video?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/veo-2.0-generate-001:predictLongRunning",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "AIzaSyDFoxITJ29qzBiSfpQoYtS20FcJD4NcN6I"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({instances: [{prompt: $json.video_prompt}]}) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "start-video-generation",
+      "name": "Start Video Generation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, -200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const postData = $('Parse JSON').first().json;\nconst veoResp = $input.first().json;\n\n// Extraire le nom de l'opération\nconst operationName = veoResp.name || null;\n\n// Retourne immédiatement avec l'operation_name\n// Le frontend fera le polling\nreturn [{\n  json: {\n    ...postData,\n    video_operation_name: operationName,\n    video_status: 'processing',\n    video_ready: false,\n    poll_url: operationName ? `https://generativelanguage.googleapis.com/v1beta/${operationName}` : null\n  }\n}];"
+      },
+      "id": "save-operation",
+      "name": "Save Operation Name",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, -200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { response: $json } }}",
+        "options": {}
+      },
+      "id": "respond-with-video",
+      "name": "Respond With Video",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1540, -200]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "id": "has-image",
+              "leftValue": "={{ $json.generate_image }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "if-image",
+      "name": "Should Generate Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1100, 150]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=AIzaSyDFoxITJ29qzBiSfpQoYtS20FcJD4NcN6I",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"contents\": [{\"parts\": [{\"text\": \"{{ $json.image_prompt }}\"}]}], \"generationConfig\": {\"responseModalities\": [\"IMAGE\", \"TEXT\"]}}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "generate-image",
+      "name": "Generate Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1320, 50]
+    },
+    {
+      "parameters": {
+        "jsCode": "const postData = $('Parse JSON').first().json;\nconst geminiResp = $input.first().json;\n\n// Extract image\nlet imageBase64 = null;\nlet mimeType = 'image/png';\n\nif (geminiResp.candidates?.[0]?.content?.parts) {\n  for (const part of geminiResp.candidates[0].content.parts) {\n    if (part.inlineData) {\n      imageBase64 = part.inlineData.data;\n      mimeType = part.inlineData.mimeType || 'image/png';\n      break;\n    }\n  }\n}\n\nreturn [{\n  json: {\n    ...postData,\n    image_base64: imageBase64,\n    mimeType: mimeType,\n    image_ready: !!imageBase64\n  }\n}];"
+      },
+      "id": "merge-with-image",
+      "name": "Merge With Image",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, 50]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "id": "should-post",
+              "leftValue": "={{ $json.shouldPost }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "if-should-post",
+      "name": "Should Auto-Post?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1760, 50]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.platform }}",
+                    "rightValue": "linkedin",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "LinkedIn"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.platform }}",
+                    "rightValue": "facebook",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Facebook"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.platform }}",
+                    "rightValue": "instagram",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Instagram"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.platform }}",
+                    "rightValue": "twitter",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Twitter"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "id": "switch-platform",
+      "name": "Route to Platform",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [1980, -50]
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.post_content.text }}\n\n{{ $json.hashtags.join(' ') }}",
+        "additionalFields": {
+          "visibility": "PUBLIC"
+        }
+      },
+      "id": "post-linkedin",
+      "name": "Post to LinkedIn",
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [2200, -300],
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "LinkedIn OAuth2"
+        }
+      },
+      "notes": "Configure LinkedIn OAuth2 credentials in n8n"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.FACEBOOK_PAGE_ID }}/feed",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ $json.post_content.text }}\n\n{{ $json.hashtags.join(' ') }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $env.FACEBOOK_ACCESS_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "post-facebook",
+      "name": "Post to Facebook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2200, -150],
+      "notes": "Uses Facebook Graph API. Set FACEBOOK_PAGE_ID and FACEBOOK_ACCESS_TOKEN in n8n environment"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.INSTAGRAM_BUSINESS_ACCOUNT_ID }}/media",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "caption",
+              "value": "={{ $json.post_content.text }}\n\n{{ $json.hashtags.join(' ') }}"
+            },
+            {
+              "name": "image_url",
+              "value": "={{ $json.image_url }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $env.FACEBOOK_ACCESS_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "create-instagram-media",
+      "name": "Create Instagram Media",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2200, 0],
+      "notes": "Step 1: Create media container. Requires public image URL."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v18.0/{{ $env.INSTAGRAM_BUSINESS_ACCOUNT_ID }}/media_publish",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "access_token",
+              "value": "={{ $env.FACEBOOK_ACCESS_TOKEN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "publish-instagram-media",
+      "name": "Publish Instagram Media",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2420, 0],
+      "notes": "Step 2: Publish the media container"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.post_content.text }}\n\n{{ $json.hashtags.join(' ') }}"
+      },
+      "id": "post-twitter",
+      "name": "Post to X/Twitter",
+      "type": "n8n-nodes-base.twitter",
+      "typeVersion": 2,
+      "position": [2200, 150],
+      "credentials": {
+        "twitterOAuth1Api": {
+          "id": "HxOZJC9TSN4t9PFC",
+          "name": "X (Twitter) - OmniA"
+        }
+      },
+      "notes": "Twitter/X credential configured"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prépare le résultat final avec statut de publication\nconst postData = $input.first().json;\n\nreturn [{\n  json: {\n    ...postData,\n    posted: true,\n    posted_at: new Date().toISOString(),\n    post_status: 'success'\n  }\n}];"
+      },
+      "id": "merge-post-result",
+      "name": "Merge Post Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2640, -50]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { response: $json } }}",
+        "options": {}
+      },
+      "id": "respond-after-post",
+      "name": "Respond After Post",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2860, -50]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { response: $json } }}",
+        "options": {}
+      },
+      "id": "respond-with-image",
+      "name": "Respond With Image",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1980, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { response: $json } }}",
+        "options": {}
+      },
+      "id": "respond-no-media",
+      "name": "Respond No Media",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1320, 200]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Prepare Prompt", "type": "main", "index": 0}]]
+    },
+    "Prepare Prompt": {
+      "main": [[{"node": "Generate Text", "type": "main", "index": 0}]]
+    },
+    "Generate Text": {
+      "main": [[{"node": "Parse JSON", "type": "main", "index": 0}]]
+    },
+    "Parse JSON": {
+      "main": [[{"node": "Should Generate Video?", "type": "main", "index": 0}]]
+    },
+    "Should Generate Video?": {
+      "main": [
+        [{"node": "Start Video Generation", "type": "main", "index": 0}],
+        [{"node": "Should Generate Image?", "type": "main", "index": 0}]
+      ]
+    },
+    "Start Video Generation": {
+      "main": [[{"node": "Save Operation Name", "type": "main", "index": 0}]]
+    },
+    "Save Operation Name": {
+      "main": [[{"node": "Respond With Video", "type": "main", "index": 0}]]
+    },
+    "Should Generate Image?": {
+      "main": [
+        [{"node": "Generate Image", "type": "main", "index": 0}],
+        [{"node": "Respond No Media", "type": "main", "index": 0}]
+      ]
+    },
+    "Generate Image": {
+      "main": [[{"node": "Merge With Image", "type": "main", "index": 0}]]
+    },
+    "Merge With Image": {
+      "main": [[{"node": "Should Auto-Post?", "type": "main", "index": 0}]]
+    },
+    "Should Auto-Post?": {
+      "main": [
+        [{"node": "Route to Platform", "type": "main", "index": 0}],
+        [{"node": "Respond With Image", "type": "main", "index": 0}]
+      ]
+    },
+    "Route to Platform": {
+      "main": [
+        [{"node": "Post to LinkedIn", "type": "main", "index": 0}],
+        [{"node": "Post to Facebook", "type": "main", "index": 0}],
+        [{"node": "Create Instagram Media", "type": "main", "index": 0}],
+        [{"node": "Post to X/Twitter", "type": "main", "index": 0}],
+        [{"node": "Respond With Image", "type": "main", "index": 0}]
+      ]
+    },
+    "Post to LinkedIn": {
+      "main": [[{"node": "Merge Post Result", "type": "main", "index": 0}]]
+    },
+    "Post to Facebook": {
+      "main": [[{"node": "Merge Post Result", "type": "main", "index": 0}]]
+    },
+    "Create Instagram Media": {
+      "main": [[{"node": "Publish Instagram Media", "type": "main", "index": 0}]]
+    },
+    "Publish Instagram Media": {
+      "main": [[{"node": "Merge Post Result", "type": "main", "index": 0}]]
+    },
+    "Post to X/Twitter": {
+      "main": [[{"node": "Merge Post Result", "type": "main", "index": 0}]]
+    },
+    "Merge Post Result": {
+      "main": [[{"node": "Respond After Post", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
