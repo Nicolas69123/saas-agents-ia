@@ -182,7 +182,7 @@ export default function PricingPage() {
                     <div className="plan-header">
                       <h3 style={{ color: plan.color }}>{plan.name}</h3>
                       <div className="plan-price">
-                        <span className="price">{plan.price}</span>
+                        <span className="price">{plan.price !== 'Sur devis' ? `${plan.price}€` : plan.price}</span>
                         <span className="period">{plan.period}</span>
                       </div>
                       <p className="plan-description">{plan.description}</p>

@@ -1412,6 +1412,33 @@ function ChatPageContent() {
           border-bottom-right-radius: 6px;
         }
 
+        /* Force white text on user messages (dark gradient backgrounds) */
+        .message.user .msg-bubble {
+          color: white !important;
+        }
+
+        .message.user .msg-bubble * {
+          color: white !important;
+        }
+
+        .message.user .markdown-content,
+        .message.user .markdown-content :global(p),
+        .message.user .markdown-content :global(span),
+        .message.user .markdown-content :global(h1),
+        .message.user .markdown-content :global(h2),
+        .message.user .markdown-content :global(h3),
+        .message.user .markdown-content :global(h4),
+        .message.user .markdown-content :global(h5),
+        .message.user .markdown-content :global(h6),
+        .message.user .markdown-content :global(strong),
+        .message.user .markdown-content :global(em),
+        .message.user .markdown-content :global(li),
+        .message.user .markdown-content :global(ul),
+        .message.user .markdown-content :global(ol),
+        .message.user .markdown-content :global(blockquote) {
+          color: white !important;
+        }
+
         .msg-time {
           font-size: 0.7rem;
           color: var(--text-tertiary);
