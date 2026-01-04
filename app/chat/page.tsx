@@ -389,7 +389,7 @@ function ChatPageContent() {
         // Extraire l'image si présente et la sauvegarder
         if (rawResponse.image_base64) {
           console.log('🖼️ Image base64 détectée, taille:', rawResponse.image_base64.length)
-          // Sauvegarder l'image dans /public/media et récupérer l'URL
+          // Essayer de sauvegarder l'image dans /public/media
           try {
             const saveResponse = await fetch('/api/media', {
               method: 'POST',
@@ -433,9 +433,17 @@ function ChatPageContent() {
               }
             } else {
               console.error('❌ Échec sauvegarde:', saveData)
+              // Fallback: utiliser l'image base64 directement
+              const mimeType = rawResponse.mimeType || 'image/png'
+              imageUrl = `data:${mimeType};base64,${rawResponse.image_base64}`
+              console.log('🔄 Fallback: utilisation base64 directe')
             }
           } catch (saveError) {
             console.error('❌ Erreur sauvegarde image:', saveError)
+            // Fallback: utiliser l'image base64 directement
+            const mimeType = rawResponse.mimeType || 'image/png'
+            imageUrl = `data:${mimeType};base64,${rawResponse.image_base64}`
+            console.log('🔄 Fallback: utilisation base64 directe')
           }
         } else {
           console.log('⚠️ Pas d\'image base64 dans la réponse, clés:', Object.keys(rawResponse))
