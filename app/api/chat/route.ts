@@ -157,14 +157,40 @@ export async function POST(request: NextRequest) {
               }
             }
 
-            // Gérer la génération d'image
+            // Si n8n a déjà généré une image base64, la sauvegarder sur le serveur
+            if (parsedContent.image_base64 && parsedContent.image_ready) {
+              console.log('Saving n8n-generated image to server...')
+              try {
+                const imageBuffer = Buffer.from(parsedContent.image_base64, 'base64')
+                const ext = parsedContent.mimeType?.includes('jpeg') ? 'jpg' : 'png'
+                const filename = `generated-${Date.now()}.${ext}`
+                const filepath = path.join(process.cwd(), 'public', 'media', filename)
+
+                const mediaDir = path.join(process.cwd(), 'public', 'media')
+                if (!existsSync(mediaDir)) {
+                  await mkdir(mediaDir, { recursive: true })
+                }
+
+                await writeFile(filepath, imageBuffer)
+
+                // Remplacer base64 par l'URL
+                parsedContent.image_url = `/media/${filename}`
+                delete parsedContent.image_base64  // Ne plus envoyer le base64
+                console.log('Image saved from n8n:', parsedContent.image_url)
+              } catch (saveErr) {
+                console.error('Error saving n8n image:', saveErr)
+                // Garder image_base64 comme fallback
+              }
+            }
+
+            // Gérer la génération d'image (si pas déjà générée par n8n)
             const shouldGenerateImage =
               parsedContent.type_contenu === 'image' ||
               (parsedContent.type_contenu === 'social_post' && parsedContent.generate_image)
 
             const imagePrompt = parsedContent.prompt_ameliore || parsedContent.image_prompt
 
-            if (shouldGenerateImage && imagePrompt && !parsedContent.image_ready) {
+            if (shouldGenerateImage && imagePrompt && !parsedContent.image_ready && !parsedContent.image_url) {
               console.log('Generating image with prompt:', imagePrompt.slice(0, 100))
               try {
                 const geminiResp = await fetch(
@@ -187,10 +213,25 @@ export async function POST(request: NextRequest) {
                   const parts = imgData.candidates?.[0]?.content?.parts || []
                   for (const part of parts) {
                     if (part.inlineData) {
-                      parsedContent.image_base64 = part.inlineData.data
+                      // Sauvegarder l'image directement sur le serveur
+                      const imageBuffer = Buffer.from(part.inlineData.data, 'base64')
+                      const ext = part.inlineData.mimeType?.includes('jpeg') ? 'jpg' : 'png'
+                      const filename = `generated-${Date.now()}.${ext}`
+                      const filepath = path.join(process.cwd(), 'public', 'media', filename)
+
+                      // Créer le dossier media s'il n'existe pas
+                      const mediaDir = path.join(process.cwd(), 'public', 'media')
+                      if (!existsSync(mediaDir)) {
+                        await mkdir(mediaDir, { recursive: true })
+                      }
+
+                      await writeFile(filepath, imageBuffer)
+
+                      // Retourner l'URL au lieu du base64
+                      parsedContent.image_url = `/media/${filename}`
                       parsedContent.mimeType = part.inlineData.mimeType || 'image/png'
                       parsedContent.image_ready = true
-                      console.log('Image generated successfully!')
+                      console.log('Image saved directly:', parsedContent.image_url)
                       break
                     }
                   }

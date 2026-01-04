@@ -386,67 +386,45 @@ function ChatPageContent() {
           }
         }
 
-        // Extraire l'image si présente et la sauvegarder
-        if (rawResponse.image_base64) {
-          console.log('🖼️ Image base64 détectée, taille:', rawResponse.image_base64.length)
-          // Essayer de sauvegarder l'image dans /public/media
-          try {
-            const saveResponse = await fetch('/api/media', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                base64: rawResponse.image_base64,
-                mimeType: rawResponse.mimeType || 'image/png',
-                name: `generated-${Date.now()}.png`
-              })
-            })
-            const saveData = await saveResponse.json()
-            console.log('📁 Réponse sauvegarde:', saveData)
-            if (saveData.success && saveData.file?.url) {
-              imageUrl = saveData.file.url  // Stocker l'URL, pas la base64
-              console.log('✅ Image sauvegardée:', imageUrl)
+        // Extraire l'image si présente (sauvegardée par le backend ou base64)
+        if (rawResponse.image_url) {
+          // Image déjà sauvegardée par le backend - utiliser directement l'URL
+          imageUrl = rawResponse.image_url
+          console.log('✅ Image déjà sauvegardée par le backend:', imageUrl)
 
-              // Si c'est un post social, sauvegarder aussi vers /api/posts pour la bibliothèque
-              if (socialPost && socialPost.platform) {
-                try {
-                  const postResponse = await fetch('/api/posts', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      platform: socialPost.platform,
-                      content: {
-                        text: socialPost.post_content?.text || '',
-                        hashtags: socialPost.hashtags || []
-                      },
-                      mediaUrl: saveData.file.url,
-                      mediaType: 'image',
-                      status: 'draft'
-                    })
-                  })
-                  const postData = await postResponse.json()
-                  if (postData.success) {
-                    console.log('📱 Post social sauvegardé:', postData.post?.id)
-                  }
-                } catch (postError) {
-                  console.error('⚠️ Erreur sauvegarde post:', postError)
-                }
+          // Si c'est un post social, sauvegarder vers /api/posts pour la bibliothèque
+          if (socialPost && socialPost.platform) {
+            try {
+              const postResponse = await fetch('/api/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  platform: socialPost.platform,
+                  content: {
+                    text: socialPost.post_content?.text || '',
+                    hashtags: socialPost.hashtags || []
+                  },
+                  mediaUrl: rawResponse.image_url,
+                  mediaType: 'image',
+                  status: 'draft'
+                })
+              })
+              const postData = await postResponse.json()
+              if (postData.success) {
+                console.log('📱 Post social sauvegardé:', postData.post?.id)
               }
-            } else {
-              console.error('❌ Échec sauvegarde:', saveData)
-              // Fallback: utiliser l'image base64 directement
-              const mimeType = rawResponse.mimeType || 'image/png'
-              imageUrl = `data:${mimeType};base64,${rawResponse.image_base64}`
-              console.log('🔄 Fallback: utilisation base64 directe')
+            } catch (postError) {
+              console.error('⚠️ Erreur sauvegarde post:', postError)
             }
-          } catch (saveError) {
-            console.error('❌ Erreur sauvegarde image:', saveError)
-            // Fallback: utiliser l'image base64 directement
-            const mimeType = rawResponse.mimeType || 'image/png'
-            imageUrl = `data:${mimeType};base64,${rawResponse.image_base64}`
-            console.log('🔄 Fallback: utilisation base64 directe')
           }
+        } else if (rawResponse.image_base64) {
+          // Fallback: image base64 (ancien comportement)
+          console.log('🖼️ Image base64 détectée, taille:', rawResponse.image_base64.length)
+          const mimeType = rawResponse.mimeType || 'image/png'
+          imageUrl = `data:${mimeType};base64,${rawResponse.image_base64}`
+          console.log('🔄 Utilisation base64 directe')
         } else {
-          console.log('⚠️ Pas d\'image base64 dans la réponse, clés:', Object.keys(rawResponse))
+          console.log('⚠️ Pas d\'image dans la réponse, clés:', Object.keys(rawResponse))
         }
 
         // Extraire la vidéo locale si présente
