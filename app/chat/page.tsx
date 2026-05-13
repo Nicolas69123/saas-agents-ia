@@ -379,10 +379,33 @@ function ChatPageContent() {
           socialPost = rawResponse as SocialPostContent
           responseText = rawResponse.post_content.text || 'Post social généré !'
         } else {
-          // Réponse structurée de n8n (type_contenu, description, hashtags, etc.)
-          responseText = rawResponse.response || rawResponse.description || rawResponse.prompt_ameliore || 'Contenu généré !'
+          // Reponse structuree (agent comptable, n8n, etc.)
+          responseText = rawResponse.response || rawResponse.content || rawResponse.description || rawResponse.prompt_ameliore || ''
 
-          // Ajouter les hashtags si présents
+          // Pour les livrables comptables (factures, rapports), enrichir l'affichage
+          if (rawResponse.type && rawResponse.title) {
+            const header = `**${rawResponse.title}**\n\n`
+            responseText = header + (responseText || '')
+
+            if (rawResponse.recommendations && Array.isArray(rawResponse.recommendations) && rawResponse.recommendations.length > 0) {
+              responseText += '\n\n**Recommandations :**\n' + rawResponse.recommendations.map((r: string) => `- ${r}`).join('\n')
+            }
+
+            if (rawResponse.alerts && Array.isArray(rawResponse.alerts) && rawResponse.alerts.length > 0) {
+              responseText += '\n\n**Alertes :**\n' + rawResponse.alerts.map((a: { level: string; message: string }) => `- [${a.level}] ${a.message}`).join('\n')
+            }
+
+            if (rawResponse.data) {
+              const d = rawResponse.data
+              if (d.total_ht !== undefined) {
+                responseText += `\n\n---\n**Total HT :** ${d.total_ht} EUR | **TVA (${d.tva_rate || 20}%) :** ${d.tva_amount} EUR | **Total TTC :** ${d.total_ttc} EUR`
+              }
+            }
+          }
+
+          if (!responseText) responseText = 'Contenu genere !'
+
+          // Ajouter les hashtags si presents
           if (rawResponse.hashtags && Array.isArray(rawResponse.hashtags)) {
             responseText += '\n\n' + rawResponse.hashtags.join(' ')
           }
