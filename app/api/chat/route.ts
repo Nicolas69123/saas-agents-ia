@@ -56,15 +56,14 @@ async function dispatch(
   agentDir: string,
   message: string,
   userId: string,
-  conversationId: string | null,
-  isNewConversation: boolean
+  conversationId: string | null
 ): Promise<{ response: string; conversationId: string; sessionId: string }> {
 
   const agentPath = `${AGENTS_BASE}/${agentDir}`
 
   // Resolve or create conversation
   let convId = conversationId
-  if (!convId || isNewConversation) {
+  if (!convId) {
     convId = `conv-${Date.now()}-${randomUUID().slice(0, 8)}`
     await pool.query(
       "INSERT INTO conversations (id, agent_id, user_id, title) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING",
@@ -101,16 +100,22 @@ async function dispatch(
     console.log(`[DISPATCH] New session ${newSessionId} for ${agentDir}`)
   }
 
-  // Call claude -p
-  const { stdout, stderr } = await execFileAsync(CLAUDE_BIN, claudeArgs, {
-    cwd: agentPath,
-    timeout: 120000,
-    maxBuffer: 1024 * 1024 * 5,
-    env: {
-      ...process.env,
-      HOME: "/home/webmaster",
-      PATH: `/home/webmaster/.npm-global/bin:${process.env.PATH}`,
-    },
+  // Call claude -p (redirect stdin to /dev/null to avoid "no stdin" warning)
+  const { stdout, stderr } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+    const child = execFile(CLAUDE_BIN, claudeArgs, {
+      cwd: agentPath,
+      timeout: 120000,
+      maxBuffer: 1024 * 1024 * 5,
+      env: {
+        ...process.env,
+        HOME: "/home/webmaster",
+        PATH: `/home/webmaster/.npm-global/bin:${process.env.PATH}`,
+      },
+    }, (error, stdout, stderr) => {
+      if (error) reject(error)
+      else resolve({ stdout, stderr })
+    })
+    child.stdin?.end()
   })
 
   if (stderr) {
@@ -161,7 +166,7 @@ setInterval(() => {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { agentId, message, conversationId, userId, newConversation } = body
+    const { agentId, message, conversationId, userId } = body
 
     if (!agentId || !message) {
       return NextResponse.json({ error: "agentId et message requis" }, { status: 400 })
@@ -181,8 +186,7 @@ export async function POST(request: NextRequest) {
       agentDir,
       message,
       effectiveUserId,
-      conversationId || null,
-      !!newConversation
+      conversationId || null
     )
 
     // Parse JSON if agent returned structured data

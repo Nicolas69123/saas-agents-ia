@@ -357,7 +357,6 @@ function ChatPageContent() {
           message: inputValue,
           conversationId: currentConversation.id,
           userId: (user as Record<string, unknown>)?.id || 'anonymous',
-          newConversation: currentConversation.messages.length <= 1,
         }),
       })
 
