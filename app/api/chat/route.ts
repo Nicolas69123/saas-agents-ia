@@ -5,10 +5,10 @@ import { writeFile, mkdir } from "fs/promises"
 import { existsSync } from "fs"
 import path from "path"
 import { Pool } from "pg"
+import { randomUUID } from "crypto"
 
 const execFileAsync = promisify(execFile)
 
-// PostgreSQL
 const pool = new Pool({
   host: process.env.PG_HOST || "localhost",
   port: parseInt(process.env.PG_PORT || "5432"),
@@ -17,7 +17,6 @@ const pool = new Pool({
   password: process.env.PG_PASSWORD || "",
 })
 
-// Mapping agentId du frontend → répertoire agent
 const AGENT_DIRS: Record<string, string> = {
   "reseaux-sociaux": "agent-social",
   "email-marketing": "agent-marketing",
@@ -31,142 +30,204 @@ const AGENT_DIRS: Record<string, string> = {
 
 const AGENTS_BASE = process.env.AGENTS_BASE || "/home/webmaster/omnia-agents"
 const CLAUDE_BIN = process.env.CLAUDE_BIN || "/home/webmaster/.npm-global/bin/claude"
+const SESSION_TIMEOUT_MS = 60 * 60 * 1000
+
+// --- Session Dispatcher ---
+
+interface SessionInfo {
+  sessionId: string
+  conversationId: string
+  lastActivity: number
+}
+
+// In-memory session index: "userId:agentId:conversationId" -> SessionInfo
+const activeSessions = new Map<string, SessionInfo>()
+
+function getSessionKey(userId: string, agentId: string, conversationId: string): string {
+  return `${userId}:${agentId}:${conversationId}`
+}
+
+function isSessionExpired(session: SessionInfo): boolean {
+  return Date.now() - session.lastActivity > SESSION_TIMEOUT_MS
+}
+
+async function dispatch(
+  agentId: string,
+  agentDir: string,
+  message: string,
+  userId: string,
+  conversationId: string | null,
+  isNewConversation: boolean
+): Promise<{ response: string; conversationId: string; sessionId: string }> {
+
+  const agentPath = `${AGENTS_BASE}/${agentDir}`
+
+  // Resolve or create conversation
+  let convId = conversationId
+  if (!convId || isNewConversation) {
+    convId = `conv-${Date.now()}-${randomUUID().slice(0, 8)}`
+    await pool.query(
+      "INSERT INTO conversations (id, agent_id, user_id, title) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING",
+      [convId, agentId, userId, message.substring(0, 50)]
+    )
+  }
+
+  // Save user message
+  await pool.query(
+    "INSERT INTO messages (id, conversation_id, role, content) VALUES ($1, $2, $3, $4)",
+    [`msg-${Date.now()}-${randomUUID().slice(0, 8)}`, convId, "user", message]
+  )
+
+  // Session lookup
+  const sessionKey = getSessionKey(userId, agentId, convId)
+  let session = activeSessions.get(sessionKey)
+
+  let claudeArgs: string[]
+
+  if (session && !isSessionExpired(session)) {
+    // Resume existing session
+    claudeArgs = ["-p", "--resume", session.sessionId, message]
+    console.log(`[DISPATCH] Resume session ${session.sessionId} for ${agentDir}`)
+  } else {
+    // Create new session
+    const newSessionId = randomUUID()
+    session = {
+      sessionId: newSessionId,
+      conversationId: convId,
+      lastActivity: Date.now(),
+    }
+    activeSessions.set(sessionKey, session)
+    claudeArgs = ["-p", "--model", "haiku", "--session-id", newSessionId, message]
+    console.log(`[DISPATCH] New session ${newSessionId} for ${agentDir}`)
+  }
+
+  // Call claude -p
+  const { stdout, stderr } = await execFileAsync(CLAUDE_BIN, claudeArgs, {
+    cwd: agentPath,
+    timeout: 120000,
+    maxBuffer: 1024 * 1024 * 5,
+    env: {
+      ...process.env,
+      HOME: "/home/webmaster",
+      PATH: `/home/webmaster/.npm-global/bin:${process.env.PATH}`,
+    },
+  })
+
+  if (stderr) {
+    console.error(`[DISPATCH] stderr ${agentDir}:`, stderr.substring(0, 200))
+  }
+
+  // Update session activity
+  session.lastActivity = Date.now()
+  activeSessions.set(sessionKey, session)
+
+  const rawResponse = stdout.trim()
+
+  // Save assistant message
+  await pool.query(
+    "INSERT INTO messages (id, conversation_id, role, content, metadata) VALUES ($1, $2, $3, $4, $5)",
+    [
+      `msg-${Date.now()}-${randomUUID().slice(0, 8)}`,
+      convId,
+      "assistant",
+      rawResponse,
+      JSON.stringify({ agentId, agentDir, sessionId: session.sessionId }),
+    ]
+  )
+
+  await pool.query("UPDATE conversations SET updated_at = NOW() WHERE id = $1", [convId])
+
+  return {
+    response: rawResponse,
+    conversationId: convId,
+    sessionId: session.sessionId,
+  }
+}
+
+// --- Cleanup expired sessions periodically ---
+setInterval(() => {
+  const keys = Array.from(activeSessions.keys())
+  for (const key of keys) {
+    const session = activeSessions.get(key)!
+    if (isSessionExpired(session)) {
+      console.log(`[CLEANUP] Archiving session ${session.sessionId}`)
+      activeSessions.delete(key)
+    }
+  }
+}, 5 * 60 * 1000)
+
+// --- API Route ---
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { agentId, message, history, conversationId } = body
+    const { agentId, message, conversationId, userId, newConversation } = body
 
     if (!agentId || !message) {
-      return NextResponse.json(
-        { error: "agentId et message requis" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "agentId et message requis" }, { status: 400 })
     }
 
     const agentDir = AGENT_DIRS[agentId]
     if (!agentDir) {
-      return NextResponse.json(
-        { error: `Agent inconnu: ${agentId}` },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: `Agent inconnu: ${agentId}` }, { status: 400 })
     }
 
-    const agentPath = `${AGENTS_BASE}/${agentDir}`
+    const effectiveUserId = userId || "anonymous"
 
-    // Créer ou récupérer la conversation
-    let convId = conversationId
-    if (!convId) {
-      convId = `conv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-      await pool.query(
-        "INSERT INTO conversations (id, agent_id, title) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",
-        [convId, agentId, message.substring(0, 50)]
-      )
-    }
+    console.log(`[API] ${effectiveUserId} -> ${agentDir}: ${message.substring(0, 80)}...`)
 
-    // Sauvegarder le message utilisateur
-    const userMsgId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    await pool.query(
-      "INSERT INTO messages (id, conversation_id, role, content) VALUES ($1, $2, $3, $4)",
-      [userMsgId, convId, "user", message]
+    const result = await dispatch(
+      agentId,
+      agentDir,
+      message,
+      effectiveUserId,
+      conversationId || null,
+      !!newConversation
     )
 
-    // Construire le prompt avec historique
-    let fullPrompt = ""
-    if (history && history.length > 0) {
-      const formattedHistory = history
-        .slice(-6)
-        .map((msg: { role: string; content: string }) =>
-          `${msg.role === "user" ? "Utilisateur" : "Assistant"}: ${msg.content}`
-        )
-        .join("\n")
-      fullPrompt = `Historique de conversation:\n${formattedHistory}\n\nNouveau message de l utilisateur: ${message}`
-    } else {
-      fullPrompt = message
-    }
-
-    console.log(`[AGENT] Appel ${agentDir} avec: ${message.substring(0, 100)}...`)
-
-    // Appeler claude -p
-    const { stdout, stderr } = await execFileAsync(
-      CLAUDE_BIN,
-      ["-p", "--model", "haiku", fullPrompt],
-      {
-        cwd: agentPath,
-        timeout: 120000,
-        maxBuffer: 1024 * 1024 * 5,
-        env: {
-          ...process.env,
-          HOME: "/home/webmaster",
-          PATH: `/home/webmaster/.npm-global/bin:${process.env.PATH}`,
-        },
-      }
-    )
-
-    if (stderr) {
-      console.error(`[AGENT] stderr ${agentDir}:`, stderr.substring(0, 200))
-    }
-
-    const rawResponse = stdout.trim()
-    console.log(`[AGENT] Réponse ${agentDir}: ${rawResponse.substring(0, 200)}...`)
-
-    // Parser le JSON si possible
-    let parsedContent = null
+    // Parse JSON if agent returned structured data
+    let responseContent: string | Record<string, unknown> = result.response
     try {
-      const jsonMatch = rawResponse.match(/```json\n?([\s\S]*?)```/)
-      const jsonStr = jsonMatch ? jsonMatch[1].trim() : rawResponse
-      parsedContent = JSON.parse(jsonStr)
+      const jsonMatch = result.response.match(/```json\n?([\s\S]*?)```/)
+      if (jsonMatch) {
+        responseContent = JSON.parse(jsonMatch[1].trim())
+      }
     } catch {
-      parsedContent = null
+      // Keep as string
     }
 
-    // Sauvegarder image si base64
-    if (parsedContent?.image_base64) {
+    // Handle base64 images
+    if (typeof responseContent === "object" && responseContent?.image_base64) {
       try {
-        const imageBuffer = Buffer.from(parsedContent.image_base64, "base64")
-        const ext = parsedContent.mimeType?.includes("jpeg") ? "jpg" : "png"
+        const imageBuffer = Buffer.from(responseContent.image_base64 as string, "base64")
+        const ext = (responseContent.mimeType as string)?.includes("jpeg") ? "jpg" : "png"
         const filename = `generated-${Date.now()}.${ext}`
         const mediaDir = path.join(process.cwd(), "public", "media")
         if (!existsSync(mediaDir)) {
           await mkdir(mediaDir, { recursive: true })
         }
         await writeFile(path.join(mediaDir, filename), imageBuffer)
-        parsedContent.image_url = `/media/${filename}`
-        delete parsedContent.image_base64
+        responseContent.image_url = `/media/${filename}`
+        delete responseContent.image_base64
       } catch (err) {
-        console.error("[AGENT] Erreur sauvegarde image:", err)
+        console.error("[API] Erreur sauvegarde image:", err)
       }
     }
-
-    const responseContent = parsedContent || rawResponse
-
-    // Sauvegarder la réponse de l agent
-    const assistantMsgId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-    const responseText = typeof responseContent === "string" ? responseContent : JSON.stringify(responseContent)
-    await pool.query(
-      "INSERT INTO messages (id, conversation_id, role, content, metadata) VALUES ($1, $2, $3, $4, $5)",
-      [assistantMsgId, convId, "assistant", responseText, JSON.stringify({ agentId, agentDir })]
-    )
-
-    // Mettre à jour updated_at de la conversation
-    await pool.query(
-      "UPDATE conversations SET updated_at = NOW() WHERE id = $1",
-      [convId]
-    )
 
     return NextResponse.json({
       success: true,
       response: responseContent,
       agentId,
-      conversationId: convId,
+      conversationId: result.conversationId,
+      sessionId: result.sessionId,
     })
   } catch (error: unknown) {
     const err = error as Error & { stderr?: string }
-    console.error("[AGENT] Erreur:", err.message)
+    console.error("[API] Erreur:", err.message)
 
     return NextResponse.json({
       success: true,
-      response: `L agent est en cours de configuration.\n\n(Erreur: ${err.message?.substring(0, 100)})`,
+      response: `L'agent est en cours de configuration.\n\n(Erreur: ${err.message?.substring(0, 100)})`,
       agentId: "fallback",
     })
   }

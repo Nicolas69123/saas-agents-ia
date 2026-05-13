@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import Header from '@/components/Header'
+import { useAuth } from '@/components/AuthProvider'
 import SocialPostPreview, { SocialPostContent } from '@/components/SocialMockups'
 
 const agents = [
@@ -146,6 +147,7 @@ interface Conversation {
 function ChatPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { user } = useAuth()
   const [mounted, setMounted] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState(agents[0])
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -353,8 +355,9 @@ function ChatPageContent() {
         body: JSON.stringify({
           agentId: selectedAgent.agentId,
           message: inputValue,
-          sessionId: `session-${selectedAgent.agentId}-${currentConversation.id}`,
-          history: chatHistory,
+          conversationId: currentConversation.id,
+          userId: (user as Record<string, unknown>)?.id || 'anonymous',
+          newConversation: currentConversation.messages.length <= 1,
         }),
       })
 
