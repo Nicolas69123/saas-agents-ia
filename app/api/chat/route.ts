@@ -61,15 +61,12 @@ async function dispatch(
 
   const agentPath = `${AGENTS_BASE}/${agentDir}`
 
-  // Resolve or create conversation
-  let convId = conversationId
-  if (!convId) {
-    convId = `conv-${Date.now()}-${randomUUID().slice(0, 8)}`
-    await pool.query(
-      "INSERT INTO conversations (id, agent_id, user_id, title) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING",
-      [convId, agentId, userId, message.substring(0, 50)]
-    )
-  }
+  // Resolve or create conversation (always upsert to ensure FK exists)
+  const convId = conversationId || `conv-${Date.now()}-${randomUUID().slice(0, 8)}`
+  await pool.query(
+    "INSERT INTO conversations (id, agent_id, user_id, title) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING",
+    [convId, agentId, userId, message.substring(0, 50)]
+  )
 
   // Save user message
   await pool.query(
