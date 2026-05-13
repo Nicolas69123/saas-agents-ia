@@ -10,11 +10,11 @@ const execFileAsync = promisify(execFile)
 
 // PostgreSQL
 const pool = new Pool({
-  host: "localhost",
-  port: 5432,
-  database: "saas_agents_ia_prod",
-  user: "saas_agents_ia_user",
-  password: "Hubble:2001",
+  host: process.env.PG_HOST || "localhost",
+  port: parseInt(process.env.PG_PORT || "5432"),
+  database: process.env.PG_DATABASE || "saas_agents_ia_prod",
+  user: process.env.PG_USER || "saas_agents_ia_user",
+  password: process.env.PG_PASSWORD || "",
 })
 
 // Mapping agentId du frontend → répertoire agent
@@ -29,8 +29,8 @@ const AGENT_DIRS: Record<string, string> = {
   "telephonique": "agent-tel",
 }
 
-const AGENTS_BASE = "/home/webmaster/omnia-agents"
-const CLAUDE_BIN = "/home/webmaster/.npm-global/bin/claude"
+const AGENTS_BASE = process.env.AGENTS_BASE || "/home/webmaster/omnia-agents"
+const CLAUDE_BIN = process.env.CLAUDE_BIN || "/home/webmaster/.npm-global/bin/claude"
 
 export async function POST(request: NextRequest) {
   try {
