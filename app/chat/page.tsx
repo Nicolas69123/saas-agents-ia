@@ -1397,7 +1397,7 @@ function ChatPageContent() {
           border-radius: 20px;
           font-size: 0.95rem;
           line-height: 1.6;
-          white-space: pre-wrap;
+          white-space: normal;
         }
 
         .message.assistant .msg-bubble {
@@ -1462,7 +1462,9 @@ function ChatPageContent() {
 
         /* Markdown Styles */
         .markdown-content {
-          line-height: 1.7;
+          word-wrap: break-word;
+          line-height: 1.5;
+n          font-size: inherit;
         }
 
         .markdown-content :global(h1) {
@@ -1514,16 +1516,19 @@ function ChatPageContent() {
 
         .markdown-content :global(ul),
         .markdown-content :global(ol) {
-          margin: 8px 0 12px 0;
+          margin: 4px 0 8px 0;
           padding-left: 24px;
+          list-style: disc !important;
         }
 
         .markdown-content :global(li) {
-          margin: 4px 0;
+          font-size: inherit;
+          margin: 2px 0;
         }
 
         .markdown-content :global(ul li) {
-          list-style-type: disc;
+          display: list-item;
+          list-style-type: disc !important;
         }
 
         .markdown-content :global(ol li) {
@@ -1655,6 +1660,7 @@ function ChatPageContent() {
           min-height: 24px;
           max-height: 150px;
           line-height: 1.5;
+n          font-size: inherit;
           outline: none;
         }
 

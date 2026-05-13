@@ -5,12 +5,14 @@ import Link from 'next/link'
 import Image from 'next/image'
 import ThemeToggle from './ThemeToggle'
 import { useAuth } from './AuthProvider'
+import { signOut } from 'next-auth/react'
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
-  const { user, logout, isLoading } = useAuth()
+  const { user, isLoading } = useAuth()
+  const logout = () => signOut({ callbackUrl: '/' })
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
@@ -93,9 +95,9 @@ export default function Header() {
                     aria-label="Profile menu"
                   >
                     <span className="profile-avatar">
-                      {user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                      {(user.name || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                     </span>
-                    <span className="profile-name-btn">{user.name.split(' ')[0]}</span>
+                    <span className="profile-name-btn">{(user.name || 'User').split(' ')[0]}</span>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="6 9 12 15 18 9"/>
                     </svg>
@@ -104,7 +106,7 @@ export default function Header() {
                   {profileOpen && (
                     <div className="profile-dropdown">
                       <div className="profile-info">
-                        <span className="profile-name">{user.name}</span>
+                        <span className="profile-name">{user.name || 'User'}</span>
                         <span className="profile-email">{user.email}</span>
                       </div>
                       <div className="profile-divider" />
