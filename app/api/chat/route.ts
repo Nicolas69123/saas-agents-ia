@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
       const docTypes = ["invoice", "monthly_report", "quarterly_report", "expense_analysis", "balance_sheet", "vat_check"]
       if (docTypes.includes(docType)) {
         try {
-          const docRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/document`, {
+          const docRes = await fetch(`http://localhost:${process.env.PORT || "3000"}/api/document`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(responseContent),
