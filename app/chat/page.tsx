@@ -130,9 +130,11 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
-  imageUrl?: string  // URL de l'image sauvegardée (au lieu de base64 pour éviter quota localStorage)
-  videoUrl?: string  // URL de la vidéo générée par Veo
-  socialPost?: SocialPostContent  // Pour les posts réseaux sociaux avec mockup
+  imageUrl?: string
+  videoUrl?: string
+  documentUrl?: string
+  documentFilename?: string
+  socialPost?: SocialPostContent
 }
 
 interface Conversation {
@@ -522,6 +524,9 @@ function ChatPageContent() {
         }
       }
 
+      const documentUrl = typeof rawResponse === 'object' ? rawResponse?.document_url : undefined
+      const documentFilename = typeof rawResponse === 'object' ? rawResponse?.document_filename : undefined
+
       const aiMessage: Message = {
         id: generateUUID(),
         role: 'assistant',
@@ -529,6 +534,8 @@ function ChatPageContent() {
         timestamp: new Date(),
         imageUrl,
         videoUrl,
+        documentUrl,
+        documentFilename,
         socialPost: cleanedSocialPost
       }
 
@@ -854,6 +861,56 @@ function ChatPageContent() {
                                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                               }}
                             />
+                          </div>
+                        )}
+                        {message.documentUrl && (
+                          <div className="msg-document" style={{
+                            marginTop: '12px',
+                            padding: '16px',
+                            background: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                          }}>
+                            <div style={{
+                              width: '48px',
+                              height: '48px',
+                              borderRadius: '10px',
+                              background: 'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'white',
+                              fontWeight: 700,
+                              fontSize: '0.7rem',
+                              flexShrink: 0,
+                            }}>DOCX</div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {message.documentFilename || 'Document'}
+                              </div>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                Document Word - Pret a telecharger
+                              </div>
+                            </div>
+                            <a
+                              href={message.documentUrl}
+                              download={message.documentFilename}
+                              style={{
+                                padding: '8px 16px',
+                                background: 'var(--accent)',
+                                color: 'white',
+                                borderRadius: '8px',
+                                textDecoration: 'none',
+                                fontSize: '0.85rem',
+                                fontWeight: 600,
+                                flexShrink: 0,
+                              }}
+                            >
+                              Telecharger
+                            </a>
                           </div>
                         )}
                       </>

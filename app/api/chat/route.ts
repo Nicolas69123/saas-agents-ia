@@ -197,6 +197,29 @@ export async function POST(request: NextRequest) {
       // Keep as string
     }
 
+    // Generate DOCX for structured documents (invoices, reports)
+    if (typeof responseContent === "object" && responseContent?.type) {
+      const docType = responseContent.type as string
+      const docTypes = ["invoice", "monthly_report", "quarterly_report", "expense_analysis", "balance_sheet", "vat_check"]
+      if (docTypes.includes(docType)) {
+        try {
+          const docRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/api/document`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(responseContent),
+          })
+          const docData = await docRes.json()
+          if (docData.success) {
+            responseContent.document_url = docData.url
+            responseContent.document_filename = docData.filename
+            console.log(`[API] Document genere: ${docData.url}`)
+          }
+        } catch (err) {
+          console.error("[API] Erreur generation document:", err)
+        }
+      }
+    }
+
     // Handle base64 images
     if (typeof responseContent === "object" && responseContent?.image_base64) {
       try {
