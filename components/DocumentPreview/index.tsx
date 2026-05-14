@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import dynamic from 'next/dynamic'
+
+const XlsxViewer = dynamic(() => import('./XlsxViewer'), { ssr: false })
 
 export type DocumentFormat = 'docx' | 'xlsx' | 'pptx' | 'pdf'
 
@@ -111,6 +114,12 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
   useEffect(() => {
     if (resolvedFormat === 'docx') return
 
+    // XLSX is rendered by XlsxViewer which manages its own loading
+    if (resolvedFormat === 'xlsx') {
+      setLoading(false)
+      return
+    }
+
     if (effectivePreviewUrl) {
       setLoading(false)
     } else {
@@ -141,6 +150,10 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
       )
     }
 
+    if (resolvedFormat === 'xlsx') {
+      return <XlsxViewer url={url} height={600} readonly />
+    }
+
     if (effectivePreviewUrl && !error) {
       return (
         <iframe
@@ -157,6 +170,9 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
   const renderFullscreenContent = () => {
     if (resolvedFormat === 'docx') {
       return <div ref={fullscreenContainerRef} className="doc-container" />
+    }
+    if (resolvedFormat === 'xlsx') {
+      return <XlsxViewer url={url} height="100%" readonly={false} />
     }
     if (effectivePreviewUrl) {
       return (
