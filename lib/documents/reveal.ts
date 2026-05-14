@@ -144,11 +144,20 @@ function decorativeBackground(theme: RevealTheme, variant: number): string {
   return variants[variant % variants.length]
 }
 
-function renderTitleSlide(theme: RevealTheme, title: string, subtitle?: string, companyName?: string): string {
+function imageUrlForQuery(query: string | undefined, w = 1600, h = 900): string | null {
+  if (!query) return null
+  const safe = encodeURIComponent(query.trim())
+  // Unsplash Source: no API key required, returns a relevant image
+  return `https://source.unsplash.com/${w}x${h}/?${safe}`
+}
+
+function renderTitleSlide(theme: RevealTheme, title: string, subtitle?: string, companyName?: string, imageQuery?: string): string {
+  const imgUrl = imageUrlForQuery(imageQuery)
   return `
     <section class="slide-title" data-transition="zoom" data-background-gradient="${theme.bgGradient}">
       ${decorativeBackground(theme, 0)}
-      <div class="title-content">
+      ${imgUrl ? `<div class="title-image" style="background-image: url('${imgUrl}')"></div>` : ''}
+      <div class="title-content ${imgUrl ? 'has-image' : ''}">
         <div class="title-badge">
           <span class="title-badge-dot"></span>
           ${escapeHtml(subtitle || new Date().toLocaleDateString("fr-FR"))}
@@ -164,6 +173,7 @@ function renderTitleSlide(theme: RevealTheme, title: string, subtitle?: string, 
 function renderContentSlide(theme: RevealTheme, slide: SlideContent, index: number): string {
   const hasMultipleBullets = slide.bullets && slide.bullets.length >= 2
   const useCardsLayout = hasMultipleBullets && (slide.bullets!.length <= 6)
+  const imgUrl = imageUrlForQuery(slide.imageQuery, 1200, 1400)
 
   const titleSection = `
     <div class="content-header">
@@ -195,7 +205,7 @@ function renderContentSlide(theme: RevealTheme, slide: SlideContent, index: numb
     bulletsSection = `
       <ul class="content-bullets">
         ${slide.bullets.map((b, i) => `
-          <li class="content-bullet" style="animation-delay: ${i * 80}ms;">
+          <li class="content-bullet">
             <span class="content-bullet-marker"></span>
             <span class="content-bullet-text">${escapeHtml(b)}</span>
           </li>
@@ -205,8 +215,9 @@ function renderContentSlide(theme: RevealTheme, slide: SlideContent, index: numb
   }
 
   return `
-    <section class="slide-content" data-transition="fade" data-background-gradient="${theme.bgGradient}">
+    <section class="slide-content ${imgUrl ? 'has-image' : ''}" data-transition="fade" data-background-gradient="${theme.bgGradient}">
       ${decorativeBackground(theme, index)}
+      ${imgUrl ? `<div class="content-image" style="background-image: url('${imgUrl}')"></div>` : ''}
       <div class="content-wrapper">
         ${titleSection}
         ${bulletsSection}
@@ -229,7 +240,7 @@ function renderRecommendationsSlide(theme: RevealTheme, recommendations: string[
         </div>
         <div class="reco-list">
           ${recommendations.map((r, i) => `
-            <div class="reco-item" style="animation-delay: ${i * 100}ms;">
+            <div class="reco-item">
               <div class="reco-number">${String(i + 1).padStart(2, "0")}</div>
               <div class="reco-text">${escapeHtml(r)}</div>
             </div>
@@ -276,12 +287,28 @@ function renderStyles(theme: RevealTheme): string {
     }
 
     /* ===== TITLE SLIDE ===== */
-    .slide-title { padding: 0 !important; }
+    .slide-title { padding: 0 !important; position: relative; overflow: hidden; }
+    .title-image {
+      position: absolute;
+      top: 0; right: 0; bottom: 0;
+      width: 50%;
+      background-size: cover;
+      background-position: center;
+      z-index: 0;
+      filter: saturate(1.1) contrast(1.05);
+    }
+    .title-image::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(90deg, ${theme.bgGradient.includes('rgba') ? 'rgba(0,0,0,0.4)' : 'rgba(15, 23, 42, 0.5)'} 0%, transparent 60%);
+    }
     .title-content {
       position: relative; z-index: 2;
       padding: 5rem 6rem;
       display: flex; flex-direction: column;
       justify-content: center; height: 100%;
+    }
+    .title-content.has-image {
+      max-width: 60%;
     }
     .title-badge {
       display: inline-flex; align-items: center; gap: 10px;
@@ -328,12 +355,29 @@ function renderStyles(theme: RevealTheme): string {
     }
 
     /* ===== CONTENT SLIDES ===== */
-    .slide-content { padding: 0 !important; }
+    .slide-content { padding: 0 !important; position: relative; overflow: hidden; }
+    .content-image {
+      position: absolute;
+      top: 0; right: 0; bottom: 0;
+      width: 38%;
+      background-size: cover;
+      background-position: center;
+      z-index: 0;
+      border-left: 1px solid var(--card-border);
+    }
+    .content-image::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(90deg, ${theme.bgGradient.includes('linear-gradient') ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.3)'} 0%, transparent 50%);
+    }
     .content-wrapper {
       position: relative; z-index: 2;
       padding: 4.5rem 6rem 4rem;
       display: flex; flex-direction: column;
       height: 100%;
+    }
+    .slide-content.has-image .content-wrapper {
+      max-width: 65%;
+      padding-right: 3rem;
     }
 
     .content-header { margin-bottom: 2.5rem; }
@@ -386,19 +430,20 @@ function renderStyles(theme: RevealTheme): string {
       border-radius: 20px;
       backdrop-filter: blur(20px);
       display: flex; flex-direction: column; gap: 1.2rem;
-      transition: transform 0.3s ease, border-color 0.3s ease;
-      animation: card-in 0.6s ease-out backwards;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.45s ease-out, transform 0.45s ease-out;
     }
-    .content-card[data-card-index="0"] { animation-delay: 0ms; }
-    .content-card[data-card-index="1"] { animation-delay: 80ms; }
-    .content-card[data-card-index="2"] { animation-delay: 160ms; }
-    .content-card[data-card-index="3"] { animation-delay: 240ms; }
-    .content-card[data-card-index="4"] { animation-delay: 320ms; }
-    .content-card[data-card-index="5"] { animation-delay: 400ms; }
-    @keyframes card-in {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    .reveal .slides section.present .content-card {
+      opacity: 1;
+      transform: translateY(0);
     }
+    .reveal .slides section.present .content-card[data-card-index="0"] { transition-delay: 80ms; }
+    .reveal .slides section.present .content-card[data-card-index="1"] { transition-delay: 160ms; }
+    .reveal .slides section.present .content-card[data-card-index="2"] { transition-delay: 240ms; }
+    .reveal .slides section.present .content-card[data-card-index="3"] { transition-delay: 320ms; }
+    .reveal .slides section.present .content-card[data-card-index="4"] { transition-delay: 400ms; }
+    .reveal .slides section.present .content-card[data-card-index="5"] { transition-delay: 480ms; }
 
     .content-card-icon {
       width: 56px; height: 56px;
@@ -425,12 +470,20 @@ function renderStyles(theme: RevealTheme): string {
       background: var(--card-bg);
       border-left: 3px solid var(--accent);
       border-radius: 0 12px 12px 0;
-      animation: bullet-in 0.5s ease-out backwards;
+      opacity: 0;
+      transform: translateX(-12px);
+      transition: opacity 0.4s ease-out, transform 0.4s ease-out;
     }
-    @keyframes bullet-in {
-      from { opacity: 0; transform: translateX(-12px); }
-      to { opacity: 1; transform: translateX(0); }
+    .reveal .slides section.present .content-bullet {
+      opacity: 1;
+      transform: translateX(0);
     }
+    .reveal .slides section.present .content-bullet:nth-child(1) { transition-delay: 100ms; }
+    .reveal .slides section.present .content-bullet:nth-child(2) { transition-delay: 180ms; }
+    .reveal .slides section.present .content-bullet:nth-child(3) { transition-delay: 260ms; }
+    .reveal .slides section.present .content-bullet:nth-child(4) { transition-delay: 340ms; }
+    .reveal .slides section.present .content-bullet:nth-child(5) { transition-delay: 420ms; }
+    .reveal .slides section.present .content-bullet:nth-child(6) { transition-delay: 500ms; }
     .content-bullet-marker {
       width: 8px; height: 8px;
       background: var(--accent);
@@ -454,8 +507,20 @@ function renderStyles(theme: RevealTheme): string {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      animation: bullet-in 0.5s ease-out backwards;
+      opacity: 0;
+      transform: translateX(-12px);
+      transition: opacity 0.4s ease-out, transform 0.4s ease-out;
     }
+    .reveal .slides section.present .reco-item {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .reveal .slides section.present .reco-item:nth-child(1) { transition-delay: 100ms; }
+    .reveal .slides section.present .reco-item:nth-child(2) { transition-delay: 200ms; }
+    .reveal .slides section.present .reco-item:nth-child(3) { transition-delay: 300ms; }
+    .reveal .slides section.present .reco-item:nth-child(4) { transition-delay: 400ms; }
+    .reveal .slides section.present .reco-item:nth-child(5) { transition-delay: 500ms; }
+    .reveal .slides section.present .reco-item:nth-child(6) { transition-delay: 600ms; }
     .reco-number {
       font-size: 2.2rem; font-weight: 800;
       color: var(--accent);
@@ -529,7 +594,8 @@ export function renderRevealHtml(req: DocumentRequest): string {
   const companyName = req.data?.company_name || "OmnIA"
   const contact = req.data?.company_email || req.data?.company_phone || ""
 
-  const titleSlide = renderTitleSlide(theme, req.title, period, companyName)
+  const titleImageQuery = slides[0]?.imageQuery || req.title
+  const titleSlide = renderTitleSlide(theme, req.title, period, companyName, titleImageQuery)
   const contentSlides = slides.map((s, i) => renderContentSlide(theme, s, i + 1)).join("\n")
   const recoSlide = req.recommendations && req.recommendations.length > 0
     ? renderRecommendationsSlide(theme, req.recommendations)
