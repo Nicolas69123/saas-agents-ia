@@ -1,10 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import ChatModal from './ChatModal'
+
+const HIDDEN_ON_PATHS = ['/chat', '/auth/login', '/auth/signup', '/profile']
 
 export default function ChatButton() {
   const [isOpen, setIsOpen] = useState(false)
+  const pathname = usePathname()
+
+  if (pathname && HIDDEN_ON_PATHS.some(p => pathname.startsWith(p))) {
+    return null
+  }
 
   return (
     <>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 export type DocumentFormat = 'docx' | 'xlsx' | 'pptx' | 'pdf'
 
@@ -121,12 +122,11 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
   // Lock body scroll in fullscreen + ESC handler
   useEffect(() => {
     if (!fullscreen) return
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    document.body.classList.add('doc-modal-open')
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setFullscreen(false) }
     window.addEventListener('keydown', onKey)
     return () => {
-      document.body.style.overflow = previousOverflow
+      document.body.classList.remove('doc-modal-open')
       window.removeEventListener('keydown', onKey)
     }
   }, [fullscreen])
@@ -218,7 +218,7 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
         </div>
       </div>
 
-      {fullscreen && (
+      {fullscreen && typeof document !== 'undefined' && createPortal(
         <div className="doc-fullscreen-overlay" onClick={() => setFullscreen(false)}>
           <div className="doc-fullscreen-panel" onClick={(e) => e.stopPropagation()}>
             <div className="doc-fs-toolbar">
@@ -242,7 +242,8 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
               {renderFullscreenContent()}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <style jsx>{`
@@ -403,11 +404,14 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
         :global(.docx-rendered table) { border-collapse: collapse; }
         :global(.docx-rendered table td), :global(.docx-rendered table th) { padding: 6px 10px; }
 
+      `}</style>
+
+      <style jsx global>{`
         .doc-fullscreen-overlay {
           position: fixed;
           inset: 0;
           background: rgba(0, 0, 0, 0.85);
-          z-index: 9999;
+          z-index: 2147483000;
           display: flex;
           align-items: stretch;
           justify-content: stretch;
@@ -441,8 +445,70 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
           gap: 12px;
         }
 
-        .doc-fs-toolbar .doc-filename { color: white; }
-        .doc-fs-toolbar .doc-subtitle { color: #aaa; }
+        .doc-fullscreen-overlay .doc-toolbar-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-width: 0;
+        }
+
+        .doc-fullscreen-overlay .doc-toolbar-right {
+          display: flex;
+          gap: 8px;
+          flex-shrink: 0;
+        }
+
+        .doc-fullscreen-overlay .doc-icon {
+          width: 40px;
+          height: 40px;
+          border-radius: 8px;
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 0.65rem;
+          flex-shrink: 0;
+          letter-spacing: 0.5px;
+        }
+
+        .doc-fullscreen-overlay .doc-meta { min-width: 0; flex: 1; }
+        .doc-fullscreen-overlay .doc-filename {
+          font-weight: 600;
+          font-size: 0.9rem;
+          color: white;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .doc-fullscreen-overlay .doc-subtitle {
+          font-size: 0.75rem;
+          color: #aaa;
+          margin-top: 2px;
+        }
+
+        .doc-fullscreen-overlay .doc-btn {
+          padding: 8px 14px;
+          border-radius: 8px;
+          border: 1px solid #555;
+          background: #3a3a3a;
+          color: white;
+          font-size: 0.8rem;
+          font-weight: 500;
+          cursor: pointer;
+          text-decoration: none;
+          transition: all 0.15s ease;
+          white-space: nowrap;
+          display: inline-flex;
+          align-items: center;
+        }
+        .doc-fullscreen-overlay .doc-btn:hover { background: #4a4a4a; }
+        .doc-fullscreen-overlay .doc-btn-primary {
+          background: #4F46E5;
+          color: white;
+          border-color: #4F46E5;
+        }
+        .doc-fullscreen-overlay .doc-btn-primary:hover { background: #4338CA; }
 
         .doc-fs-content {
           flex: 1;
@@ -455,11 +521,25 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
         .doc-fs-content .doc-iframe {
           flex: 1;
           height: 100%;
+          width: 100%;
+          border: none;
+          background: white;
+          display: block;
+        }
+
+        .doc-fs-content .doc-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
+        }
+
+        body.doc-modal-open {
+          overflow: hidden;
         }
 
         @media (max-width: 768px) {
           .doc-fullscreen-panel { margin: 0; border-radius: 0; }
-          .doc-iframe { height: 400px; }
         }
       `}</style>
     </>
