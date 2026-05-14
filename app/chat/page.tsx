@@ -10,7 +10,7 @@ import Header from '@/components/Header'
 import { useAuth } from '@/components/AuthProvider'
 import SocialPostPreview, { SocialPostContent } from '@/components/SocialMockups'
 
-const DocxPreview = dynamic(() => import('@/components/DocxPreview'), { ssr: false })
+const DocumentPreview = dynamic(() => import('@/components/DocumentPreview'), { ssr: false })
 
 const agents = [
   { id: 1, name: 'Lucas', role: 'Comptable', category: 'Finance', avatar: '/avatars/agent-1.png', color: '#4F46E5', gradient: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)', agentId: 'comptable' },
@@ -137,6 +137,8 @@ interface Message {
   videoUrl?: string
   documentUrl?: string
   documentFilename?: string
+  documentFormat?: 'docx' | 'xlsx' | 'pptx' | 'pdf'
+  documentPreviewUrl?: string | null
   socialPost?: SocialPostContent
 }
 
@@ -528,6 +530,8 @@ function ChatPageContent() {
 
       const documentUrl = typeof rawResponse === 'object' ? rawResponse?.document_url : undefined
       const documentFilename = typeof rawResponse === 'object' ? rawResponse?.document_filename : undefined
+      const documentFormat = typeof rawResponse === 'object' ? rawResponse?.document_format : undefined
+      const documentPreviewUrl = typeof rawResponse === 'object' ? rawResponse?.document_preview_url : undefined
 
       const aiMessage: Message = {
         id: generateUUID(),
@@ -538,6 +542,8 @@ function ChatPageContent() {
         videoUrl,
         documentUrl,
         documentFilename,
+        documentFormat,
+        documentPreviewUrl,
         socialPost: cleanedSocialPost
       }
 
@@ -866,9 +872,11 @@ function ChatPageContent() {
                           </div>
                         )}
                         {message.documentUrl && (
-                          <DocxPreview
+                          <DocumentPreview
                             url={message.documentUrl}
                             filename={message.documentFilename}
+                            format={message.documentFormat}
+                            previewUrl={message.documentPreviewUrl}
                           />
                         )}
                       </>

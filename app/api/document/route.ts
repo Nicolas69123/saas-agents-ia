@@ -1,215 +1,98 @@
 import { NextRequest, NextResponse } from "next/server"
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, AlignmentType, HeadingLevel } from "docx"
 import { writeFile, mkdir } from "fs/promises"
 import { existsSync } from "fs"
 import path from "path"
+import { generateDocx } from "@/lib/documents/docx"
+import { generateXlsx } from "@/lib/documents/xlsx"
+import { generatePptx } from "@/lib/documents/pptx"
+import { generatePdf, convertToPdfWithLibreOffice } from "@/lib/documents/pdf"
+import type { DocumentRequest, GeneratedDocument } from "@/lib/documents/types"
 
 const DOCS_DIR = path.join(process.cwd(), "public", "documents")
 
-interface InvoiceItem {
-  description: string
-  quantity: number
-  unit_price: number
-  amount: number
+const TYPE_TO_FORMAT: Record<string, "docx" | "xlsx" | "pptx" | "pdf"> = {
+  invoice: "docx",
+  monthly_report: "docx",
+  quarterly_report: "docx",
+  expense_analysis: "xlsx",
+  balance_sheet: "xlsx",
+  vat_check: "docx",
+  presentation: "pptx",
+  client_deck: "pptx",
+  pitch_deck: "pptx",
+  contract: "pdf",
+  certificate: "pdf",
 }
 
-interface InvoiceData {
-  type: string
-  title: string
-  content?: string
-  data?: {
-    company_name?: string
-    company_address?: string
-    company_siret?: string
-    company_tva?: string
-    client_name?: string
-    client_address?: string
-    client_siret?: string
-    invoice_number?: string
-    invoice_date?: string
-    due_date?: string
-    items?: InvoiceItem[]
-    total_ht?: number
-    tva_rate?: number
-    tva_amount?: number
-    total_ttc?: number
-    payment_terms?: string
-    payment_method?: string
-    iban?: string
-    period?: string
+function resolveFormat(req: DocumentRequest): "docx" | "xlsx" | "pptx" | "pdf" {
+  if (req.format) return req.format
+  return TYPE_TO_FORMAT[req.type] || "docx"
+}
+
+async function generateForFormat(
+  format: "docx" | "xlsx" | "pptx" | "pdf",
+  req: DocumentRequest
+): Promise<GeneratedDocument> {
+  switch (format) {
+    case "docx":
+      return generateDocx(req)
+    case "xlsx":
+      return generateXlsx(req)
+    case "pptx":
+      return generatePptx(req)
+    case "pdf":
+      return generatePdf(req)
   }
-  recommendations?: string[]
-  alerts?: { level: string; message: string }[]
 }
 
-function createInvoiceDoc(invoice: InvoiceData): Document {
-  const d = invoice.data || {}
-  const items = d.items || []
+async function tryGeneratePreviewPdf(doc: GeneratedDocument, safeBaseName: string) {
+  if (doc.format === "pdf") {
+    return { previewUrl: `/documents/${safeBaseName}`, previewFilename: safeBaseName }
+  }
 
-  const headerRows = [
-    new TableRow({
-      children: [
-        new TableCell({
-          width: { size: 50, type: WidthType.PERCENTAGE },
-          borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
-          children: [
-            new Paragraph({ children: [new TextRun({ text: d.company_name || "[Votre entreprise]", bold: true, size: 28 })] }),
-            new Paragraph({ children: [new TextRun({ text: d.company_address || "[Adresse]", size: 20, color: "666666" })] }),
-            new Paragraph({ children: [new TextRun({ text: `SIRET: ${d.company_siret || "[A completer]"}`, size: 18, color: "888888" })] }),
-            new Paragraph({ children: [new TextRun({ text: `TVA: ${d.company_tva || "[A completer]"}`, size: 18, color: "888888" })] }),
-          ],
-        }),
-        new TableCell({
-          width: { size: 50, type: WidthType.PERCENTAGE },
-          borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } },
-          children: [
-            new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: "FACTURE", bold: true, size: 40, color: "4F46E5" })] }),
-            new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `N: ${d.invoice_number || "[Numero]"}`, size: 20 })] }),
-            new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `Date: ${d.invoice_date || new Date().toLocaleDateString("fr-FR")}`, size: 20 })] }),
-            new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `Echeance: ${d.due_date || "[A definir]"}`, size: 20 })] }),
-          ],
-        }),
-      ],
-    }),
-  ]
-
-  const clientSection = [
-    new Paragraph({ spacing: { before: 400 }, children: [new TextRun({ text: "FACTURER A :", bold: true, size: 20, color: "888888" })] }),
-    new Paragraph({ children: [new TextRun({ text: d.client_name || "[Nom du client]", bold: true, size: 24 })] }),
-    new Paragraph({ children: [new TextRun({ text: d.client_address || "[Adresse du client]", size: 20, color: "666666" })] }),
-    ...(d.client_siret ? [new Paragraph({ children: [new TextRun({ text: `SIRET: ${d.client_siret}`, size: 18, color: "888888" })] })] : []),
-  ]
-
-  const tableHeaderRow = new TableRow({
-    tableHeader: true,
-    children: ["Description", "Qte", "Prix unit. HT", "Montant HT"].map((text, i) =>
-      new TableCell({
-        width: { size: i === 0 ? 50 : 16, type: WidthType.PERCENTAGE },
-        shading: { fill: "F3F4F6" },
-        children: [new Paragraph({
-          alignment: i > 0 ? AlignmentType.RIGHT : AlignmentType.LEFT,
-          children: [new TextRun({ text, bold: true, size: 18, color: "374151" })],
-        })],
-      })
-    ),
-  })
-
-  const itemRows = items.length > 0
-    ? items.map(item => new TableRow({
-        children: [
-          new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: item.description, size: 20 })] })] }),
-          new TableCell({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: String(item.quantity), size: 20 })] })] }),
-          new TableCell({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `${item.unit_price.toFixed(2)} EUR`, size: 20 })] })] }),
-          new TableCell({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `${item.amount.toFixed(2)} EUR`, size: 20 })] })] }),
-        ],
-      }))
-    : [new TableRow({
-        children: [
-          new TableCell({ columnSpan: 4, children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "[Ajouter les lignes de facturation]", size: 20, color: "999999", italics: true })] })] }),
-        ],
-      })]
-
-  const totalsSection = [
-    new Paragraph({ spacing: { before: 300 }, alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `Total HT : ${(d.total_ht ?? 0).toFixed(2)} EUR`, size: 22 })] }),
-    new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `TVA (${d.tva_rate ?? 20}%) : ${(d.tva_amount ?? 0).toFixed(2)} EUR`, size: 22 })] }),
-    new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: `Total TTC : ${(d.total_ttc ?? 0).toFixed(2)} EUR`, bold: true, size: 28 })] }),
-  ]
-
-  const footerSection = [
-    new Paragraph({ spacing: { before: 600 }, children: [new TextRun({ text: `Conditions de paiement : ${d.payment_terms || "A 30 jours"}`, size: 18, color: "888888" })] }),
-    new Paragraph({ children: [new TextRun({ text: `Mode de paiement : ${d.payment_method || "Virement bancaire"}`, size: 18, color: "888888" })] }),
-    ...(d.iban ? [new Paragraph({ children: [new TextRun({ text: `IBAN : ${d.iban}`, size: 18, color: "888888" })] })] : []),
-    new Paragraph({ spacing: { before: 300 }, children: [new TextRun({ text: "En cas de retard de paiement, une penalite de 3 fois le taux d'interet legal sera appliquee, ainsi qu'une indemnite forfaitaire de 40 EUR pour frais de recouvrement (art. L.441-10 du Code de commerce).", size: 14, color: "AAAAAA" })] }),
-  ]
-
-  return new Document({
-    sections: [{
-      children: [
-        new Table({ rows: headerRows, width: { size: 100, type: WidthType.PERCENTAGE } }),
-        ...clientSection,
-        new Paragraph({ spacing: { before: 400 }, text: "" }),
-        new Table({ rows: [tableHeaderRow, ...itemRows], width: { size: 100, type: WidthType.PERCENTAGE } }),
-        ...totalsSection,
-        ...footerSection,
-      ],
-    }],
-  })
-}
-
-function createReportDoc(report: InvoiceData): Document {
-  const sections: Paragraph[] = [
-    new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun({ text: report.title || "Rapport", bold: true })] }),
-    new Paragraph({ spacing: { before: 200 }, children: [new TextRun({ text: report.data?.period ? `Periode : ${report.data.period}` : `Date : ${new Date().toLocaleDateString("fr-FR")}`, color: "666666" })] }),
-  ]
-
-  if (report.content) {
-    const lines = report.content.split("\n")
-    for (const line of lines) {
-      if (line.startsWith("# ")) {
-        sections.push(new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun({ text: line.replace("# ", "") })] }))
-      } else if (line.startsWith("## ")) {
-        sections.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: line.replace("## ", "") })] }))
-      } else if (line.startsWith("- ")) {
-        sections.push(new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: line.replace("- ", "") })] }))
-      } else if (line.trim()) {
-        sections.push(new Paragraph({ children: [new TextRun({ text: line })] }))
-      }
+  try {
+    const pdfBuffer = await convertToPdfWithLibreOffice(doc.buffer, doc.format)
+    const previewFilename = safeBaseName.replace(/\.(docx|xlsx|pptx)$/, ".preview.pdf")
+    await writeFile(path.join(DOCS_DIR, previewFilename), pdfBuffer)
+    return {
+      previewUrl: `/documents/${previewFilename}`,
+      previewFilename,
     }
+  } catch (err) {
+    console.error("[DOCUMENT] LibreOffice preview failed:", err)
+    return { previewUrl: null, previewFilename: null }
   }
-
-  if (report.recommendations && report.recommendations.length > 0) {
-    sections.push(new Paragraph({ spacing: { before: 400 }, heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "Recommandations" })] }))
-    for (const rec of report.recommendations) {
-      sections.push(new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: rec })] }))
-    }
-  }
-
-  return new Document({ sections: [{ children: sections }] })
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body: InvoiceData = await request.json()
+    const body: DocumentRequest = await request.json()
 
     if (!body.type) {
       return NextResponse.json({ error: "Type de document requis" }, { status: 400 })
     }
 
-    let doc: Document
-    let filename: string
-
-    switch (body.type) {
-      case "invoice":
-        doc = createInvoiceDoc(body)
-        filename = `facture-${body.data?.invoice_number || Date.now()}.docx`
-        break
-      case "monthly_report":
-      case "quarterly_report":
-      case "expense_analysis":
-      case "balance_sheet":
-      case "vat_check":
-        doc = createReportDoc(body)
-        filename = `${body.type}-${body.data?.period || Date.now()}.docx`
-        break
-      default:
-        doc = createReportDoc(body)
-        filename = `document-${Date.now()}.docx`
-    }
-
-    const buffer = await Packer.toBuffer(doc)
+    const format = resolveFormat(body)
+    const doc = await generateForFormat(format, body)
 
     if (!existsSync(DOCS_DIR)) {
       await mkdir(DOCS_DIR, { recursive: true })
     }
 
-    const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_")
-    await writeFile(path.join(DOCS_DIR, safeName), buffer)
+    const safeName = doc.filename.replace(/[^a-zA-Z0-9._-]/g, "_")
+    await writeFile(path.join(DOCS_DIR, safeName), doc.buffer)
+
+    const preview = await tryGeneratePreviewPdf(doc, safeName)
 
     return NextResponse.json({
       success: true,
       url: `/documents/${safeName}`,
       filename: safeName,
-      size: buffer.length,
+      size: doc.buffer.length,
+      format: doc.format,
+      mimeType: doc.mimeType,
+      previewUrl: preview.previewUrl,
+      previewFilename: preview.previewFilename,
     })
   } catch (error) {
     console.error("[DOCUMENT] Erreur generation:", error)

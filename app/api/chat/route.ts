@@ -197,10 +197,14 @@ export async function POST(request: NextRequest) {
       // Keep as string
     }
 
-    // Generate DOCX for structured documents (invoices, reports)
+    // Generate document (DOCX/XLSX/PPTX/PDF) for structured responses
     if (typeof responseContent === "object" && responseContent?.type) {
       const docType = responseContent.type as string
-      const docTypes = ["invoice", "monthly_report", "quarterly_report", "expense_analysis", "balance_sheet", "vat_check"]
+      const docTypes = [
+        "invoice", "monthly_report", "quarterly_report", "expense_analysis",
+        "balance_sheet", "vat_check", "presentation", "client_deck",
+        "pitch_deck", "contract", "certificate",
+      ]
       if (docTypes.includes(docType)) {
         try {
           const docRes = await fetch(`http://localhost:${process.env.PORT || "3000"}/api/document`, {
@@ -212,7 +216,9 @@ export async function POST(request: NextRequest) {
           if (docData.success) {
             responseContent.document_url = docData.url
             responseContent.document_filename = docData.filename
-            console.log(`[API] Document genere: ${docData.url}`)
+            responseContent.document_format = docData.format
+            responseContent.document_preview_url = docData.previewUrl
+            console.log(`[API] Document ${docData.format} genere: ${docData.url}`)
           }
         } catch (err) {
           console.error("[API] Erreur generation document:", err)
