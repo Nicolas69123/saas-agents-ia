@@ -9,16 +9,19 @@ interface DocxPreviewProps {
 }
 
 export default function DocxPreview({ url, filename, className }: DocxPreviewProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const inlineContainerRef = useRef<HTMLDivElement>(null)
+  const fullscreenContainerRef = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [expanded, setExpanded] = useState(false)
+  const [fullscreen, setFullscreen] = useState(false)
+  const [blobCache, setBlobCache] = useState<Blob | null>(null)
 
+  // Render in the inline container
   useEffect(() => {
     let cancelled = false
 
     const render = async () => {
-      if (!containerRef.current) return
+      if (!inlineContainerRef.current) return
 
       try {
         setLoading(true)
@@ -34,11 +37,12 @@ export default function DocxPreview({ url, filename, className }: DocxPreviewPro
         }
 
         const blob = await response.blob()
-        if (cancelled || !containerRef.current) return
+        if (cancelled || !inlineContainerRef.current) return
 
-        containerRef.current.innerHTML = ''
+        setBlobCache(blob)
+        inlineContainerRef.current.innerHTML = ''
 
-        await renderAsync(blob, containerRef.current, undefined, {
+        await renderAsync(blob, inlineContainerRef.current, undefined, {
           className: 'docx-rendered',
           inWrapper: true,
           ignoreWidth: false,
@@ -74,55 +78,140 @@ export default function DocxPreview({ url, filename, className }: DocxPreviewPro
     }
   }, [url])
 
+  // Render in fullscreen modal when opened
+  useEffect(() => {
+    if (!fullscreen || !blobCache || !fullscreenContainerRef.current) return
+
+    let cancelled = false
+    const render = async () => {
+      try {
+        const { renderAsync } = await import('docx-preview')
+        if (cancelled || !fullscreenContainerRef.current) return
+
+        fullscreenContainerRef.current.innerHTML = ''
+        await renderAsync(blobCache, fullscreenContainerRef.current, undefined, {
+          className: 'docx-rendered',
+          inWrapper: true,
+          breakPages: true,
+          ignoreLastRenderedPageBreak: true,
+        })
+      } catch (err) {
+        console.error('[DocxPreview] Erreur fullscreen:', err)
+      }
+    }
+
+    render()
+    return () => {
+      cancelled = true
+    }
+  }, [fullscreen, blobCache])
+
+  // Lock body scroll when fullscreen open
+  useEffect(() => {
+    if (fullscreen) {
+      const previousOverflow = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setFullscreen(false)
+      }
+      window.addEventListener('keydown', onKey)
+
+      return () => {
+        document.body.style.overflow = previousOverflow
+        window.removeEventListener('keydown', onKey)
+      }
+    }
+  }, [fullscreen])
+
   return (
-    <div className={`docx-preview-card ${className || ''}`}>
-      <div className="docx-toolbar">
-        <div className="docx-toolbar-left">
-          <div className="docx-icon">DOCX</div>
-          <div className="docx-meta">
-            <div className="docx-filename">{filename || 'Document'}</div>
-            <div className="docx-subtitle">Document Word</div>
+    <>
+      <div className={`docx-preview-card ${className || ''}`}>
+        <div className="docx-toolbar">
+          <div className="docx-toolbar-left">
+            <div className="docx-icon">DOCX</div>
+            <div className="docx-meta">
+              <div className="docx-filename">{filename || 'Document'}</div>
+              <div className="docx-subtitle">Document Word</div>
+            </div>
+          </div>
+          <div className="docx-toolbar-right">
+            <button
+              type="button"
+              className="docx-btn"
+              onClick={() => setFullscreen(true)}
+              aria-label="Plein ecran"
+            >
+              Plein ecran
+            </button>
+            <a
+              href={url}
+              download={filename}
+              className="docx-btn docx-btn-primary"
+            >
+              Telecharger
+            </a>
           </div>
         </div>
-        <div className="docx-toolbar-right">
-          <button
-            className="docx-btn"
-            onClick={() => setExpanded(!expanded)}
-            aria-label={expanded ? 'Reduire' : 'Agrandir'}
-          >
-            {expanded ? 'Reduire' : 'Plein ecran'}
-          </button>
-          <a
-            href={url}
-            download={filename}
-            className="docx-btn docx-btn-primary"
-          >
-            Telecharger
-          </a>
+
+        <div className="docx-preview-wrapper">
+          {loading && (
+            <div className="docx-loading">
+              <div className="docx-spinner" />
+              <span>Chargement du document...</span>
+            </div>
+          )}
+          {error && (
+            <div className="docx-error">
+              <p>Impossible de charger l&apos;apercu</p>
+              <span>{error}</span>
+              <a href={url} download={filename} className="docx-btn docx-btn-primary" style={{ marginTop: 12, display: 'inline-block' }}>
+                Telecharger directement
+              </a>
+            </div>
+          )}
+          <div
+            ref={inlineContainerRef}
+            className={`docx-container ${loading || error ? 'hidden' : ''}`}
+          />
         </div>
       </div>
 
-      <div className={`docx-preview-wrapper ${expanded ? 'expanded' : ''}`}>
-        {loading && (
-          <div className="docx-loading">
-            <div className="docx-spinner" />
-            <span>Chargement du document...</span>
+      {fullscreen && (
+        <div className="docx-fullscreen-overlay" onClick={() => setFullscreen(false)}>
+          <div className="docx-fullscreen-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="docx-fs-toolbar">
+              <div className="docx-toolbar-left">
+                <div className="docx-icon">DOCX</div>
+                <div className="docx-meta">
+                  <div className="docx-filename">{filename || 'Document'}</div>
+                  <div className="docx-subtitle">Apercu plein ecran</div>
+                </div>
+              </div>
+              <div className="docx-toolbar-right">
+                <a
+                  href={url}
+                  download={filename}
+                  className="docx-btn docx-btn-primary"
+                >
+                  Telecharger
+                </a>
+                <button
+                  type="button"
+                  className="docx-btn"
+                  onClick={() => setFullscreen(false)}
+                  aria-label="Fermer"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+            <div className="docx-fs-content">
+              <div ref={fullscreenContainerRef} className="docx-container" />
+            </div>
           </div>
-        )}
-        {error && (
-          <div className="docx-error">
-            <p>Impossible de charger l&apos;apercu</p>
-            <span>{error}</span>
-            <a href={url} download={filename} className="docx-btn docx-btn-primary" style={{ marginTop: 12, display: 'inline-block' }}>
-              Telecharger directement
-            </a>
-          </div>
-        )}
-        <div
-          ref={containerRef}
-          className={`docx-container ${loading || error ? 'hidden' : ''}`}
-        />
-      </div>
+        </div>
+      )}
 
       <style jsx>{`
         .docx-preview-card {
@@ -204,6 +293,8 @@ export default function DocxPreview({ url, filename, className }: DocxPreviewPro
           text-decoration: none;
           transition: all 0.15s ease;
           white-space: nowrap;
+          display: inline-flex;
+          align-items: center;
         }
 
         .docx-btn:hover {
@@ -226,11 +317,6 @@ export default function DocxPreview({ url, filename, className }: DocxPreviewPro
           overflow: auto;
           background: #525659;
           padding: 24px;
-          transition: max-height 0.3s ease;
-        }
-
-        .docx-preview-wrapper.expanded {
-          max-height: 90vh;
         }
 
         .docx-loading,
@@ -274,7 +360,6 @@ export default function DocxPreview({ url, filename, className }: DocxPreviewPro
           display: none;
         }
 
-        /* Custom styling for the Word-like page rendering */
         :global(.docx-rendered) {
           background: white;
           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
@@ -298,7 +383,67 @@ export default function DocxPreview({ url, filename, className }: DocxPreviewPro
         :global(.docx-rendered table th) {
           padding: 6px 10px;
         }
+
+        /* Fullscreen overlay */
+        .docx-fullscreen-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.85);
+          z-index: 9999;
+          display: flex;
+          align-items: stretch;
+          justify-content: stretch;
+          backdrop-filter: blur(4px);
+          animation: docx-fade-in 0.2s ease;
+        }
+
+        @keyframes docx-fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .docx-fullscreen-panel {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          background: #525659;
+          margin: 24px;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .docx-fs-toolbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 14px 20px;
+          background: #2d2d2d;
+          border-bottom: 1px solid #444;
+          gap: 12px;
+        }
+
+        .docx-fs-toolbar .docx-filename {
+          color: white;
+        }
+
+        .docx-fs-toolbar .docx-subtitle {
+          color: #aaa;
+        }
+
+        .docx-fs-content {
+          flex: 1;
+          overflow: auto;
+          padding: 32px 16px;
+        }
+
+        @media (max-width: 768px) {
+          .docx-fullscreen-panel {
+            margin: 0;
+            border-radius: 0;
+          }
+        }
       `}</style>
-    </div>
+    </>
   )
 }
