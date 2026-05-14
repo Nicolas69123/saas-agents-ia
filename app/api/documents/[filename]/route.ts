@@ -9,6 +9,7 @@ const MIME_BY_EXT: Record<string, string> = {
   ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   ".pdf": "application/pdf",
+  ".html": "text/html; charset=utf-8",
 }
 
 export async function GET(

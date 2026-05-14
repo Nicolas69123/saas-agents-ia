@@ -6,7 +6,10 @@ import { generateDocx } from "@/lib/documents/docx"
 import { generateXlsx } from "@/lib/documents/xlsx"
 import { generatePptx } from "@/lib/documents/pptx"
 import { generatePdf, convertToPdfWithLibreOffice } from "@/lib/documents/pdf"
+import { renderRevealHtml } from "@/lib/documents/reveal"
 import type { DocumentRequest, GeneratedDocument } from "@/lib/documents/types"
+
+const PRESENTATION_TYPES = new Set(["presentation", "client_deck", "pitch_deck"])
 
 const DOCS_DIR = path.join(process.cwd(), "public", "documents")
 
@@ -72,12 +75,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Type de document requis" }, { status: 400 })
     }
 
-    const format = resolveFormat(body)
-    const doc = await generateForFormat(format, body)
-
     if (!existsSync(DOCS_DIR)) {
       await mkdir(DOCS_DIR, { recursive: true })
     }
+
+    // Special handling for presentations: generate reveal.js HTML AND a downloadable PPTX
+    if (PRESENTATION_TYPES.has(body.type)) {
+      const html = renderRevealHtml(body)
+      const baseName = `presentation-${(body.data?.period || "").replace(/\s+/g, "-") || Date.now()}`
+      const safeBase = baseName.replace(/[^a-zA-Z0-9._-]/g, "_")
+      const htmlFilename = `${safeBase}.html`
+
+      await writeFile(path.join(DOCS_DIR, htmlFilename), html, "utf-8")
+
+      // Also generate the PPTX for download
+      const pptxDoc = await generatePptx(body)
+      const pptxFilename = `${safeBase}.pptx`
+      await writeFile(path.join(DOCS_DIR, pptxFilename), pptxDoc.buffer)
+
+      return NextResponse.json({
+        success: true,
+        url: `/api/documents/${htmlFilename}`,
+        filename: htmlFilename,
+        size: Buffer.byteLength(html, "utf-8"),
+        format: "html",
+        mimeType: "text/html",
+        previewUrl: `/api/documents/${htmlFilename}`,
+        previewFilename: htmlFilename,
+        downloadUrl: `/api/documents/${pptxFilename}`,
+        downloadFilename: pptxFilename,
+      })
+    }
+
+    const format = resolveFormat(body)
+    const doc = await generateForFormat(format, body)
 
     const safeName = doc.filename.replace(/[^a-zA-Z0-9._-]/g, "_")
     await writeFile(path.join(DOCS_DIR, safeName), doc.buffer)

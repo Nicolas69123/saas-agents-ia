@@ -137,8 +137,10 @@ interface Message {
   videoUrl?: string
   documentUrl?: string
   documentFilename?: string
-  documentFormat?: 'docx' | 'xlsx' | 'pptx' | 'pdf'
+  documentFormat?: 'docx' | 'xlsx' | 'pptx' | 'pdf' | 'html'
   documentPreviewUrl?: string | null
+  documentDownloadUrl?: string
+  documentDownloadFilename?: string
   socialPost?: SocialPostContent
 }
 
@@ -532,6 +534,8 @@ function ChatPageContent() {
       const documentFilename = typeof rawResponse === 'object' ? rawResponse?.document_filename : undefined
       const documentFormat = typeof rawResponse === 'object' ? rawResponse?.document_format : undefined
       const documentPreviewUrl = typeof rawResponse === 'object' ? rawResponse?.document_preview_url : undefined
+      const documentDownloadUrl = typeof rawResponse === 'object' ? rawResponse?.document_download_url : undefined
+      const documentDownloadFilename = typeof rawResponse === 'object' ? rawResponse?.document_download_filename : undefined
 
       const aiMessage: Message = {
         id: generateUUID(),
@@ -544,6 +548,8 @@ function ChatPageContent() {
         documentFilename,
         documentFormat,
         documentPreviewUrl,
+        documentDownloadUrl,
+        documentDownloadFilename,
         socialPost: cleanedSocialPost
       }
 
@@ -877,6 +883,8 @@ function ChatPageContent() {
                             filename={message.documentFilename}
                             format={message.documentFormat}
                             previewUrl={message.documentPreviewUrl}
+                            downloadUrl={message.documentDownloadUrl}
+                            downloadFilename={message.documentDownloadFilename}
                           />
                         )}
                       </>

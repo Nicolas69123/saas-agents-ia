@@ -6,13 +6,15 @@ import dynamic from 'next/dynamic'
 
 const XlsxViewer = dynamic(() => import('./XlsxViewer'), { ssr: false })
 
-export type DocumentFormat = 'docx' | 'xlsx' | 'pptx' | 'pdf'
+export type DocumentFormat = 'docx' | 'xlsx' | 'pptx' | 'pdf' | 'html'
 
 interface DocumentPreviewProps {
   url: string
   filename?: string
   format?: DocumentFormat
   previewUrl?: string | null
+  downloadUrl?: string
+  downloadFilename?: string
 }
 
 const FORMAT_META: Record<DocumentFormat, { label: string; subtitle: string; gradient: string }> = {
@@ -20,16 +22,17 @@ const FORMAT_META: Record<DocumentFormat, { label: string; subtitle: string; gra
   xlsx: { label: 'XLSX', subtitle: 'Tableur Excel', gradient: 'linear-gradient(135deg, #047857 0%, #10B981 100%)' },
   pptx: { label: 'PPTX', subtitle: 'Presentation PowerPoint', gradient: 'linear-gradient(135deg, #DC2626 0%, #F97316 100%)' },
   pdf: { label: 'PDF', subtitle: 'Document PDF', gradient: 'linear-gradient(135deg, #B91C1C 0%, #EF4444 100%)' },
+  html: { label: 'SLIDES', subtitle: 'Presentation interactive', gradient: 'linear-gradient(135deg, #7C3AED 0%, #A855F7 100%)' },
 }
 
 function detectFormat(filename?: string, format?: DocumentFormat): DocumentFormat {
   if (format) return format
   const ext = filename?.split('.').pop()?.toLowerCase()
-  if (ext === 'docx' || ext === 'xlsx' || ext === 'pptx' || ext === 'pdf') return ext
+  if (ext === 'docx' || ext === 'xlsx' || ext === 'pptx' || ext === 'pdf' || ext === 'html') return ext as DocumentFormat
   return 'docx'
 }
 
-export default function DocumentPreview({ url, filename, format, previewUrl }: DocumentPreviewProps) {
+export default function DocumentPreview({ url, filename, format, previewUrl, downloadUrl, downloadFilename }: DocumentPreviewProps) {
   const inlineContainerRef = useRef<HTMLDivElement>(null)
   const fullscreenContainerRef = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
@@ -39,7 +42,9 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
 
   const resolvedFormat = detectFormat(filename, format)
   const meta = FORMAT_META[resolvedFormat]
-  const effectivePreviewUrl = previewUrl || (resolvedFormat === 'pdf' ? url : null)
+  const effectivePreviewUrl = previewUrl || ((resolvedFormat === 'pdf' || resolvedFormat === 'html') ? url : null)
+  const finalDownloadUrl = downloadUrl || url
+  const finalDownloadFilename = downloadFilename || filename
 
   // DOCX: render via docx-preview, no LibreOffice needed
   useEffect(() => {
@@ -155,11 +160,13 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
     }
 
     if (effectivePreviewUrl && !error) {
+      const isPresentation = resolvedFormat === 'html'
       return (
         <iframe
           src={effectivePreviewUrl}
-          className="doc-iframe"
+          className={`doc-iframe ${isPresentation ? 'doc-iframe-presentation' : ''}`}
           title={filename || 'Document'}
+          allow="autoplay; fullscreen"
         />
       )
     }
@@ -180,6 +187,7 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
           src={effectivePreviewUrl}
           className="doc-iframe fs"
           title={filename || 'Document'}
+          allow="autoplay; fullscreen"
         />
       )
     }
@@ -208,13 +216,13 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
                 Plein ecran
               </button>
             )}
-            <a href={url} download={filename} className="doc-btn doc-btn-primary">
+            <a href={finalDownloadUrl} download={finalDownloadFilename} className="doc-btn doc-btn-primary">
               Telecharger
             </a>
           </div>
         </div>
 
-        <div className={`doc-preview-wrapper ${resolvedFormat === 'pdf' ? 'pdf-bg' : ''}`}>
+        <div className={`doc-preview-wrapper ${resolvedFormat === 'pdf' ? 'pdf-bg' : ''} ${resolvedFormat === 'html' ? 'html-bg' : ''}`}>
           {/* Always render the container so the ref is available */}
           <div style={{ visibility: loading || error ? 'hidden' : 'visible', minHeight: loading || error ? 0 : 'auto' }}>
             {renderInlinePreview()}
@@ -229,7 +237,7 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
             <div className="doc-error-overlay">
               <p>{error === 'Apercu non disponible' ? 'Apercu non disponible' : 'Impossible de charger l\'apercu'}</p>
               {error !== 'Apercu non disponible' && <span>{error}</span>}
-              <a href={url} download={filename} className="doc-btn doc-btn-primary" style={{ marginTop: 12, display: 'inline-block' }}>
+              <a href={finalDownloadUrl} download={finalDownloadFilename} className="doc-btn doc-btn-primary" style={{ marginTop: 12, display: 'inline-block' }}>
                 Telecharger
               </a>
             </div>
@@ -249,7 +257,7 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
                 </div>
               </div>
               <div className="doc-toolbar-right">
-                <a href={url} download={filename} className="doc-btn doc-btn-primary">
+                <a href={finalDownloadUrl} download={finalDownloadFilename} className="doc-btn doc-btn-primary">
                   Telecharger
                 </a>
                 <button type="button" className="doc-btn" onClick={() => setFullscreen(false)}>
@@ -361,6 +369,10 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
         }
 
         .doc-preview-wrapper.pdf-bg { padding: 0; }
+        .doc-preview-wrapper.html-bg {
+          background: linear-gradient(135deg, #1F2937 0%, #111827 100%);
+          padding: 20px;
+        }
 
         .doc-loading-overlay, .doc-error-overlay {
           position: absolute;
@@ -405,6 +417,13 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
           border: none;
           background: white;
           display: block;
+        }
+
+        .doc-iframe-presentation {
+          height: 540px;
+          background: #000;
+          border-radius: 8px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.4);
         }
 
         .doc-iframe.fs { height: 100%; }

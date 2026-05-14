@@ -218,6 +218,10 @@ export async function POST(request: NextRequest) {
             responseContent.document_filename = docData.filename
             responseContent.document_format = docData.format
             responseContent.document_preview_url = docData.previewUrl
+            if (docData.downloadUrl) {
+              responseContent.document_download_url = docData.downloadUrl
+              responseContent.document_download_filename = docData.downloadFilename
+            }
             console.log(`[API] Document ${docData.format} genere: ${docData.url}`)
           }
         } catch (err) {
