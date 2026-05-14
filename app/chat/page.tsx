@@ -142,6 +142,8 @@ interface Message {
   documentDownloadUrl?: string
   documentDownloadFilename?: string
   socialPost?: SocialPostContent
+  status?: 'pending' | 'done' | 'error'
+  serverMessageId?: string
 }
 
 interface Conversation {
@@ -249,6 +251,61 @@ function ChatPageContent() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [currentConversation?.messages])
 
+  // Resume polling for pending messages on mount or conversation switch
+  useEffect(() => {
+    if (!currentConversation) return
+    const pendingMessages = currentConversation.messages.filter((m) => m.status === 'pending' && m.serverMessageId)
+    if (pendingMessages.length === 0) return
+
+    const intervals: ReturnType<typeof setInterval>[] = []
+    for (const pm of pendingMessages) {
+      let attempts = 0
+      const maxAttempts = 90
+      const interval = setInterval(async () => {
+        attempts++
+        try {
+          const res = await fetch(`/api/chat?messageId=${encodeURIComponent(pm.serverMessageId!)}`)
+          if (!res.ok) return
+          const data = await res.json()
+          if (data.status === 'done' || data.status === 'error') {
+            clearInterval(interval)
+            const parsed: Message = data.status === 'error'
+              ? { id: pm.id, role: 'assistant', content: data.response || `Erreur: ${data.error}`, timestamp: new Date(), status: 'error' }
+              : parseAgentResponse(data.response, pm.id)
+            parsed.serverMessageId = pm.serverMessageId
+
+            setConversations((prev) => {
+              const updated = prev.map((c) => {
+                if (c.id !== currentConversation.id) return c
+                return { ...c, messages: c.messages.map((m) => m.id === pm.id ? parsed : m) }
+              })
+              saveAgentConversations(selectedAgent.id, updated)
+              return updated
+            })
+            setCurrentConversation((cur) => {
+              if (!cur || cur.id !== currentConversation.id) return cur
+              return { ...cur, messages: cur.messages.map((m) => m.id === pm.id ? parsed : m) }
+            })
+            setIsLoading(false)
+          }
+        } catch (err) {
+          console.error('[RESUME POLL] error:', err)
+        }
+
+        if (attempts >= maxAttempts) {
+          clearInterval(interval)
+          setIsLoading(false)
+        }
+      }, 2000)
+      intervals.push(interval)
+    }
+
+    return () => {
+      for (const i of intervals) clearInterval(i)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentConversation?.id])
+
   const handleAgentChange = (agent: typeof agents[0]) => {
     // Save current agent's conversations before switching
     if (selectedAgent.id !== agent.id) {
@@ -319,6 +376,122 @@ function ChatPageContent() {
     saveCurrentConvId(selectedAgent.id, conv.id)
   }
 
+  // Parse an agent response (raw text or structured JSON) into a Message
+  const parseAgentResponse = (rawResponse: unknown, messageId: string): Message => {
+    let responseText: string
+    let imageUrl: string | undefined
+    let videoUrl: string | undefined
+    let socialPost: SocialPostContent | undefined
+
+    if (typeof rawResponse === 'object' && rawResponse !== null) {
+      const r = rawResponse as Record<string, unknown> & { type_contenu?: string; response?: string; post_content?: { text?: string } }
+      if (r.type_contenu === 'conversation' && r.response) {
+        responseText = r.response
+      } else if (r.type_contenu === 'social_post' && r.post_content) {
+        socialPost = rawResponse as SocialPostContent
+        responseText = (r.post_content?.text as string) || 'Post social genere !'
+      } else {
+        const hasDocument = !!r.document_url
+
+        if (hasDocument && r.title) {
+          responseText = `Voici **${r.title}** :`
+          if (Array.isArray(r.recommendations) && r.recommendations.length > 0) {
+            responseText += '\n\n**Recommandations :**\n' + (r.recommendations as string[]).map((rc: string) => `- ${rc}`).join('\n')
+          }
+          if (Array.isArray(r.alerts) && r.alerts.length > 0) {
+            responseText += '\n\n**Alertes :**\n' + (r.alerts as { level: string; message: string }[]).map((a) => `- [${a.level}] ${a.message}`).join('\n')
+          }
+        } else {
+          responseText = (r.response as string) || (r.content as string) || (r.description as string) || (r.prompt_ameliore as string) || ''
+          if (r.title && responseText) {
+            responseText = `**${r.title}**\n\n${responseText}`
+          }
+        }
+
+        if (!responseText) responseText = 'Contenu genere !'
+        if (Array.isArray(r.hashtags)) {
+          responseText += '\n\n' + (r.hashtags as string[]).join(' ')
+        }
+      }
+
+      if (r.image_url) imageUrl = r.image_url as string
+      else if (r.image_base64) imageUrl = `data:${(r.mimeType as string) || 'image/png'};base64,${r.image_base64}`
+
+      if (r.video_local_url) videoUrl = r.video_local_url as string
+
+      return {
+        id: messageId,
+        role: 'assistant',
+        content: responseText,
+        timestamp: new Date(),
+        imageUrl,
+        videoUrl,
+        documentUrl: r.document_url as string | undefined,
+        documentFilename: r.document_filename as string | undefined,
+        documentFormat: r.document_format as Message['documentFormat'],
+        documentPreviewUrl: r.document_preview_url as string | null | undefined,
+        documentDownloadUrl: r.document_download_url as string | undefined,
+        documentDownloadFilename: r.document_download_filename as string | undefined,
+        socialPost: socialPost,
+        status: 'done',
+      }
+    }
+
+    return {
+      id: messageId,
+      role: 'assistant',
+      content: typeof rawResponse === 'string' ? rawResponse : 'Reponse vide',
+      timestamp: new Date(),
+      status: 'done',
+    }
+  }
+
+  // Poll a pending message until it's done
+  const pollMessageStatus = (serverMessageId: string, localMessageId: string, convId: string) => {
+    let attempts = 0
+    const maxAttempts = 90 // 90 * 2s = 3min max
+    const interval = setInterval(async () => {
+      attempts++
+      try {
+        const res = await fetch(`/api/chat?messageId=${encodeURIComponent(serverMessageId)}`)
+        if (!res.ok) return
+
+        const data = await res.json()
+        if (data.status === 'done' || data.status === 'error') {
+          clearInterval(interval)
+          const parsed: Message = data.status === 'error'
+            ? { id: localMessageId, role: 'assistant', content: data.response || `Erreur: ${data.error}`, timestamp: new Date(), status: 'error' }
+            : parseAgentResponse(data.response, localMessageId)
+          parsed.serverMessageId = serverMessageId
+
+          setConversations((prev) => {
+            const updated = prev.map((c) => {
+              if (c.id !== convId) return c
+              return {
+                ...c,
+                messages: c.messages.map((m) => m.id === localMessageId ? parsed : m),
+              }
+            })
+            saveAgentConversations(selectedAgent.id, updated)
+            return updated
+          })
+          setCurrentConversation((cur) => {
+            if (!cur || cur.id !== convId) return cur
+            return { ...cur, messages: cur.messages.map((m) => m.id === localMessageId ? parsed : m) }
+          })
+          setIsLoading(false)
+        }
+      } catch (err) {
+        console.error('[POLL] error:', err)
+      }
+
+      if (attempts >= maxAttempts) {
+        clearInterval(interval)
+        setIsLoading(false)
+      }
+    }, 2000)
+  }
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !currentConversation) return
 
@@ -329,9 +502,18 @@ function ChatPageContent() {
       timestamp: new Date()
     }
 
+    const pendingId = generateUUID()
+    const pendingMessage: Message = {
+      id: pendingId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      status: 'pending',
+    }
+
     const updatedConv = {
       ...currentConversation,
-      messages: [...currentConversation.messages, userMessage],
+      messages: [...currentConversation.messages, userMessage, pendingMessage],
       title: currentConversation.messages.length <= 1 ? inputValue.slice(0, 30) + (inputValue.length > 30 ? '...' : '') : currentConversation.title,
       preview: inputValue.slice(0, 40)
     }
@@ -339,37 +521,51 @@ function ChatPageContent() {
     setCurrentConversation(updatedConv)
     const updatedConversations = conversations.map(c => c.id === updatedConv.id ? updatedConv : c)
     setConversations(updatedConversations)
+    const currentInput = inputValue
     setInputValue('')
     setIsLoading(true)
 
-    // Save to localStorage immediately after user message
     saveAgentConversations(selectedAgent.id, updatedConversations)
 
-    // Resize textarea
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
     }
 
-    // Call n8n API via backend - envoyer l'historique pour le contexte
     try {
-      // Préparer l'historique des messages (sans les images base64 pour réduire la taille)
-      const chatHistory = updatedConv.messages.slice(-10).map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }))
-
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           agentId: selectedAgent.agentId,
-          message: inputValue,
+          message: currentInput,
           conversationId: currentConversation.id,
           userId: (user as Record<string, unknown>)?.id || 'anonymous',
         }),
       })
 
       const data = await response.json()
+
+      // New async flow: start polling
+      if (data.status === 'pending' && data.messageId) {
+        // Save serverMessageId on the pending message for refresh-recovery
+        const enrichedPending = { ...pendingMessage, serverMessageId: data.messageId }
+        setConversations((prev) => {
+          const updated = prev.map((c) => {
+            if (c.id !== updatedConv.id) return c
+            return { ...c, messages: c.messages.map((m) => m.id === pendingId ? enrichedPending : m) }
+          })
+          saveAgentConversations(selectedAgent.id, updated)
+          return updated
+        })
+        setCurrentConversation((cur) => {
+          if (!cur || cur.id !== updatedConv.id) return cur
+          return { ...cur, messages: cur.messages.map((m) => m.id === pendingId ? enrichedPending : m) }
+        })
+        pollMessageStatus(data.messageId, pendingId, updatedConv.id)
+        return
+      }
+
+      // Legacy sync flow (fallback - kept for compatibility)
 
       // Extraire le texte de la réponse (peut être un objet structuré ou une string)
       let responseText: string
@@ -841,6 +1037,15 @@ function ChatPageContent() {
                           }
                         }}
                       />
+                    ) : message.status === 'pending' ? (
+                      <div className="msg-pending">
+                        <div className="msg-typing-indicator">
+                          <span></span>
+                          <span></span>
+                          <span></span>
+                        </div>
+                        <span className="msg-pending-text">Generation en cours...</span>
+                      </div>
                     ) : (
                       <>
                         <div className="markdown-content">
@@ -968,6 +1173,36 @@ function ChatPageContent() {
       </main>
 
       <style jsx>{`
+        .msg-pending {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 6px 0;
+        }
+        .msg-pending-text {
+          font-size: 0.9rem;
+          color: var(--text-secondary, #6b7280);
+          font-style: italic;
+        }
+        .msg-typing-indicator {
+          display: flex;
+          gap: 5px;
+          align-items: center;
+        }
+        .msg-typing-indicator span {
+          width: 8px;
+          height: 8px;
+          background: var(--accent, #4F46E5);
+          border-radius: 50%;
+          animation: typing-bounce 1.2s infinite ease-in-out;
+        }
+        .msg-typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
+        .msg-typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+        @keyframes typing-bounce {
+          0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+          30% { transform: translateY(-6px); opacity: 1; }
+        }
+
         .chat-app {
           display: flex;
           height: calc(100vh - 72px);

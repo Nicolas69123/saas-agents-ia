@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { execFile } from "child_process"
-import { promisify } from "util"
 import { writeFile, mkdir } from "fs/promises"
 import { existsSync } from "fs"
 import path from "path"
 import { Pool } from "pg"
 import { randomUUID } from "crypto"
-
-const execFileAsync = promisify(execFile)
 
 const pool = new Pool({
   host: process.env.PG_HOST || "localhost",
@@ -32,15 +29,12 @@ const AGENTS_BASE = process.env.AGENTS_BASE || "/home/webmaster/omnia-agents"
 const CLAUDE_BIN = process.env.CLAUDE_BIN || "/home/webmaster/.npm-global/bin/claude"
 const SESSION_TIMEOUT_MS = 60 * 60 * 1000
 
-// --- Session Dispatcher ---
-
 interface SessionInfo {
   sessionId: string
   conversationId: string
   lastActivity: number
 }
 
-// In-memory session index: "userId:agentId:conversationId" -> SessionInfo
 const activeSessions = new Map<string, SessionInfo>()
 
 function getSessionKey(userId: string, agentId: string, conversationId: string): string {
@@ -51,57 +45,11 @@ function isSessionExpired(session: SessionInfo): boolean {
   return Date.now() - session.lastActivity > SESSION_TIMEOUT_MS
 }
 
-async function dispatch(
-  agentId: string,
-  agentDir: string,
-  message: string,
-  userId: string,
-  conversationId: string | null
-): Promise<{ response: string; conversationId: string; sessionId: string }> {
-
-  const agentPath = `${AGENTS_BASE}/${agentDir}`
-
-  // Resolve or create conversation (always upsert to ensure FK exists)
-  const convId = conversationId || `conv-${Date.now()}-${randomUUID().slice(0, 8)}`
-  await pool.query(
-    "INSERT INTO conversations (id, agent_id, user_id, title) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING",
-    [convId, agentId, userId, message.substring(0, 50)]
-  )
-
-  // Save user message
-  await pool.query(
-    "INSERT INTO messages (id, conversation_id, role, content) VALUES ($1, $2, $3, $4)",
-    [`msg-${Date.now()}-${randomUUID().slice(0, 8)}`, convId, "user", message]
-  )
-
-  // Session lookup
-  const sessionKey = getSessionKey(userId, agentId, convId)
-  let session = activeSessions.get(sessionKey)
-
-  let claudeArgs: string[]
-
-  if (session && !isSessionExpired(session)) {
-    // Resume existing session
-    claudeArgs = ["-p", "--resume", session.sessionId, message]
-    console.log(`[DISPATCH] Resume session ${session.sessionId} for ${agentDir}`)
-  } else {
-    // Create new session
-    const newSessionId = randomUUID()
-    session = {
-      sessionId: newSessionId,
-      conversationId: convId,
-      lastActivity: Date.now(),
-    }
-    activeSessions.set(sessionKey, session)
-    claudeArgs = ["-p", "--model", "haiku", "--session-id", newSessionId, message]
-    console.log(`[DISPATCH] New session ${newSessionId} for ${agentDir}`)
-  }
-
-  // Call claude -p (redirect stdin to /dev/null to avoid "no stdin" warning)
-  const { stdout, stderr } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
-    const child = execFile(CLAUDE_BIN, claudeArgs, {
+function callClaude(args: string[], agentPath: string): Promise<{ stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    const child = execFile(CLAUDE_BIN, args, {
       cwd: agentPath,
-      timeout: 120000,
+      timeout: 180000,
       maxBuffer: 1024 * 1024 * 5,
       env: {
         ...process.env,
@@ -114,82 +62,52 @@ async function dispatch(
     })
     child.stdin?.end()
   })
-
-  if (stderr) {
-    console.error(`[DISPATCH] stderr ${agentDir}:`, stderr.substring(0, 200))
-  }
-
-  // Update session activity
-  session.lastActivity = Date.now()
-  activeSessions.set(sessionKey, session)
-
-  const rawResponse = stdout.trim()
-
-  // Save assistant message
-  await pool.query(
-    "INSERT INTO messages (id, conversation_id, role, content, metadata) VALUES ($1, $2, $3, $4, $5)",
-    [
-      `msg-${Date.now()}-${randomUUID().slice(0, 8)}`,
-      convId,
-      "assistant",
-      rawResponse,
-      JSON.stringify({ agentId, agentDir, sessionId: session.sessionId }),
-    ]
-  )
-
-  await pool.query("UPDATE conversations SET updated_at = NOW() WHERE id = $1", [convId])
-
-  return {
-    response: rawResponse,
-    conversationId: convId,
-    sessionId: session.sessionId,
-  }
 }
 
-// --- Cleanup expired sessions periodically ---
-setInterval(() => {
-  const keys = Array.from(activeSessions.keys())
-  for (const key of keys) {
-    const session = activeSessions.get(key)!
-    if (isSessionExpired(session)) {
-      console.log(`[CLEANUP] Archiving session ${session.sessionId}`)
-      activeSessions.delete(key)
-    }
-  }
-}, 5 * 60 * 1000)
+async function processAssistantMessage(params: {
+  messageId: string
+  agentId: string
+  agentDir: string
+  message: string
+  userId: string
+  conversationId: string
+}) {
+  const { messageId, agentId, agentDir, message, userId, conversationId } = params
+  const agentPath = `${AGENTS_BASE}/${agentDir}`
 
-// --- API Route ---
-
-export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { agentId, message, conversationId, userId } = body
+    // Session lookup
+    const sessionKey = getSessionKey(userId, agentId, conversationId)
+    let session = activeSessions.get(sessionKey)
+    let claudeArgs: string[]
 
-    if (!agentId || !message) {
-      return NextResponse.json({ error: "agentId et message requis" }, { status: 400 })
+    if (session && !isSessionExpired(session)) {
+      claudeArgs = ["-p", "--resume", session.sessionId, message]
+      console.log(`[DISPATCH] Resume session ${session.sessionId} for ${agentDir}`)
+    } else {
+      const newSessionId = randomUUID()
+      session = {
+        sessionId: newSessionId,
+        conversationId,
+        lastActivity: Date.now(),
+      }
+      activeSessions.set(sessionKey, session)
+      claudeArgs = ["-p", "--model", "haiku", "--session-id", newSessionId, message]
+      console.log(`[DISPATCH] New session ${newSessionId} for ${agentDir}`)
     }
 
-    const agentDir = AGENT_DIRS[agentId]
-    if (!agentDir) {
-      return NextResponse.json({ error: `Agent inconnu: ${agentId}` }, { status: 400 })
-    }
+    const { stdout, stderr } = await callClaude(claudeArgs, agentPath)
+    if (stderr) console.error(`[DISPATCH] stderr ${agentDir}:`, stderr.substring(0, 200))
 
-    const effectiveUserId = userId || "anonymous"
+    session.lastActivity = Date.now()
+    activeSessions.set(sessionKey, session)
 
-    console.log(`[API] ${effectiveUserId} -> ${agentDir}: ${message.substring(0, 80)}...`)
-
-    const result = await dispatch(
-      agentId,
-      agentDir,
-      message,
-      effectiveUserId,
-      conversationId || null
-    )
+    const rawResponse = stdout.trim()
 
     // Parse JSON if agent returned structured data
-    let responseContent: string | Record<string, unknown> = result.response
+    let responseContent: string | Record<string, unknown> = rawResponse
     try {
-      const jsonMatch = result.response.match(/```json\n?([\s\S]*?)```/)
+      const jsonMatch = rawResponse.match(/```json\n?([\s\S]*?)```/)
       if (jsonMatch) {
         responseContent = JSON.parse(jsonMatch[1].trim())
       }
@@ -197,7 +115,7 @@ export async function POST(request: NextRequest) {
       // Keep as string
     }
 
-    // Generate document (DOCX/XLSX/PPTX/PDF) for structured responses
+    // Generate document if structured response with a document type
     if (typeof responseContent === "object" && responseContent?.type) {
       const docType = responseContent.type as string
       const docTypes = [
@@ -237,9 +155,7 @@ export async function POST(request: NextRequest) {
         const ext = (responseContent.mimeType as string)?.includes("jpeg") ? "jpg" : "png"
         const filename = `generated-${Date.now()}.${ext}`
         const mediaDir = path.join(process.cwd(), "public", "media")
-        if (!existsSync(mediaDir)) {
-          await mkdir(mediaDir, { recursive: true })
-        }
+        if (!existsSync(mediaDir)) await mkdir(mediaDir, { recursive: true })
         await writeFile(path.join(mediaDir, filename), imageBuffer)
         responseContent.image_url = `/media/${filename}`
         delete responseContent.image_base64
@@ -248,21 +164,173 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      response: responseContent,
-      agentId,
-      conversationId: result.conversationId,
-      sessionId: result.sessionId,
-    })
+    const finalContent = typeof responseContent === "string"
+      ? responseContent
+      : JSON.stringify(responseContent)
+
+    // Update the pending message in DB to "done"
+    await pool.query(
+      `UPDATE messages
+       SET content = $1,
+           metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb
+       WHERE id = $3`,
+      [
+        finalContent,
+        JSON.stringify({ agentId, agentDir, sessionId: session.sessionId, status: "done" }),
+        messageId,
+      ]
+    )
+
+    await pool.query("UPDATE conversations SET updated_at = NOW() WHERE id = $1", [conversationId])
+    console.log(`[API] Message ${messageId} completed`)
   } catch (error: unknown) {
     const err = error as Error & { stderr?: string }
-    console.error("[API] Erreur:", err.message)
+    console.error(`[API] Message ${messageId} failed:`, err.message)
 
+    await pool.query(
+      `UPDATE messages
+       SET content = $1,
+           metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb
+       WHERE id = $3`,
+      [
+        `L'agent a rencontre une erreur.\n\n(${err.message?.substring(0, 200)})`,
+        JSON.stringify({ status: "error", error: err.message?.substring(0, 500) }),
+        messageId,
+      ]
+    )
+  }
+}
+
+// Cleanup expired sessions
+setInterval(() => {
+  const keys = Array.from(activeSessions.keys())
+  for (const key of keys) {
+    const session = activeSessions.get(key)!
+    if (isSessionExpired(session)) {
+      console.log(`[CLEANUP] Archiving session ${session.sessionId}`)
+      activeSessions.delete(key)
+    }
+  }
+}, 5 * 60 * 1000)
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { agentId, message, conversationId, userId } = body
+
+    if (!agentId || !message) {
+      return NextResponse.json({ error: "agentId et message requis" }, { status: 400 })
+    }
+
+    const agentDir = AGENT_DIRS[agentId]
+    if (!agentDir) {
+      return NextResponse.json({ error: `Agent inconnu: ${agentId}` }, { status: 400 })
+    }
+
+    const effectiveUserId = userId || "anonymous"
+    const convId = conversationId || `conv-${Date.now()}-${randomUUID().slice(0, 8)}`
+
+    console.log(`[API] ${effectiveUserId} -> ${agentDir}: ${message.substring(0, 80)}...`)
+
+    // 1. Upsert conversation
+    await pool.query(
+      "INSERT INTO conversations (id, agent_id, user_id, title) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO NOTHING",
+      [convId, agentId, effectiveUserId, message.substring(0, 50)]
+    )
+
+    // 2. Save user message
+    const userMsgId = `msg-${Date.now()}-${randomUUID().slice(0, 8)}`
+    await pool.query(
+      "INSERT INTO messages (id, conversation_id, role, content) VALUES ($1, $2, $3, $4)",
+      [userMsgId, convId, "user", message]
+    )
+
+    // 3. Create pending assistant message
+    const assistantMsgId = `msg-${Date.now()}-${randomUUID().slice(0, 8)}-pending`
+    await pool.query(
+      "INSERT INTO messages (id, conversation_id, role, content, metadata) VALUES ($1, $2, $3, $4, $5)",
+      [
+        assistantMsgId,
+        convId,
+        "assistant",
+        "",
+        JSON.stringify({ status: "pending", agentId }),
+      ]
+    )
+
+    // 4. Launch generation in background (do NOT await)
+    processAssistantMessage({
+      messageId: assistantMsgId,
+      agentId,
+      agentDir,
+      message,
+      userId: effectiveUserId,
+      conversationId: convId,
+    }).catch((err) => {
+      console.error(`[API] Background process failed:`, err)
+    })
+
+    // 5. Return immediately
     return NextResponse.json({
       success: true,
-      response: `L'agent est en cours de configuration.\n\n(Erreur: ${err.message?.substring(0, 100)})`,
-      agentId: "fallback",
+      status: "pending",
+      messageId: assistantMsgId,
+      userMessageId: userMsgId,
+      conversationId: convId,
+      agentId,
     })
+  } catch (error: unknown) {
+    const err = error as Error
+    console.error("[API] Erreur:", err.message)
+    return NextResponse.json({
+      success: false,
+      error: err.message?.substring(0, 200),
+    }, { status: 500 })
+  }
+}
+
+// GET /api/chat?messageId=xxx -> get status of a pending message
+export async function GET(request: NextRequest) {
+  try {
+    const messageId = request.nextUrl.searchParams.get("messageId")
+    if (!messageId) {
+      return NextResponse.json({ error: "messageId requis" }, { status: 400 })
+    }
+
+    const result = await pool.query(
+      "SELECT id, content, metadata, created_at FROM messages WHERE id = $1",
+      [messageId]
+    )
+
+    if (result.rows.length === 0) {
+      return NextResponse.json({ error: "Message non trouve" }, { status: 404 })
+    }
+
+    const row = result.rows[0]
+    const meta = row.metadata || {}
+    const status = meta.status || "done"
+
+    // Parse the content if it's JSON
+    let response: string | Record<string, unknown> = row.content
+    if (status === "done" && row.content) {
+      try {
+        const parsed = JSON.parse(row.content)
+        response = parsed
+      } catch {
+        // Keep as string
+      }
+    }
+
+    return NextResponse.json({
+      messageId,
+      status,
+      response,
+      error: meta.error,
+      createdAt: row.created_at,
+    })
+  } catch (error: unknown) {
+    const err = error as Error
+    console.error("[API] GET error:", err.message)
+    return NextResponse.json({ error: err.message?.substring(0, 200) }, { status: 500 })
   }
 }
