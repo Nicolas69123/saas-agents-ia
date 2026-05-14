@@ -199,14 +199,18 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
         </div>
 
         <div className={`doc-preview-wrapper ${resolvedFormat === 'pdf' ? 'pdf-bg' : ''}`}>
+          {/* Always render the container so the ref is available */}
+          <div style={{ visibility: loading || error ? 'hidden' : 'visible', minHeight: loading || error ? 0 : 'auto' }}>
+            {renderInlinePreview()}
+          </div>
           {loading && (
-            <div className="doc-loading">
+            <div className="doc-loading-overlay">
               <div className="doc-spinner" />
               <span>Chargement du document...</span>
             </div>
           )}
           {error && !loading && (
-            <div className="doc-error">
+            <div className="doc-error-overlay">
               <p>{error === 'Apercu non disponible' ? 'Apercu non disponible' : 'Impossible de charger l\'apercu'}</p>
               {error !== 'Apercu non disponible' && <span>{error}</span>}
               <a href={url} download={filename} className="doc-btn doc-btn-primary" style={{ marginTop: 12, display: 'inline-block' }}>
@@ -214,7 +218,6 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
               </a>
             </div>
           )}
-          {!loading && !error && renderInlinePreview()}
         </div>
       </div>
 
@@ -343,7 +346,9 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
 
         .doc-preview-wrapper.pdf-bg { padding: 0; }
 
-        .doc-loading, .doc-error {
+        .doc-loading-overlay, .doc-error-overlay {
+          position: absolute;
+          inset: 0;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -352,9 +357,11 @@ export default function DocumentPreview({ url, filename, format, previewUrl }: D
           padding: 60px 20px;
           color: #d1d5db;
           text-align: center;
+          background: #525659;
+          z-index: 2;
         }
 
-        .doc-error span { font-size: 0.85rem; opacity: 0.7; }
+        .doc-error-overlay span { font-size: 0.85rem; opacity: 0.7; }
 
         .doc-spinner {
           width: 32px;
