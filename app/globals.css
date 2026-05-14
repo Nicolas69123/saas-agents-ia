@@ -45,6 +45,145 @@
   --duration-fast: 0.2s;
   --duration-normal: 0.4s;
   --duration-slow: 0.6s;
+
+  /* ─── The Shift palette mix (bleu accent + violet brand OmnIA) ─── */
+  --ts-blue: #2563eb;
+  --ts-blue-dark: #1e3a8a;
+  --ts-blue-light: #3b82f6;
+  --ts-blue-glow: rgba(37, 99, 235, 0.08);
+  --ts-blue-glow-strong: rgba(37, 99, 235, 0.25);
+  --ts-violet: #4F46E5;
+  --ts-violet-light: #7c3aed;
+  --ts-surface: #f1f5f9;
+  --ts-muted: #64748b;
+  --ts-border: #e2e8f0;
+  --ts-card: #ffffff;
+  --ts-card-hover: #f8fafc;
+  --ts-radius: 20px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   THE SHIFT - Design utilities (CSS pur, sans Tailwind)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.ts-bento {
+  background: var(--ts-card);
+  border: 1px solid var(--ts-border);
+  border-radius: var(--ts-radius);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ts-bento:hover {
+  background: var(--ts-card-hover);
+  border-color: rgba(37, 99, 235, 0.25);
+  box-shadow: 0 4px 24px rgba(37, 99, 235, 0.08);
+}
+
+.ts-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(37, 99, 235, 0.06);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--ts-blue);
+  letter-spacing: 0.02em;
+}
+.ts-pill-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--ts-blue);
+}
+
+.ts-text-shine {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 40%, #4F46E5 70%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.ts-bg-grid {
+  background-image:
+    linear-gradient(rgba(37, 99, 235, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(37, 99, 235, 0.04) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+.ts-bg-grid-fade {
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, black 20%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, black 20%, transparent 100%);
+}
+
+.ts-glow-radial {
+  position: absolute;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--ts-blue) 0%, transparent 70%);
+  opacity: 0.06;
+  filter: blur(80px);
+  pointer-events: none;
+  animation: ts-glow-pulse 8s ease-in-out infinite;
+}
+@keyframes ts-glow-pulse {
+  0%, 100% { opacity: 0.04; transform: scale(1); }
+  50%      { opacity: 0.10; transform: scale(1.1); }
+}
+
+.ts-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ts-border), rgba(37, 99, 235, 0.2), var(--ts-border), transparent);
+}
+
+@keyframes ts-fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ts-fade-up   { animation: ts-fade-up 0.6s ease-out both; }
+.ts-fade-up-1 { animation: ts-fade-up 0.6s 0.05s ease-out both; }
+.ts-fade-up-2 { animation: ts-fade-up 0.6s 0.15s ease-out both; }
+.ts-fade-up-3 { animation: ts-fade-up 0.6s 0.25s ease-out both; }
+.ts-fade-up-4 { animation: ts-fade-up 0.6s 0.35s ease-out both; }
+.ts-fade-up-5 { animation: ts-fade-up 0.6s 0.45s ease-out both; }
+
+.ts-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  background: var(--ts-blue);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+.ts-btn-primary:hover {
+  background: var(--ts-blue-dark);
+  box-shadow: 0 0 24px var(--ts-blue-glow-strong);
+}
+.ts-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--ts-border);
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.ts-btn-ghost:hover {
+  border-color: var(--ts-blue);
+  color: var(--ts-blue);
 }
 
 /* ─── Dark Mode ─── */

@@ -97,61 +97,60 @@ export default function Home() {
     <>
       <Header />
       <main>
-        {/* Hero Section */}
-        <section className="hero">
-          <video
-            className="hero-video"
-            autoPlay
-            muted
-            playsInline
-          >
-            <source src="/hero-background.mp4" type="video/mp4" />
-          </video>
-          <div className="hero-content">
-            <ScrollReveal>
-              <span className="hero-badge">La nouvelle génération d'automatisation</span>
-            </ScrollReveal>
-            <ScrollReveal delay={100}>
-              <h1>
-                Vos agents IA,<br />
-                <span className="gradient-text">votre équipe augmentée</span>
-              </h1>
-            </ScrollReveal>
-            <ScrollReveal delay={200}>
-              <p className="hero-description">
-                8 agents spécialisés pour automatiser votre comptabilité, marketing,
-                RH et support client. Gagnez du temps, réduisez les coûts.
-              </p>
-            </ScrollReveal>
-            <ScrollReveal delay={300}>
-              <div className="hero-buttons">
-                <a href="/auth/signup" className="btn-primary">
-                  Commencer gratuitement
-                  <span className="btn-arrow">→</span>
-                </a>
-                <a href="/agents" className="btn-secondary">
-                  Découvrir les agents
-                </a>
+        {/* Hero Section - The Shift style */}
+        <section className="ts-hero">
+          <div className="ts-bg-grid ts-bg-grid-fade ts-hero-grid" />
+          <div className="ts-glow-radial ts-hero-glow" />
+          <div className="ts-glow-radial ts-hero-glow-2" />
+
+          <div className="ts-hero-inner">
+            <span className="ts-pill ts-fade-up">
+              <span className="ts-pill-dot" />
+              Plateforme IA pour PME
+            </span>
+
+            <h1 className="ts-hero-title ts-fade-up-1">
+              Vos tâches répétitives,
+              <br />
+              <span className="ts-text-shine">automatisées par 8 agents IA.</span>
+            </h1>
+
+            <p className="ts-hero-sub ts-fade-up-2">
+              Comptabilité, marketing, RH, support client. OmnIA déploie une équipe
+              d&apos;agents spécialisés qui travaillent 24/7 pour votre entreprise.
+            </p>
+
+            <div className="ts-hero-cta ts-fade-up-3">
+              <a href="/auth/signup" className="ts-btn-primary">
+                Essayer gratuitement
+                <span aria-hidden="true">→</span>
+              </a>
+              <a href="/agents" className="ts-btn-ghost">
+                Découvrir les agents
+              </a>
+            </div>
+
+            <div className="ts-hero-trust ts-fade-up-4">
+              <div className="ts-trust-item">
+                <span className="ts-trust-num">8</span>
+                <span className="ts-trust-label">Agents spécialisés</span>
               </div>
-            </ScrollReveal>
-            <ScrollReveal delay={400}>
-              <div className="hero-stats">
-                <div className="stat">
-                  <span className="stat-number">8</span>
-                  <span className="stat-label">Agents IA</span>
-                </div>
-                <div className="stat-divider" />
-                <div className="stat">
-                  <span className="stat-number">24/7</span>
-                  <span className="stat-label">Disponibles</span>
-                </div>
-                <div className="stat-divider" />
-                <div className="stat">
-                  <span className="stat-number">-70%</span>
-                  <span className="stat-label">De temps gagné</span>
-                </div>
+              <span className="ts-trust-sep" />
+              <div className="ts-trust-item">
+                <span className="ts-trust-num">24/7</span>
+                <span className="ts-trust-label">Disponibilité</span>
               </div>
-            </ScrollReveal>
+              <span className="ts-trust-sep" />
+              <div className="ts-trust-item">
+                <span className="ts-trust-num">−70%</span>
+                <span className="ts-trust-label">Temps gagné</span>
+              </div>
+              <span className="ts-trust-sep" />
+              <div className="ts-trust-item">
+                <span className="ts-trust-num">RGPD</span>
+                <span className="ts-trust-label">Hébergé en France</span>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -256,7 +255,116 @@ export default function Home() {
           padding: 0 24px;
         }
 
-        /* Hero Section */
+        /* ═══════ The Shift Hero ═══════ */
+        .ts-hero {
+          position: relative;
+          overflow: hidden;
+          padding: clamp(7rem, 12vw, 11rem) 24px clamp(5rem, 9vw, 8rem);
+          background: var(--bg-primary, #FEFEFE);
+          isolation: isolate;
+        }
+        .ts-hero-grid {
+          position: absolute;
+          inset: 0;
+          z-index: 0;
+        }
+        .ts-hero-glow {
+          top: 20%;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 0;
+        }
+        .ts-hero-glow-2 {
+          top: 70%;
+          left: 30%;
+          width: 400px;
+          height: 400px;
+          background: radial-gradient(circle, var(--ts-violet) 0%, transparent 70%);
+          animation-delay: -4s;
+          z-index: 0;
+        }
+        .ts-hero-inner {
+          position: relative;
+          z-index: 1;
+          max-width: 880px;
+          margin: 0 auto;
+          text-align: center;
+        }
+        .ts-hero-inner .ts-pill {
+          margin-bottom: 28px;
+        }
+        .ts-hero-title {
+          font-family: 'Sora', system-ui, sans-serif;
+          font-size: clamp(2.4rem, 5.5vw, 4.5rem);
+          line-height: 1.05;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          margin: 0 0 24px;
+          color: var(--text-primary, #0f172a);
+        }
+        .ts-hero-sub {
+          font-size: clamp(1rem, 1.4vw, 1.15rem);
+          line-height: 1.65;
+          color: var(--ts-muted);
+          max-width: 620px;
+          margin: 0 auto 40px;
+        }
+        .ts-hero-cta {
+          display: flex;
+          gap: 14px;
+          justify-content: center;
+          flex-wrap: wrap;
+          margin-bottom: 64px;
+        }
+        .ts-hero-trust {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 28px;
+          flex-wrap: wrap;
+          padding: 24px 32px;
+          background: rgba(255, 255, 255, 0.6);
+          backdrop-filter: blur(10px);
+          border: 1px solid var(--ts-border);
+          border-radius: 16px;
+          max-width: 740px;
+          margin: 0 auto;
+        }
+        .ts-trust-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
+        }
+        .ts-trust-num {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: var(--text-primary, #0f172a);
+          letter-spacing: -0.02em;
+        }
+        .ts-trust-label {
+          font-size: 0.78rem;
+          color: var(--ts-muted);
+          letter-spacing: 0.02em;
+        }
+        .ts-trust-sep {
+          width: 1px;
+          height: 32px;
+          background: var(--ts-border);
+        }
+        @media (max-width: 640px) {
+          .ts-trust-sep { display: none; }
+          .ts-hero-trust { gap: 18px; }
+        }
+
+        [data-theme="dark"] .ts-hero {
+          background: var(--bg-primary, #0a0e1a);
+        }
+        [data-theme="dark"] .ts-hero-trust {
+          background: rgba(15, 23, 42, 0.6);
+        }
+
+        /* Hero Section (legacy, fallback) */
         .hero {
           min-height: 100vh;
           display: flex;
