@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     // Special handling for presentations: generate reveal.js HTML AND a downloadable PPTX
     if (PRESENTATION_TYPES.has(body.type)) {
-      const html = renderRevealHtml(body)
+      const html = await renderRevealHtml(body)
       const baseName = `presentation-${(body.data?.period || "").replace(/\s+/g, "-") || Date.now()}`
       const safeBase = baseName.replace(/[^a-zA-Z0-9._-]/g, "_")
       const htmlFilename = `${safeBase}.html`

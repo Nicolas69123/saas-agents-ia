@@ -1,4 +1,7 @@
 import type { DocumentRequest, SlideContent } from "./types"
+import { findImageUrl } from "./pexels-service"
+
+type ImageMap = Map<string, { url: string; photographer: string }>
 
 interface RevealTheme {
   name: string
@@ -144,15 +147,14 @@ function decorativeBackground(theme: RevealTheme, variant: number): string {
   return variants[variant % variants.length]
 }
 
-function imageUrlForQuery(query: string | undefined, w = 1600, h = 900): string | null {
+function imageUrlForQuery(query: string | undefined, images: ImageMap): string | null {
   if (!query) return null
-  const safe = encodeURIComponent(query.trim())
-  // Unsplash Source: no API key required, returns a relevant image
-  return `https://source.unsplash.com/${w}x${h}/?${safe}`
+  const ref = images.get(query.toLowerCase())
+  return ref?.url || null
 }
 
-function renderTitleSlide(theme: RevealTheme, title: string, subtitle?: string, companyName?: string, imageQuery?: string): string {
-  const imgUrl = imageUrlForQuery(imageQuery)
+function renderTitleSlide(theme: RevealTheme, title: string, subtitle: string | undefined, companyName: string | undefined, imageQuery: string | undefined, images: ImageMap): string {
+  const imgUrl = imageUrlForQuery(imageQuery, images)
   return `
     <section class="slide-title" data-transition="zoom" data-background-gradient="${theme.bgGradient}">
       ${decorativeBackground(theme, 0)}
@@ -170,10 +172,10 @@ function renderTitleSlide(theme: RevealTheme, title: string, subtitle?: string, 
   `
 }
 
-function renderContentSlide(theme: RevealTheme, slide: SlideContent, index: number): string {
+function renderContentSlide(theme: RevealTheme, slide: SlideContent, index: number, images: ImageMap): string {
   const hasMultipleBullets = slide.bullets && slide.bullets.length >= 2
   const useCardsLayout = hasMultipleBullets && (slide.bullets!.length <= 6)
-  const imgUrl = imageUrlForQuery(slide.imageQuery, 1200, 1400)
+  const imgUrl = imageUrlForQuery(slide.imageQuery, images)
 
   const titleSection = `
     <div class="content-header">
@@ -587,7 +589,22 @@ function renderStyles(theme: RevealTheme): string {
   `
 }
 
-export function renderRevealHtml(req: DocumentRequest): string {
+async function resolveAllImages(queries: string[]): Promise<ImageMap> {
+  const unique = Array.from(new Set(queries.filter(Boolean).map(q => q.toLowerCase())))
+  const results = await Promise.all(
+    unique.map(async (q) => {
+      const ref = await findImageUrl(q)
+      return [q, ref] as const
+    })
+  )
+  const map: ImageMap = new Map()
+  for (const [q, ref] of results) {
+    if (ref) map.set(q, { url: ref.url, photographer: ref.photographer })
+  }
+  return map
+}
+
+export async function renderRevealHtml(req: DocumentRequest): Promise<string> {
   const theme = getTheme(req.data?.theme)
   const slides: SlideContent[] = req.data?.slides || []
   const period = req.data?.period || new Date().toLocaleDateString("fr-FR")
@@ -595,8 +612,12 @@ export function renderRevealHtml(req: DocumentRequest): string {
   const contact = req.data?.company_email || req.data?.company_phone || ""
 
   const titleImageQuery = slides[0]?.imageQuery || req.title
-  const titleSlide = renderTitleSlide(theme, req.title, period, companyName, titleImageQuery)
-  const contentSlides = slides.map((s, i) => renderContentSlide(theme, s, i + 1)).join("\n")
+  const allQueries = [titleImageQuery, ...slides.map(s => s.imageQuery || "")]
+    .filter((q): q is string => !!q)
+  const images = await resolveAllImages(allQueries)
+
+  const titleSlide = renderTitleSlide(theme, req.title, period, companyName, titleImageQuery, images)
+  const contentSlides = slides.map((s, i) => renderContentSlide(theme, s, i + 1, images)).join("\n")
   const recoSlide = req.recommendations && req.recommendations.length > 0
     ? renderRecommendationsSlide(theme, req.recommendations)
     : ""

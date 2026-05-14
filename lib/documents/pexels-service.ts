@@ -22,6 +22,51 @@ async function downloadImage(url: string): Promise<Buffer> {
   return Buffer.from(arrayBuffer)
 }
 
+interface ImageRef {
+  url: string
+  photographer: string
+  source: "pexels"
+}
+
+const urlCache = new Map<string, ImageRef>()
+
+export async function findImageUrl(query: string): Promise<ImageRef | null> {
+  if (!query?.trim()) return null
+
+  const key = query.toLowerCase()
+  const cached = urlCache.get(key)
+  if (cached) return cached
+
+  if (!client) {
+    console.warn("[PEXELS] No PEXELS_API_KEY set, image search disabled")
+    return null
+  }
+
+  try {
+    const result = await client.photos.search({ query, per_page: 1, orientation: "landscape" })
+
+    if ("error" in result) {
+      console.error("[PEXELS] API error:", (result as ErrorResponse).error)
+      return null
+    }
+
+    const photos = (result as Photos).photos
+    if (!photos.length) return null
+
+    const photo = photos[0]
+    const ref: ImageRef = {
+      url: photo.src.large2x || photo.src.large || photo.src.original,
+      photographer: photo.photographer,
+      source: "pexels",
+    }
+    urlCache.set(key, ref)
+    return ref
+  } catch (err) {
+    console.error("[PEXELS] URL search failed for:", query, err)
+    return null
+  }
+}
+
 export async function findImageBuffer(query: string): Promise<FetchedImage | null> {
   if (!query?.trim()) return null
 
