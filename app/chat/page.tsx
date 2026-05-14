@@ -5,9 +5,12 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
+import dynamic from 'next/dynamic'
 import Header from '@/components/Header'
 import { useAuth } from '@/components/AuthProvider'
 import SocialPostPreview, { SocialPostContent } from '@/components/SocialMockups'
+
+const DocxPreview = dynamic(() => import('@/components/DocxPreview'), { ssr: false })
 
 const agents = [
   { id: 1, name: 'Lucas', role: 'Comptable', category: 'Finance', avatar: '/avatars/agent-1.png', color: '#4F46E5', gradient: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)', agentId: 'comptable' },
@@ -382,12 +385,11 @@ function ChatPageContent() {
           responseText = rawResponse.post_content.text || 'Post social généré !'
         } else {
           // Reponse structuree (agent comptable, n8n, etc.)
-          responseText = rawResponse.response || rawResponse.content || rawResponse.description || rawResponse.prompt_ameliore || ''
+          const hasDocument = !!rawResponse.document_url
 
-          // Pour les livrables comptables (factures, rapports), enrichir l'affichage
-          if (rawResponse.type && rawResponse.title) {
-            const header = `**${rawResponse.title}**\n\n`
-            responseText = header + (responseText || '')
+          if (hasDocument && rawResponse.title) {
+            // Document Word genere : message court, le contenu est dans la preview DOCX
+            responseText = `Voici **${rawResponse.title}** :`
 
             if (rawResponse.recommendations && Array.isArray(rawResponse.recommendations) && rawResponse.recommendations.length > 0) {
               responseText += '\n\n**Recommandations :**\n' + rawResponse.recommendations.map((r: string) => `- ${r}`).join('\n')
@@ -396,12 +398,12 @@ function ChatPageContent() {
             if (rawResponse.alerts && Array.isArray(rawResponse.alerts) && rawResponse.alerts.length > 0) {
               responseText += '\n\n**Alertes :**\n' + rawResponse.alerts.map((a: { level: string; message: string }) => `- [${a.level}] ${a.message}`).join('\n')
             }
+          } else {
+            // Pas de document : fallback vers texte plein
+            responseText = rawResponse.response || rawResponse.content || rawResponse.description || rawResponse.prompt_ameliore || ''
 
-            if (rawResponse.data) {
-              const d = rawResponse.data
-              if (d.total_ht !== undefined) {
-                responseText += `\n\n---\n**Total HT :** ${d.total_ht} EUR | **TVA (${d.tva_rate || 20}%) :** ${d.tva_amount} EUR | **Total TTC :** ${d.total_ttc} EUR`
-              }
+            if (rawResponse.title && responseText) {
+              responseText = `**${rawResponse.title}**\n\n${responseText}`
             }
           }
 
@@ -864,54 +866,10 @@ function ChatPageContent() {
                           </div>
                         )}
                         {message.documentUrl && (
-                          <div className="msg-document" style={{
-                            marginTop: '12px',
-                            padding: '16px',
-                            background: 'var(--bg-secondary)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                          }}>
-                            <div style={{
-                              width: '48px',
-                              height: '48px',
-                              borderRadius: '10px',
-                              background: 'linear-gradient(135deg, #2563EB 0%, #3B82F6 100%)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: 'white',
-                              fontWeight: 700,
-                              fontSize: '0.7rem',
-                              flexShrink: 0,
-                            }}>DOCX</div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {message.documentFilename || 'Document'}
-                              </div>
-                              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                Document Word - Pret a telecharger
-                              </div>
-                            </div>
-                            <a
-                              href={message.documentUrl}
-                              download={message.documentFilename}
-                              style={{
-                                padding: '8px 16px',
-                                background: 'var(--accent)',
-                                color: 'white',
-                                borderRadius: '8px',
-                                textDecoration: 'none',
-                                fontSize: '0.85rem',
-                                fontWeight: 600,
-                                flexShrink: 0,
-                              }}
-                            >
-                              Telecharger
-                            </a>
-                          </div>
+                          <DocxPreview
+                            url={message.documentUrl}
+                            filename={message.documentFilename}
+                          />
                         )}
                       </>
                     )}
