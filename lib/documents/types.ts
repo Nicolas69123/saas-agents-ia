@@ -18,6 +18,7 @@ export interface SlideContent {
   subtitle?: string
   body?: string
   bullets?: string[]
+  imageQuery?: string
 }
 
 export interface DocumentRequest {
@@ -50,6 +51,7 @@ export interface DocumentRequest {
     iban?: string
     period?: string
     slides?: SlideContent[]
+    theme?: "business" | "marketing" | "finance" | "dark"
   }
   recommendations?: string[]
   alerts?: { level: string; message: string }[]
