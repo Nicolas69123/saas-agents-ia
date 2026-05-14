@@ -23,6 +23,57 @@ const agents = [
   { id: 8, name: 'Léa', role: 'Téléphonique', category: 'Support', avatar: '/avatars/agent-8.png', color: '#16A34A', gradient: 'linear-gradient(135deg, #16A34A 0%, #22C55E 100%)', agentId: 'telephonique' },
 ]
 
+const AGENT_SUGGESTIONS: Record<string, string[]> = {
+  'comptable': [
+    'Génère-moi une facture template',
+    'Analyse mes dépenses du mois',
+    'Vérification de ma TVA',
+    'Crée un bilan mensuel',
+  ],
+  'tresorier': [
+    'Prévisions de trésorerie 3 mois',
+    'Analyse de mon cashflow',
+    'Calcul mon BFR',
+    'Tableau de bord trésorerie',
+  ],
+  'investissements': [
+    'Analyse de mon portefeuille',
+    'Recommandations placements',
+    'Comparer 2 produits financiers',
+    'Stratégie d\'épargne entreprise',
+  ],
+  'reseaux-sociaux': [
+    'Crée un post LinkedIn',
+    'Planning éditorial du mois',
+    'Idées de contenu Instagram',
+    'Analyse de mes statistiques',
+  ],
+  'email-marketing': [
+    'Rédige une newsletter',
+    'Campagne emailing produit',
+    'Email de relance client',
+    'Optimiser mes taux d\'ouverture',
+  ],
+  'ressources-humaines': [
+    'Fiche de poste développeur',
+    'Plan d\'onboarding nouveau salarié',
+    'Analyser un CV',
+    'Politique de télétravail',
+  ],
+  'support-client': [
+    'Réponse FAQ produit',
+    'Template ticket support',
+    'Analyse satisfaction client',
+    'Procédure SAV',
+  ],
+  'telephonique': [
+    'Script d\'appel commercial',
+    'Message vocal professionnel',
+    'Argumentaire de vente',
+    'Procédure relance téléphonique',
+  ],
+}
+
 // ═══════════════════════════════════════════════════════════════
 // UUID HELPER (compatible HTTP & HTTPS)
 // ═══════════════════════════════════════════════════════════════
@@ -107,11 +158,13 @@ const saveLastAgent = (agentId: number) => {
 export interface MediaFile {
   id: string
   name: string
+  filename?: string
   type: string
   size: number
   url: string
   uploadedAt: Date
-  agentIdOrigin: number // Which agent it was uploaded from (for reference)
+  agentIdOrigin: number
+  conversationId?: string
 }
 
 const loadSharedMedias = (): MediaFile[] => {
@@ -144,6 +197,23 @@ interface Message {
   socialPost?: SocialPostContent
   status?: 'pending' | 'done' | 'error'
   serverMessageId?: string
+  attachments?: MessageAttachment[]
+  actions?: MessageAction[]
+}
+
+interface MessageAttachment {
+  id: string
+  name: string
+  filename: string
+  size: number
+  type: string
+  url: string
+}
+
+interface MessageAction {
+  type: 'upload' | 'continue' | 'generate' | 'link'
+  label: string
+  payload?: string
 }
 
 interface Conversation {
@@ -167,6 +237,8 @@ function ChatPageContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [showAgentPicker, setShowAgentPicker] = useState(false)
   const [sharedMedias, setSharedMedias] = useState<MediaFile[]>([])
+  const [pendingAttachments, setPendingAttachments] = useState<MessageAttachment[]>([])
+  const [isUploading, setIsUploading] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -419,6 +491,14 @@ function ChatPageContent() {
 
       if (r.video_local_url) videoUrl = r.video_local_url as string
 
+      const rawActions = Array.isArray(r.actions) ? (r.actions as unknown[]) : null
+      const actions: MessageAction[] | undefined = rawActions
+        ? rawActions
+            .map((a) => a as { type?: string; label?: string; payload?: string })
+            .filter((a) => a && a.type && a.label && ['upload', 'continue', 'generate', 'link'].includes(a.type))
+            .map((a) => ({ type: a.type as MessageAction['type'], label: a.label!, payload: a.payload }))
+        : undefined
+
       return {
         id: messageId,
         role: 'assistant',
@@ -434,6 +514,7 @@ function ChatPageContent() {
         documentDownloadFilename: r.document_download_filename as string | undefined,
         socialPost: socialPost,
         status: 'done',
+        actions: actions && actions.length > 0 ? actions : undefined,
       }
     }
 
@@ -492,14 +573,58 @@ function ChatPageContent() {
     }, 2000)
   }
 
+  const getAttachmentIcon = (type: string, name: string): string => {
+    const lower = (name || '').toLowerCase()
+    if (type?.startsWith('image/')) return '🖼️'
+    if (type === 'application/pdf' || lower.endsWith('.pdf')) return '📕'
+    if (lower.endsWith('.xlsx') || lower.endsWith('.xls') || lower.endsWith('.csv')) return '📊'
+    if (lower.endsWith('.docx') || lower.endsWith('.doc')) return '📄'
+    if (lower.endsWith('.json')) return '🗂️'
+    if (lower.endsWith('.md') || lower.endsWith('.txt')) return '📝'
+    return '📎'
+  }
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} o`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`
+  }
+
+  const handleMessageAction = (action: MessageAction) => {
+    switch (action.type) {
+      case 'upload':
+        fileInputRef.current?.click()
+        break
+      case 'continue':
+      case 'generate':
+        if (action.payload) {
+          setInputValue(action.payload)
+          setTimeout(() => textareaRef.current?.focus(), 0)
+        }
+        break
+      case 'link':
+        if (action.payload) window.open(action.payload, '_blank', 'noopener,noreferrer')
+        break
+    }
+  }
+
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || !currentConversation) return
+    const hasText = inputValue.trim().length > 0
+    const hasAttachments = pendingAttachments.length > 0
+    if ((!hasText && !hasAttachments) || !currentConversation) return
+
+    const messageText = hasText
+      ? inputValue
+      : `J'ai joint ${pendingAttachments.length} fichier${pendingAttachments.length > 1 ? 's' : ''}.`
+
+    const attachmentsSnapshot = [...pendingAttachments]
 
     const userMessage: Message = {
       id: generateUUID(),
       role: 'user',
-      content: inputValue,
-      timestamp: new Date()
+      content: messageText,
+      timestamp: new Date(),
+      attachments: attachmentsSnapshot.length > 0 ? attachmentsSnapshot : undefined,
     }
 
     const pendingId = generateUUID()
@@ -514,15 +639,16 @@ function ChatPageContent() {
     const updatedConv = {
       ...currentConversation,
       messages: [...currentConversation.messages, userMessage, pendingMessage],
-      title: currentConversation.messages.length <= 1 ? inputValue.slice(0, 30) + (inputValue.length > 30 ? '...' : '') : currentConversation.title,
-      preview: inputValue.slice(0, 40)
+      title: currentConversation.messages.length <= 1 ? messageText.slice(0, 30) + (messageText.length > 30 ? '...' : '') : currentConversation.title,
+      preview: messageText.slice(0, 40)
     }
 
     setCurrentConversation(updatedConv)
     const updatedConversations = conversations.map(c => c.id === updatedConv.id ? updatedConv : c)
     setConversations(updatedConversations)
-    const currentInput = inputValue
+    const currentInput = messageText
     setInputValue('')
+    setPendingAttachments([])
     setIsLoading(true)
 
     saveAgentConversations(selectedAgent.id, updatedConversations)
@@ -540,6 +666,13 @@ function ChatPageContent() {
           message: currentInput,
           conversationId: currentConversation.id,
           userId: (user as Record<string, unknown>)?.id || 'anonymous',
+          attachments: attachmentsSnapshot.map((a) => ({
+            id: a.id,
+            filename: a.filename,
+            name: a.name,
+            type: a.type,
+            size: a.size,
+          })),
         }),
       })
 
@@ -785,38 +918,69 @@ function ChatPageContent() {
     }
   }
 
-  // Handle file upload - saves to shared medias
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files
-    if (!files || files.length === 0) return
+    if (!files || files.length === 0 || !currentConversation) return
 
+    setIsUploading(true)
+    const userId = String((user as Record<string, unknown>)?.id || 'anonymous')
+    const uploaded: MessageAttachment[] = []
     const newMedias: MediaFile[] = []
 
-    Array.from(files).forEach(file => {
-      // Create a blob URL for the file (in production, you'd upload to a server)
-      const url = URL.createObjectURL(file)
+    for (const file of Array.from(files)) {
+      try {
+        const fd = new FormData()
+        fd.append('file', file)
+        fd.append('conversationId', currentConversation.id)
+        fd.append('userId', userId)
 
-      const media: MediaFile = {
-        id: generateUUID(),
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        url: url,
-        uploadedAt: new Date(),
-        agentIdOrigin: selectedAgent.id
+        const res = await fetch('/api/uploads', { method: 'POST', body: fd })
+        const data = await res.json()
+
+        if (!res.ok || !data.success) {
+          console.error('[UPLOAD] echec:', data.error)
+          alert(`Echec upload "${file.name}": ${data.error || 'erreur inconnue'}`)
+          continue
+        }
+
+        uploaded.push({
+          id: data.id,
+          name: data.name,
+          filename: data.filename,
+          size: data.size,
+          type: data.type,
+          url: data.url,
+        })
+
+        newMedias.push({
+          id: data.id,
+          name: data.name,
+          filename: data.filename,
+          type: data.type,
+          size: data.size,
+          url: data.url,
+          uploadedAt: new Date(),
+          agentIdOrigin: selectedAgent.id,
+          conversationId: currentConversation.id,
+        })
+      } catch (err) {
+        console.error('[UPLOAD] exception:', err)
       }
-
-      newMedias.push(media)
-    })
-
-    const updatedMedias = [...sharedMedias, ...newMedias]
-    setSharedMedias(updatedMedias)
-    saveSharedMedias(updatedMedias)
-
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
     }
+
+    if (uploaded.length > 0) {
+      setPendingAttachments((prev) => [...prev, ...uploaded])
+      const updatedMedias = [...sharedMedias, ...newMedias]
+      setSharedMedias(updatedMedias)
+      saveSharedMedias(updatedMedias)
+    }
+
+    setIsUploading(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const removePendingAttachment = (id: string) => {
+    setPendingAttachments((prev) => prev.filter((a) => a.id !== id))
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -1092,7 +1256,39 @@ function ChatPageContent() {
                             downloadFilename={message.documentDownloadFilename}
                           />
                         )}
+                        {message.actions && message.actions.length > 0 && (
+                          <div className="msg-actions">
+                            {message.actions.map((action, i) => (
+                              <button
+                                key={i}
+                                className="msg-action-btn"
+                                onClick={() => handleMessageAction(action)}
+                              >
+                                {action.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </>
+                    )}
+                    {message.attachments && message.attachments.length > 0 && (
+                      <div className="msg-attachments">
+                        {message.attachments.map((att) => (
+                          <a
+                            key={att.id}
+                            href={att.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="msg-attachment-chip"
+                          >
+                            <span className="att-icon">{getAttachmentIcon(att.type, att.name)}</span>
+                            <span className="att-info">
+                              <span className="att-name">{att.name}</span>
+                              <span className="att-size">{formatFileSize(att.size)}</span>
+                            </span>
+                          </a>
+                        ))}
+                      </div>
                     )}
                   </div>
                   <span className="msg-time">
@@ -1122,18 +1318,64 @@ function ChatPageContent() {
               </div>
             )}
 
+            {/* Suggestions shown only when conversation has just the welcome message */}
+            {currentConversation && currentConversation.messages.length === 1 && currentConversation.messages[0].role === 'assistant' && AGENT_SUGGESTIONS[selectedAgent.agentId] && (
+              <div className="suggestions-container">
+                <div className="suggestions-title">Pour commencer, essaie :</div>
+                <div className="suggestions-grid">
+                  {AGENT_SUGGESTIONS[selectedAgent.agentId].map((suggestion, idx) => (
+                    <button
+                      key={idx}
+                      className="suggestion-chip"
+                      onClick={() => {
+                        setInputValue(suggestion)
+                        setTimeout(() => textareaRef.current?.focus(), 0)
+                      }}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
         </div>
 
         {/* Input Area */}
         <div className="input-area">
+          {(pendingAttachments.length > 0 || isUploading) && (
+            <div className="pending-attachments">
+              {pendingAttachments.map((att) => (
+                <div key={att.id} className="pending-chip">
+                  <span className="pending-icon">{getAttachmentIcon(att.type, att.name)}</span>
+                  <span className="pending-name">{att.name}</span>
+                  <span className="pending-size">{formatFileSize(att.size)}</span>
+                  <button
+                    type="button"
+                    className="pending-remove"
+                    onClick={() => removePendingAttachment(att.id)}
+                    aria-label="Retirer"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              {isUploading && (
+                <div className="pending-chip uploading">
+                  <span className="pending-spinner" />
+                  <span className="pending-name">Upload en cours...</span>
+                </div>
+              )}
+            </div>
+          )}
           <div className="input-wrapper">
             <input
               type="file"
               ref={fileInputRef}
               multiple
-              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.json"
               style={{ display: 'none' }}
               onChange={handleFileUpload}
             />
@@ -1141,6 +1383,7 @@ function ChatPageContent() {
               className="input-btn attach"
               onClick={() => fileInputRef.current?.click()}
               title="Joindre un fichier"
+              disabled={isUploading}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
@@ -1159,7 +1402,7 @@ function ChatPageContent() {
             <button
               className="input-btn send"
               onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isLoading}
+              disabled={(!inputValue.trim() && pendingAttachments.length === 0) || isLoading || isUploading}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
@@ -1173,6 +1416,173 @@ function ChatPageContent() {
       </main>
 
       <style jsx>{`
+        .suggestions-container {
+          margin: 32px auto;
+          max-width: 800px;
+          padding: 0 24px;
+          animation: suggestions-in 0.5s ease-out;
+        }
+        @keyframes suggestions-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .suggestions-title {
+          font-size: 0.85rem;
+          color: var(--text-secondary, #6b7280);
+          margin-bottom: 12px;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+        .suggestions-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+        @media (max-width: 640px) {
+          .suggestions-grid { grid-template-columns: 1fr; }
+        }
+        .suggestion-chip {
+          padding: 14px 18px;
+          background: var(--bg-secondary, #f9fafb);
+          border: 1px solid var(--border-color, #e5e7eb);
+          border-radius: 14px;
+          color: var(--text-primary, #111827);
+          font-size: 0.92rem;
+          text-align: left;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          font-family: inherit;
+          line-height: 1.4;
+        }
+        .suggestion-chip:hover {
+          border-color: var(--accent, #4F46E5);
+          background: var(--bg-primary, #fff);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08);
+        }
+        .suggestion-chip:active {
+          transform: translateY(0);
+        }
+
+        .msg-attachments {
+          margin-top: 10px;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .msg-attachment-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 12px;
+          background: rgba(255, 255, 255, 0.85);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          border-radius: 14px;
+          text-decoration: none;
+          color: inherit;
+          transition: all 0.2s ease;
+          max-width: 280px;
+        }
+        .msg-attachment-chip:hover {
+          background: #fff;
+          border-color: var(--agent-color, #4F46E5);
+          transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        .message.user .msg-attachment-chip {
+          background: rgba(255, 255, 255, 0.18);
+          border-color: rgba(255, 255, 255, 0.25);
+          color: #fff;
+        }
+        .message.user .msg-attachment-chip:hover {
+          background: rgba(255, 255, 255, 0.28);
+        }
+        .att-icon { font-size: 1.4rem; line-height: 1; }
+        .att-info { display: flex; flex-direction: column; min-width: 0; }
+        .att-name {
+          font-size: 0.88rem; font-weight: 500;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+          max-width: 200px;
+        }
+        .att-size { font-size: 0.72rem; opacity: 0.7; }
+
+        .msg-actions {
+          margin-top: 12px;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .msg-action-btn {
+          padding: 8px 16px;
+          border-radius: 999px;
+          border: 1px solid var(--agent-color, #4F46E5);
+          background: rgba(79, 70, 229, 0.06);
+          color: var(--agent-color, #4F46E5);
+          font-size: 0.85rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .msg-action-btn:hover {
+          background: var(--agent-color, #4F46E5);
+          color: #fff;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+
+        .pending-attachments {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          padding: 0 8px 10px;
+          max-width: 800px;
+          margin: 0 auto;
+          width: 100%;
+        }
+        .pending-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 6px 10px;
+          background: var(--bg-secondary, #f3f4f6);
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          border-radius: 999px;
+          font-size: 0.82rem;
+        }
+        .pending-chip.uploading {
+          opacity: 0.7;
+          font-style: italic;
+        }
+        .pending-icon { font-size: 1.1rem; line-height: 1; }
+        .pending-name {
+          font-weight: 500;
+          max-width: 180px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .pending-size { opacity: 0.65; font-size: 0.72rem; }
+        .pending-remove {
+          background: none;
+          border: none;
+          font-size: 1.2rem;
+          line-height: 1;
+          cursor: pointer;
+          color: var(--text-secondary, #6b7280);
+          padding: 0 2px;
+        }
+        .pending-remove:hover { color: #ef4444; }
+        .pending-spinner {
+          width: 14px;
+          height: 14px;
+          border: 2px solid rgba(0, 0, 0, 0.1);
+          border-top-color: var(--agent-color, #4F46E5);
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
         .msg-pending {
           display: flex;
           align-items: center;

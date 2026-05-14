@@ -55,6 +55,8 @@ export async function GET(
         content: parsedContent,
         status,
         error: meta.error,
+        attachments: Array.isArray(meta.attachments) ? meta.attachments : undefined,
+        actions: Array.isArray(meta.actions) ? meta.actions : undefined,
         createdAt: row.created_at,
       }
     })

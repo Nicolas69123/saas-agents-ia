@@ -1,10 +1,58 @@
 import { NextRequest, NextResponse } from "next/server"
 import { execFile } from "child_process"
-import { writeFile, mkdir } from "fs/promises"
+import { writeFile, mkdir, copyFile } from "fs/promises"
 import { existsSync } from "fs"
 import path from "path"
 import { Pool } from "pg"
 import { randomUUID } from "crypto"
+
+const UPLOADS_ROOT = process.env.UPLOADS_ROOT || "/home/webmaster/saas-uploads"
+
+function sanitizeName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_")
+}
+
+interface AttachmentRef {
+  id?: string
+  filename: string
+  name?: string
+  type?: string
+  size?: number
+}
+
+async function copyAttachmentsToAgent(params: {
+  agentPath: string
+  attachments: AttachmentRef[]
+  userId: string
+  conversationId: string
+}): Promise<string[]> {
+  const { agentPath, attachments, userId, conversationId } = params
+  if (!attachments || attachments.length === 0) return []
+
+  const safeUser = sanitizeName(userId)
+  const safeConv = sanitizeName(conversationId)
+  const srcDir = path.join(UPLOADS_ROOT, safeUser, safeConv)
+  const dstDir = path.join(agentPath, "data", `conv-${safeConv}`)
+  if (!existsSync(dstDir)) await mkdir(dstDir, { recursive: true })
+
+  const relativePaths: string[] = []
+  for (const att of attachments) {
+    const safeName = sanitizeName(att.filename)
+    const src = path.join(srcDir, safeName)
+    const dst = path.join(dstDir, safeName)
+    if (!existsSync(src)) {
+      console.warn(`[ATTACH] source manquante: ${src}`)
+      continue
+    }
+    try {
+      await copyFile(src, dst)
+      relativePaths.push(path.relative(agentPath, dst))
+    } catch (err) {
+      console.error(`[ATTACH] copie echouee ${safeName}:`, err)
+    }
+  }
+  return relativePaths
+}
 
 const pool = new Pool({
   host: process.env.PG_HOST || "localhost",
@@ -71,18 +119,32 @@ async function processAssistantMessage(params: {
   message: string
   userId: string
   conversationId: string
+  attachments?: AttachmentRef[]
 }) {
-  const { messageId, agentId, agentDir, message, userId, conversationId } = params
+  const { messageId, agentId, agentDir, message, userId, conversationId, attachments } = params
   const agentPath = `${AGENTS_BASE}/${agentDir}`
 
   try {
+    let finalMessage = message
+    if (attachments && attachments.length > 0) {
+      const copied = await copyAttachmentsToAgent({ agentPath, attachments, userId, conversationId })
+      if (copied.length > 0) {
+        const lines = copied.map((p, i) => {
+          const att = attachments[i]
+          return `- ${att?.name || att?.filename || p} -> ${p}`
+        }).join("\n")
+        finalMessage = `${message}\n\n---\nPieces jointes fournies par l'utilisateur (utilise l'outil Read pour les ouvrir si pertinent) :\n${lines}`
+        console.log(`[ATTACH] ${copied.length} fichier(s) copies pour ${agentDir}`)
+      }
+    }
+
     // Session lookup
     const sessionKey = getSessionKey(userId, agentId, conversationId)
     let session = activeSessions.get(sessionKey)
     let claudeArgs: string[]
 
     if (session && !isSessionExpired(session)) {
-      claudeArgs = ["-p", "--resume", session.sessionId, message]
+      claudeArgs = ["-p", "--resume", session.sessionId, finalMessage]
       console.log(`[DISPATCH] Resume session ${session.sessionId} for ${agentDir}`)
     } else {
       const newSessionId = randomUUID()
@@ -92,7 +154,7 @@ async function processAssistantMessage(params: {
         lastActivity: Date.now(),
       }
       activeSessions.set(sessionKey, session)
-      claudeArgs = ["-p", "--model", "haiku", "--session-id", newSessionId, message]
+      claudeArgs = ["-p", "--model", "haiku", "--session-id", newSessionId, finalMessage]
       console.log(`[DISPATCH] New session ${newSessionId} for ${agentDir}`)
     }
 
@@ -216,11 +278,23 @@ setInterval(() => {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { agentId, message, conversationId, userId } = body
+    const { agentId, message, conversationId, userId, attachments } = body
 
     if (!agentId || !message) {
       return NextResponse.json({ error: "agentId et message requis" }, { status: 400 })
     }
+
+    const safeAttachments: AttachmentRef[] = Array.isArray(attachments)
+      ? attachments
+          .filter((a) => a && typeof a.filename === "string")
+          .map((a) => ({
+            id: typeof a.id === "string" ? a.id : undefined,
+            filename: String(a.filename),
+            name: typeof a.name === "string" ? a.name : undefined,
+            type: typeof a.type === "string" ? a.type : undefined,
+            size: typeof a.size === "number" ? a.size : undefined,
+          }))
+      : []
 
     const agentDir = AGENT_DIRS[agentId]
     if (!agentDir) {
@@ -240,9 +314,10 @@ export async function POST(request: NextRequest) {
 
     // 2. Save user message
     const userMsgId = `msg-${Date.now()}-${randomUUID().slice(0, 8)}`
+    const userMeta = safeAttachments.length > 0 ? { attachments: safeAttachments } : null
     await pool.query(
-      "INSERT INTO messages (id, conversation_id, role, content) VALUES ($1, $2, $3, $4)",
-      [userMsgId, convId, "user", message]
+      "INSERT INTO messages (id, conversation_id, role, content, metadata) VALUES ($1, $2, $3, $4, $5)",
+      [userMsgId, convId, "user", message, userMeta ? JSON.stringify(userMeta) : null]
     )
 
     // 3. Create pending assistant message
@@ -266,6 +341,7 @@ export async function POST(request: NextRequest) {
       message,
       userId: effectiveUserId,
       conversationId: convId,
+      attachments: safeAttachments,
     }).catch((err) => {
       console.error(`[API] Background process failed:`, err)
     })
