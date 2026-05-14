@@ -47,7 +47,7 @@ async function generateForFormat(
 
 async function tryGeneratePreviewPdf(doc: GeneratedDocument, safeBaseName: string) {
   if (doc.format === "pdf") {
-    return { previewUrl: `/documents/${safeBaseName}`, previewFilename: safeBaseName }
+    return { previewUrl: `/api/documents/${safeBaseName}`, previewFilename: safeBaseName }
   }
 
   try {
@@ -55,7 +55,7 @@ async function tryGeneratePreviewPdf(doc: GeneratedDocument, safeBaseName: strin
     const previewFilename = safeBaseName.replace(/\.(docx|xlsx|pptx)$/, ".preview.pdf")
     await writeFile(path.join(DOCS_DIR, previewFilename), pdfBuffer)
     return {
-      previewUrl: `/documents/${previewFilename}`,
+      previewUrl: `/api/documents/${previewFilename}`,
       previewFilename,
     }
   } catch (err) {
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      url: `/documents/${safeName}`,
+      url: `/api/documents/${safeName}`,
       filename: safeName,
       size: doc.buffer.length,
       format: doc.format,
