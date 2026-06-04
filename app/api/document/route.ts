@@ -37,6 +37,32 @@ const TYPE_TO_FORMAT: Record<string, "docx" | "xlsx" | "pptx" | "pdf"> = {
   work_certificate: "pdf",
   pay_slip_summary: "xlsx",
   hr_presentation: "pptx",
+  // Reseaux sociaux (Thomas) -- social_post est rendu via mockup, pas document
+  content_calendar: "xlsx",
+  social_strategy: "docx",
+  social_report: "pptx",
+  // Email marketing (Sophie)
+  newsletter: "docx",
+  email_campaign: "docx",
+  marketing_plan: "pptx",
+  audience_analysis: "xlsx",
+  // Tresorerie (Marc)
+  cashflow_forecast: "xlsx",
+  treasury_dashboard: "xlsx",
+  treasury_report: "docx",
+  // Investissements (Julie)
+  portfolio_analysis: "xlsx",
+  investment_report: "docx",
+  market_report: "pptx",
+  // Support client (Emma)
+  ticket_response: "docx",
+  faq_document: "docx",
+  response_template: "docx",
+  satisfaction_report: "xlsx",
+  // Telephonique (Lea)
+  call_script: "docx",
+  voicemail_script: "docx",
+  callback_plan: "xlsx",
 }
 
 function resolveFormat(req: DocumentRequest): "docx" | "xlsx" | "pptx" | "pdf" {

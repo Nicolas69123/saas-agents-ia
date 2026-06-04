@@ -1,6 +1,75 @@
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, BorderStyle, AlignmentType, HeadingLevel } from "docx"
 import type { DocumentRequest, GeneratedDocument } from "./types"
 import { FORMAT_MIME } from "./types"
+import { parseMarkdown, type InlineSpan, type MdBlock } from "./markdown"
+
+const ACCENT_HEX = "4F46E5"
+
+// Convertit des spans markdown inline en TextRun docx (gras/italique/code).
+function spansToRuns(spans: InlineSpan[], baseSize = 22): TextRun[] {
+  return spans.map((s) =>
+    new TextRun({
+      text: s.text,
+      size: baseSize,
+      bold: s.bold,
+      italics: s.italic,
+      font: s.code ? "Courier New" : undefined,
+      color: s.code ? "B91C1C" : undefined,
+    })
+  )
+}
+
+// Rend un bloc markdown en elements docx (Paragraph | Table).
+function blockToDocx(block: MdBlock): (Paragraph | Table)[] {
+  switch (block.type) {
+    case "heading": {
+      const heading = block.level === 1 ? HeadingLevel.HEADING_1 : block.level === 2 ? HeadingLevel.HEADING_2 : HeadingLevel.HEADING_3
+      return [new Paragraph({
+        heading,
+        spacing: { before: block.level === 1 ? 360 : 280, after: 120 },
+        children: block.spans.map((s) => new TextRun({ text: s.text, bold: true, color: block.level <= 2 ? ACCENT_HEX : "374151" })),
+      })]
+    }
+    case "paragraph":
+      return [new Paragraph({ spacing: { after: 120 }, children: spansToRuns(block.spans) })]
+    case "bullet":
+      return [new Paragraph({ bullet: { level: Math.min(block.level, 3) }, spacing: { after: 60 }, children: spansToRuns(block.spans) })]
+    case "ordered":
+      return [new Paragraph({
+        numbering: { reference: "omnia-ordered", level: Math.min(block.level, 3) },
+        spacing: { after: 60 },
+        children: spansToRuns(block.spans),
+      })]
+    case "quote":
+      return [new Paragraph({
+        spacing: { before: 120, after: 120 },
+        indent: { left: 360 },
+        border: { left: { style: BorderStyle.SINGLE, size: 18, color: ACCENT_HEX, space: 12 } },
+        children: spansToRuns(block.spans, 22).map((r) => r),
+      })]
+    case "divider":
+      return [new Paragraph({ spacing: { before: 120, after: 120 }, border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: "E5E7EB" } }, children: [] })]
+    case "table": {
+      const headerRow = new TableRow({
+        tableHeader: true,
+        children: block.headers.map((cell) =>
+          new TableCell({
+            shading: { fill: "F3F4F6" },
+            children: [new Paragraph({ children: cell.map((s) => new TextRun({ text: s.text, bold: true, size: 18, color: "374151" })) })],
+          })
+        ),
+      })
+      const bodyRows = block.rows.map((row) =>
+        new TableRow({
+          children: row.map((cell) =>
+            new TableCell({ children: [new Paragraph({ children: spansToRuns(cell, 20) })] })
+          ),
+        })
+      )
+      return [new Table({ rows: [headerRow, ...bodyRows], width: { size: 100, type: WidthType.PERCENTAGE } })]
+    }
+  }
+}
 
 function buildInvoiceDoc(invoice: DocumentRequest): Document {
   const d = invoice.data || {}
@@ -99,33 +168,58 @@ function buildInvoiceDoc(invoice: DocumentRequest): Document {
 }
 
 function buildReportDoc(report: DocumentRequest): Document {
-  const sections: Paragraph[] = [
-    new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun({ text: report.title || "Rapport", bold: true })] }),
-    new Paragraph({ spacing: { before: 200 }, children: [new TextRun({ text: report.data?.period ? `Periode : ${report.data.period}` : `Date : ${new Date().toLocaleDateString("fr-FR")}`, color: "666666" })] }),
+  const children: (Paragraph | Table)[] = [
+    // Titre principal
+    new Paragraph({
+      heading: HeadingLevel.TITLE,
+      spacing: { after: 80 },
+      children: [new TextRun({ text: report.title || "Document", bold: true, size: 44, color: ACCENT_HEX })],
+    }),
+    new Paragraph({
+      spacing: { after: 240 },
+      border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: "E5E7EB" } },
+      children: [new TextRun({ text: report.data?.period ? `Periode : ${report.data.period}` : `Date : ${new Date().toLocaleDateString("fr-FR")}`, size: 20, color: "888888" })],
+    }),
   ]
 
+  // Corps : markdown riche
   if (report.content) {
-    for (const line of report.content.split("\n")) {
-      if (line.startsWith("# ")) {
-        sections.push(new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun({ text: line.replace("# ", "") })] }))
-      } else if (line.startsWith("## ")) {
-        sections.push(new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: line.replace("## ", "") })] }))
-      } else if (line.startsWith("- ")) {
-        sections.push(new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: line.replace("- ", "") })] }))
-      } else if (line.trim()) {
-        sections.push(new Paragraph({ children: [new TextRun({ text: line })] }))
-      }
+    for (const block of parseMarkdown(report.content)) {
+      children.push(...blockToDocx(block))
     }
   }
 
+  // Encart recommandations
   if (report.recommendations && report.recommendations.length > 0) {
-    sections.push(new Paragraph({ spacing: { before: 400 }, heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "Recommandations" })] }))
+    children.push(new Paragraph({ spacing: { before: 360, after: 120 }, heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "Recommandations", bold: true, color: ACCENT_HEX })] }))
     for (const rec of report.recommendations) {
-      sections.push(new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text: rec })] }))
+      children.push(new Paragraph({ bullet: { level: 0 }, spacing: { after: 60 }, children: [new TextRun({ text: rec, size: 22 })] }))
     }
   }
 
-  return new Document({ sections: [{ children: sections }] })
+  // Encart alertes
+  if (report.alerts && report.alerts.length > 0) {
+    children.push(new Paragraph({ spacing: { before: 280, after: 120 }, heading: HeadingLevel.HEADING_2, children: [new TextRun({ text: "Points d'attention", bold: true, color: "D97706" })] }))
+    for (const a of report.alerts) {
+      children.push(new Paragraph({ bullet: { level: 0 }, spacing: { after: 60 }, children: [new TextRun({ text: `[${a.level}] ${a.message}`, size: 22, color: "92400E" })] }))
+    }
+  }
+
+  return new Document({
+    numbering: {
+      config: [{
+        reference: "omnia-ordered",
+        levels: [0, 1, 2, 3].map((lvl) => ({
+          level: lvl,
+          format: "decimal" as const,
+          text: `%${lvl + 1}.`,
+          alignment: AlignmentType.START,
+          style: { paragraph: { indent: { left: 360 * (lvl + 1), hanging: 260 } } },
+        })),
+      }],
+    },
+    sections: [{ children }],
+  })
 }
 
 export async function generateDocx(req: DocumentRequest): Promise<GeneratedDocument> {

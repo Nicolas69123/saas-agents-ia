@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs"
 import type { DocumentRequest, GeneratedDocument } from "./types"
 import { FORMAT_MIME } from "./types"
+import { parseMarkdown, spansToText } from "./markdown"
 
 const ACCENT = "FF4F46E5"
 const HEADER_BG = "FFF3F4F6"
@@ -176,28 +177,101 @@ function buildExpenseAnalysisSheet(workbook: ExcelJS.Workbook, req: DocumentRequ
 
 function buildGenericReportSheet(workbook: ExcelJS.Workbook, req: DocumentRequest) {
   const sheet = workbook.addWorksheet("Rapport", { views: [{ showGridLines: false }] })
-  sheet.columns = [{ width: 40 }, { width: 30 }]
+  // Largeur de base ; les tableaux ajusteront jusqu'a 6 colonnes
+  sheet.columns = [{ width: 42 }, { width: 24 }, { width: 24 }, { width: 24 }, { width: 24 }, { width: 24 }]
 
   sheet.getCell("A1").value = req.title || "Rapport"
-  sheet.getCell("A1").font = { bold: true, size: 18 }
+  sheet.getCell("A1").font = { bold: true, size: 18, color: { argb: ACCENT } }
 
+  let row = 3
   if (req.data?.period) {
-    sheet.getCell("A2").value = `Periode : ${req.data.period}`
-    sheet.getCell("A2").font = { color: { argb: GRAY }, size: 10 }
+    sheet.getCell(`A${row}`).value = `Periode : ${req.data.period}`
+    sheet.getCell(`A${row}`).font = { color: { argb: GRAY }, size: 10 }
+    row += 2
   }
 
   if (req.content) {
-    let row = 4
-    for (const line of req.content.split("\n")) {
-      if (!line.trim()) continue
+    for (const block of parseMarkdown(req.content)) {
+      switch (block.type) {
+        case "heading": {
+          const cell = sheet.getCell(`A${row}`)
+          cell.value = spansToText(block.spans)
+          cell.font = { bold: true, size: block.level === 1 ? 14 : block.level === 2 ? 12 : 11, color: { argb: block.level <= 2 ? ACCENT : HEADER_TEXT } }
+          row += 1
+          break
+        }
+        case "paragraph": {
+          const cell = sheet.getCell(`A${row}`)
+          sheet.mergeCells(`A${row}:F${row}`)
+          cell.value = spansToText(block.spans)
+          cell.font = { size: 11 }
+          cell.alignment = { wrapText: true, vertical: "top" }
+          row += 1
+          break
+        }
+        case "bullet":
+        case "ordered": {
+          const cell = sheet.getCell(`A${row}`)
+          sheet.mergeCells(`A${row}:F${row}`)
+          const prefix = block.type === "ordered" ? `${block.index}. ` : "- "
+          cell.value = `${"   ".repeat(block.level)}${prefix}${spansToText(block.spans)}`
+          cell.font = { size: 11 }
+          cell.alignment = { wrapText: true, vertical: "top" }
+          row += 1
+          break
+        }
+        case "quote": {
+          const cell = sheet.getCell(`A${row}`)
+          sheet.mergeCells(`A${row}:F${row}`)
+          cell.value = spansToText(block.spans)
+          cell.font = { size: 11, italic: true, color: { argb: GRAY } }
+          row += 1
+          break
+        }
+        case "divider":
+          row += 1
+          break
+        case "table": {
+          // En-tete
+          block.headers.forEach((h, c) => {
+            const cell = sheet.getCell(row, c + 1)
+            cell.value = spansToText(h)
+            cell.font = { bold: true, size: 11, color: { argb: HEADER_TEXT } }
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: HEADER_BG } }
+            cell.alignment = { vertical: "middle" }
+          })
+          row += 1
+          // Lignes
+          for (const r of block.rows) {
+            r.forEach((cellSpans, c) => {
+              const cell = sheet.getCell(row, c + 1)
+              cell.value = spansToText(cellSpans)
+              cell.font = { size: 11 }
+              cell.alignment = { vertical: "top", wrapText: true }
+            })
+            row += 1
+          }
+          row += 1
+          break
+        }
+      }
+    }
+  }
+
+  // Recommandations
+  if (req.recommendations && req.recommendations.length > 0) {
+    row += 1
+    const head = sheet.getCell(`A${row}`)
+    head.value = "Recommandations"
+    head.font = { bold: true, size: 12, color: { argb: ACCENT } }
+    row += 1
+    for (const rec of req.recommendations) {
       const cell = sheet.getCell(`A${row}`)
-      sheet.mergeCells(`A${row}:B${row}`)
-      cell.value = line.replace(/^#+\s*/, "").replace(/^-\s*/, "  - ")
-      if (line.startsWith("# ")) cell.font = { bold: true, size: 14 }
-      else if (line.startsWith("## ")) cell.font = { bold: true, size: 12 }
-      else cell.font = { size: 11 }
+      sheet.mergeCells(`A${row}:F${row}`)
+      cell.value = `- ${rec}`
+      cell.font = { size: 11 }
       cell.alignment = { wrapText: true, vertical: "top" }
-      row++
+      row += 1
     }
   }
 }

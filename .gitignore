@@ -64,3 +64,10 @@ next-env.d.ts
 demo-videos/
 n8n-workflows-backup/
 public/media/
+public/documents/
+
+# Dossiers agents (runtime, deployes directement sur la VM)
+omnia-agents/
+
+# Screenshots de debug locaux
+/*.png

@@ -6,6 +6,7 @@ import { tmpdir } from "os"
 import path from "path"
 import type { DocumentRequest, GeneratedDocument } from "./types"
 import { FORMAT_MIME } from "./types"
+import { parseMarkdown, type InlineSpan } from "./markdown"
 
 const execFileAsync = promisify(execFile)
 type PDFDocumentInstance = InstanceType<typeof PDFDocument>
@@ -117,35 +118,98 @@ function buildInvoicePdf(req: DocumentRequest): PDFDocumentInstance {
   return doc
 }
 
+// Ecrit une suite de spans inline sur une meme ligne (gras/italique/code).
+function writeInlineSpans(doc: PDFDocumentInstance, spans: InlineSpan[], size: number, indent = 50) {
+  const width = 545 - indent
+  spans.forEach((s, idx) => {
+    const font = s.code ? "Courier" : s.bold && s.italic ? "Helvetica-BoldOblique" : s.bold ? "Helvetica-Bold" : s.italic ? "Helvetica-Oblique" : "Helvetica"
+    doc.font(font).fontSize(size).fillColor(s.code ? "#B91C1C" : TEXT_PRIMARY)
+    doc.text(s.text, { continued: idx < spans.length - 1, width })
+  })
+}
+
 function buildReportPdf(req: DocumentRequest): PDFDocumentInstance {
   const doc = new PDFDocument({ size: "A4", margin: 50 })
 
-  doc.fontSize(22).fillColor(TEXT_PRIMARY).font("Helvetica-Bold").text(req.title || "Rapport")
-  if (req.data?.period) {
-    doc.fontSize(10).fillColor(TEXT_SECONDARY).font("Helvetica").text(`Periode : ${req.data.period}`)
-  }
-  doc.moveDown(1.5)
+  // Titre + filet
+  doc.fontSize(24).fillColor(ACCENT).font("Helvetica-Bold").text(req.title || "Document")
+  doc.fontSize(10).fillColor(TEXT_SECONDARY).font("Helvetica")
+    .text(req.data?.period ? `Periode : ${req.data.period}` : `Date : ${new Date().toLocaleDateString("fr-FR")}`)
+  doc.moveDown(0.4)
+  doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor(LIGHT_GRAY).stroke()
+  doc.moveDown(0.8)
 
   if (req.content) {
-    for (const line of req.content.split("\n")) {
-      if (line.startsWith("# ")) {
-        doc.moveDown(0.5).fontSize(16).fillColor(TEXT_PRIMARY).font("Helvetica-Bold").text(line.replace("# ", ""))
-      } else if (line.startsWith("## ")) {
-        doc.moveDown(0.5).fontSize(13).fillColor(TEXT_PRIMARY).font("Helvetica-Bold").text(line.replace("## ", ""))
-      } else if (line.startsWith("- ")) {
-        doc.fontSize(11).fillColor(TEXT_PRIMARY).font("Helvetica").text(`-  ${line.replace("- ", "")}`)
-      } else if (line.trim()) {
-        doc.fontSize(11).fillColor(TEXT_PRIMARY).font("Helvetica").text(line)
+    for (const block of parseMarkdown(req.content)) {
+      switch (block.type) {
+        case "heading": {
+          const size = block.level === 1 ? 16 : block.level === 2 ? 13 : 11.5
+          doc.moveDown(0.5).font("Helvetica-Bold").fontSize(size).fillColor(block.level <= 2 ? ACCENT : TEXT_PRIMARY)
+          doc.text(block.spans.map((s) => s.text).join(""))
+          doc.moveDown(0.2)
+          break
+        }
+        case "paragraph":
+          writeInlineSpans(doc, block.spans, 11)
+          doc.moveDown(0.3)
+          break
+        case "bullet":
+          doc.font("Helvetica").fontSize(11).fillColor(TEXT_PRIMARY)
+            .text(`${"   ".repeat(block.level)}•  ${block.spans.map((s) => s.text).join("")}`, { indent: 0 })
+          break
+        case "ordered":
+          doc.font("Helvetica").fontSize(11).fillColor(TEXT_PRIMARY)
+            .text(`${"   ".repeat(block.level)}${block.index}.  ${block.spans.map((s) => s.text).join("")}`)
+          break
+        case "quote":
+          doc.font("Helvetica-Oblique").fontSize(11).fillColor(TEXT_SECONDARY)
+            .text(`   ${block.spans.map((s) => s.text).join("")}`, { indent: 10 })
+          doc.moveDown(0.2)
+          break
+        case "divider":
+          doc.moveDown(0.3)
+          doc.moveTo(50, doc.y).lineTo(545, doc.y).strokeColor(LIGHT_GRAY).stroke()
+          doc.moveDown(0.4)
+          break
+        case "table": {
+          const cols = block.headers.length || 1
+          const colW = 495 / cols
+          const startX = 50
+          // En-tete
+          let ty = doc.y + 4
+          doc.rect(startX, ty, 495, 20).fill("#F3F4F6")
+          doc.fillColor(TEXT_PRIMARY).font("Helvetica-Bold").fontSize(9)
+          block.headers.forEach((cell, c) => {
+            doc.text(cell.map((s) => s.text).join(""), startX + 6 + c * colW, ty + 6, { width: colW - 12 })
+          })
+          ty += 20
+          // Lignes
+          doc.font("Helvetica").fontSize(9.5).fillColor(TEXT_PRIMARY)
+          for (const row of block.rows) {
+            row.forEach((cell, c) => {
+              doc.text(cell.map((s) => s.text).join(""), startX + 6 + c * colW, ty + 5, { width: colW - 12 })
+            })
+            ty += 20
+            doc.moveTo(startX, ty).lineTo(startX + 495, ty).strokeColor(LIGHT_GRAY).stroke()
+          }
+          doc.y = ty + 6
+          doc.x = 50
+          break
+        }
       }
     }
   }
 
   if (req.recommendations && req.recommendations.length > 0) {
-    doc.moveDown(1).fontSize(14).fillColor(TEXT_PRIMARY).font("Helvetica-Bold").text("Recommandations")
-    doc.fontSize(11).font("Helvetica")
-    for (const rec of req.recommendations) {
-      doc.text(`-  ${rec}`)
-    }
+    doc.moveDown(1).fontSize(14).fillColor(ACCENT).font("Helvetica-Bold").text("Recommandations")
+    doc.fontSize(11).font("Helvetica").fillColor(TEXT_PRIMARY)
+    for (const rec of req.recommendations) doc.text(`•  ${rec}`)
+  }
+
+  if (req.alerts && req.alerts.length > 0) {
+    doc.moveDown(0.8).fontSize(14).fillColor("#D97706").font("Helvetica-Bold").text("Points d'attention")
+    doc.fontSize(11).font("Helvetica").fillColor("#92400E")
+    for (const a of req.alerts) doc.text(`[${a.level}]  ${a.message}`)
   }
 
   doc.end()

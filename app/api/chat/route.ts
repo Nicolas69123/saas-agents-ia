@@ -93,6 +93,11 @@ function isSessionExpired(session: SessionInfo): boolean {
   return Date.now() - session.lastActivity > SESSION_TIMEOUT_MS
 }
 
+// HOME / PATH pour claude : valeurs VM par defaut, surchargeables en local via .env
+// (CLAUDE_HOME, CLAUDE_PATH_PREFIX) pour pouvoir lancer le chat en developpement.
+const CLAUDE_HOME = process.env.CLAUDE_HOME || "/home/webmaster"
+const CLAUDE_PATH_PREFIX = process.env.CLAUDE_PATH_PREFIX || "/home/webmaster/.npm-global/bin"
+
 function callClaude(args: string[], agentPath: string): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
     const child = execFile(CLAUDE_BIN, args, {
@@ -101,8 +106,8 @@ function callClaude(args: string[], agentPath: string): Promise<{ stdout: string
       maxBuffer: 1024 * 1024 * 5,
       env: {
         ...process.env,
-        HOME: "/home/webmaster",
-        PATH: `/home/webmaster/.npm-global/bin:${process.env.PATH}`,
+        HOME: CLAUDE_HOME,
+        PATH: `${CLAUDE_PATH_PREFIX}:${process.env.PATH}`,
       },
     }, (error, stdout, stderr) => {
       if (error) reject(error)
@@ -189,6 +194,18 @@ async function processAssistantMessage(params: {
         "job_posting", "job_offer", "employment_contract", "hr_letter",
         "onboarding_plan", "interview_guide", "cv_analysis", "work_certificate",
         "pay_slip_summary", "hr_presentation",
+        // Reseaux sociaux (Thomas)
+        "content_calendar", "social_strategy", "social_report",
+        // Email marketing (Sophie)
+        "newsletter", "email_campaign", "marketing_plan", "audience_analysis",
+        // Tresorerie (Marc)
+        "cashflow_forecast", "treasury_dashboard", "treasury_report",
+        // Investissements (Julie)
+        "portfolio_analysis", "investment_report", "market_report",
+        // Support client (Emma)
+        "ticket_response", "faq_document", "response_template", "satisfaction_report",
+        // Telephonique (Lea)
+        "call_script", "voicemail_script", "callback_plan",
       ]
       if (docTypes.includes(docType)) {
         try {
@@ -228,6 +245,29 @@ async function processAssistantMessage(params: {
         delete responseContent.image_base64
       } catch (err) {
         console.error("[API] Erreur sauvegarde image:", err)
+      }
+    }
+
+    // Image pour les posts sociaux : recuperation via Pexels (gratuit, libre de droit)
+    // si l'agent demande une image (generate_image + image_prompt) et qu'aucune n'est deja fournie.
+    if (
+      typeof responseContent === "object" &&
+      responseContent?.generate_image &&
+      responseContent?.image_prompt &&
+      !responseContent?.image_url
+    ) {
+      try {
+        const { findImageUrl } = await import("@/lib/documents/pexels-service")
+        const ref = await findImageUrl(String(responseContent.image_prompt))
+        if (ref?.url) {
+          responseContent.image_url = ref.url
+          responseContent.image_credit = `Photo : ${ref.photographer} (Pexels)`
+          console.log(`[API] Image Pexels social: ${responseContent.image_prompt} -> ${ref.url}`)
+        } else {
+          console.warn(`[API] Pexels: aucune image pour "${responseContent.image_prompt}"`)
+        }
+      } catch (err) {
+        console.error("[API] Erreur image Pexels:", err)
       }
     }
 
