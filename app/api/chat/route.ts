@@ -146,28 +146,50 @@ async function processAssistantMessage(params: {
     // Session lookup
     const sessionKey = getSessionKey(userId, agentId, conversationId)
     let session = activeSessions.get(sessionKey)
-    let claudeArgs: string[]
 
-    if (session && !isSessionExpired(session)) {
-      claudeArgs = ["-p", "--resume", session.sessionId, finalMessage]
-      console.log(`[DISPATCH] Resume session ${session.sessionId} for ${agentDir}`)
-    } else {
+    // Lance une NOUVELLE session claude (toujours fiable).
+    const startNewSession = async () => {
       const newSessionId = randomUUID()
-      session = {
-        sessionId: newSessionId,
-        conversationId,
-        lastActivity: Date.now(),
-      }
+      session = { sessionId: newSessionId, conversationId, lastActivity: Date.now() }
       activeSessions.set(sessionKey, session)
-      claudeArgs = ["-p", "--model", "haiku", "--session-id", newSessionId, finalMessage]
       console.log(`[DISPATCH] New session ${newSessionId} for ${agentDir}`)
+      return callClaude(["-p", "--model", "haiku", "--session-id", newSessionId, finalMessage], agentPath)
     }
 
-    const { stdout, stderr } = await callClaude(claudeArgs, agentPath)
+    let stdout: string
+    let stderr: string
+
+    if (session && !isSessionExpired(session)) {
+      // Tentative de reprise ; si la session claude n'existe plus, on repart a neuf.
+      try {
+        console.log(`[DISPATCH] Resume session ${session.sessionId} for ${agentDir}`)
+        const res = await callClaude(["-p", "--resume", session.sessionId, finalMessage], agentPath)
+        stdout = res.stdout
+        stderr = res.stderr
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        if (/No conversation found|session/i.test(msg)) {
+          console.warn(`[DISPATCH] Resume echoue (${session.sessionId}), nouvelle session: ${msg.substring(0, 120)}`)
+          activeSessions.delete(sessionKey)
+          const res = await startNewSession()
+          stdout = res.stdout
+          stderr = res.stderr
+        } else {
+          throw err
+        }
+      }
+    } else {
+      const res = await startNewSession()
+      stdout = res.stdout
+      stderr = res.stderr
+    }
+
     if (stderr) console.error(`[DISPATCH] stderr ${agentDir}:`, stderr.substring(0, 200))
 
-    session.lastActivity = Date.now()
-    activeSessions.set(sessionKey, session)
+    if (session) {
+      session.lastActivity = Date.now()
+      activeSessions.set(sessionKey, session)
+    }
 
     const rawResponse = stdout.trim()
 
@@ -283,7 +305,7 @@ async function processAssistantMessage(params: {
        WHERE id = $3`,
       [
         finalContent,
-        JSON.stringify({ agentId, agentDir, sessionId: session.sessionId, status: "done" }),
+        JSON.stringify({ agentId, agentDir, sessionId: session?.sessionId, status: "done" }),
         messageId,
       ]
     )
