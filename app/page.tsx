@@ -147,7 +147,7 @@ export default function Home() {
                 </div>
                 <div className="stat-divider" />
                 <div className="stat">
-                  <span className="stat-number">-70%</span>
+                  <span className="stat-number">70%</span>
                   <span className="stat-label">De temps gagné</span>
                 </div>
               </div>
