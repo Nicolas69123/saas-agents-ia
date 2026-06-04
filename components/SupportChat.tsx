@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 // Chatbot de support de la vitrine (IA via /api/support, claude -p).
 // Cache sur le chat agent, le dashboard et les pages auth pour eviter le doublon.
@@ -83,7 +85,15 @@ export default function SupportChat() {
 
           <div className="support-body">
             {messages.map((m, i) => (
-              <div key={i} className={`support-msg ${m.role}`}>{m.content}</div>
+              <div key={i} className={`support-msg ${m.role}`}>
+                {m.role === 'assistant' ? (
+                  <div className="support-md">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                  </div>
+                ) : (
+                  m.content
+                )}
+              </div>
             ))}
             {loading && (
               <div className="support-msg assistant support-typing">
@@ -248,6 +258,43 @@ export default function SupportChat() {
           justify-content: center;
         }
         .support-send:disabled { opacity: 0.5; cursor: not-allowed; }
+      `}</style>
+
+      <style jsx global>{`
+        .support-md { white-space: normal; }
+        .support-md > :first-child { margin-top: 0; }
+        .support-md > :last-child { margin-bottom: 0; }
+        .support-md p { margin: 0 0 0.5rem; }
+        .support-md strong { font-weight: 700; color: var(--text-primary); }
+        .support-md em { font-style: italic; }
+        .support-md ul, .support-md ol { margin: 0.25rem 0 0.5rem; padding-left: 1.2rem; }
+        .support-md li { margin: 0 0 0.2rem; }
+        .support-md a { color: var(--accent); text-decoration: underline; }
+        .support-md code {
+          font-family: 'SF Mono', ui-monospace, Menlo, monospace;
+          font-size: 0.85em;
+          background: var(--bg-tertiary);
+          padding: 0.1em 0.35em;
+          border-radius: 5px;
+        }
+        .support-md table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 0.4rem 0;
+          font-size: 0.82rem;
+        }
+        .support-md th, .support-md td {
+          border: 1px solid var(--border);
+          padding: 0.35rem 0.5rem;
+          text-align: left;
+        }
+        .support-md th { background: var(--bg-tertiary); font-weight: 600; }
+        .support-md h1, .support-md h2, .support-md h3 {
+          font-size: 0.95rem;
+          font-weight: 700;
+          margin: 0.5rem 0 0.3rem;
+          color: var(--text-primary);
+        }
       `}</style>
     </>
   )
