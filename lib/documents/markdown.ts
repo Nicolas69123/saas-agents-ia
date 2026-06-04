@@ -58,10 +58,28 @@ function indentLevel(line: string): number {
   return Math.floor(m[1].replace(/\t/g, '  ').length / 2)
 }
 
+// Certains agents produisent des tableaux "aplatis" sur une seule ligne :
+//   | A | B | | --- | --- | | x | y | | z | w |
+// On re-decoupe ces sequences en plusieurs lignes pour que le parser de tableau
+// les reconnaisse. Heuristique : une ligne contenant 3+ "|" et la sequence " | | "
+// (fin d'une ligne collee au debut de la suivante) est re-segmentee.
+function normalizeFlatTables(md: string): string {
+  return md
+    .split('\n')
+    .map((line) => {
+      const pipes = (line.match(/\|/g) || []).length
+      // Ne traiter que les lignes qui ressemblent a du tableau colle
+      if (pipes < 5 || !line.includes('| |')) return line
+      // Coupe a chaque frontiere "| |" -> "|\n|"
+      return line.replace(/\|\s*\|/g, '|\n|')
+    })
+    .join('\n')
+}
+
 /** Transforme un texte markdown en blocs structures. */
 export function parseMarkdown(md: string): MdBlock[] {
   const blocks: MdBlock[] = []
-  const lines = md.replace(/\r\n/g, '\n').split('\n')
+  const lines = normalizeFlatTables(md.replace(/\r\n/g, '\n')).split('\n')
   let i = 0
 
   while (i < lines.length) {

@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import dynamic from 'next/dynamic'
 import Header from '@/components/Header'
 import { useAuth } from '@/components/AuthProvider'
@@ -1213,7 +1214,7 @@ function ChatPageContent() {
                     ) : (
                       <>
                         <div className="markdown-content">
-                          <ReactMarkdown>{message.content}</ReactMarkdown>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                         </div>
                         {message.imageUrl && (
                           <div className="msg-image" style={{ marginTop: '12px' }}>
@@ -1418,7 +1419,7 @@ function ChatPageContent() {
       <style jsx>{`
         .suggestions-container {
           margin: 32px auto;
-          max-width: 800px;
+          max-width: 1080px;
           padding: 0 24px;
           animation: suggestions-in 0.5s ease-out;
         }
@@ -1536,7 +1537,7 @@ function ChatPageContent() {
           flex-wrap: wrap;
           gap: 8px;
           padding: 0 8px 10px;
-          max-width: 800px;
+          max-width: 1080px;
           margin: 0 auto;
           width: 100%;
         }
@@ -2037,7 +2038,7 @@ function ChatPageContent() {
         }
 
         .messages-wrapper {
-          max-width: 800px;
+          max-width: 1080px;
           margin: 0 auto;
           display: flex;
           flex-direction: column;
@@ -2332,7 +2333,7 @@ n          font-size: inherit;
         }
 
         .input-wrapper {
-          max-width: 800px;
+          max-width: 1080px;
           margin: 0 auto;
           display: flex;
           align-items: flex-end;
@@ -2408,7 +2409,7 @@ n          font-size: inherit;
         }
 
         .input-hint {
-          max-width: 800px;
+          max-width: 1080px;
           margin: 10px auto 0;
           font-size: 0.7rem;
           color: var(--text-tertiary);
