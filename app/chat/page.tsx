@@ -99,6 +99,17 @@ const STORAGE_KEYS = {
   currentConvId: (agentId: number) => `omnia_current_conv_agent_${agentId}`,
   sharedMedias: 'omnia_shared_medias',
   lastAgent: 'omnia_last_agent',
+  openAgents: 'omnia_open_agents',
+}
+
+// Onglets d'agents ouverts (liste d'IDs, ordre = ordre d'ouverture)
+const loadOpenAgents = (): number[] => {
+  if (typeof window === 'undefined') return []
+  return safeJsonParse<number[]>(localStorage.getItem(STORAGE_KEYS.openAgents), [])
+}
+const saveOpenAgents = (ids: number[]) => {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(STORAGE_KEYS.openAgents, JSON.stringify(ids))
 }
 
 // Helper to safely parse JSON from localStorage
@@ -232,6 +243,7 @@ function ChatPageContent() {
   const { user } = useAuth()
   const [mounted, setMounted] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState(agents[0])
+  const [openAgentIds, setOpenAgentIds] = useState<number[]>([])
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null)
   const [inputValue, setInputValue] = useState('')
@@ -293,6 +305,12 @@ function ChatPageContent() {
 
     setSelectedAgent(initialAgent)
     saveLastAgent(initialAgent.id)
+
+    // Onglets d'agents ouverts : charger + garantir que l'agent courant y figure
+    const storedOpen = loadOpenAgents().filter((id) => agents.some((a) => a.id === id))
+    const openTabs = storedOpen.includes(initialAgent.id) ? storedOpen : [...storedOpen, initialAgent.id]
+    setOpenAgentIds(openTabs)
+    saveOpenAgents(openTabs)
 
     // Load conversations for this agent from localStorage
     const storedConversations = loadAgentConversations(initialAgent.id)
@@ -392,6 +410,13 @@ function ChatPageContent() {
     setShowAgentPicker(false)
     saveLastAgent(agent.id)
 
+    // Ajouter l'agent aux onglets ouverts (s'il n'y est pas deja)
+    setOpenAgentIds((prev) => {
+      const next = prev.includes(agent.id) ? prev : [...prev, agent.id]
+      saveOpenAgents(next)
+      return next
+    })
+
     // Update URL to reflect agent change
     router.push(`/chat?agent=${agent.id}`, { scroll: false })
 
@@ -418,6 +443,23 @@ function ChatPageContent() {
       saveAgentConversations(agent.id, [welcomeConv])
       saveCurrentConvId(agent.id, welcomeConv.id)
     }
+  }
+
+  // Ferme un onglet d'agent. L'historique des conversations reste conserve en
+  // localStorage (on retire juste l'onglet). Si on ferme l'agent actif, on bascule
+  // sur un autre onglet ouvert.
+  const closeAgentTab = (e: React.MouseEvent, agentId: number) => {
+    e.stopPropagation()
+    setOpenAgentIds((prev) => {
+      const next = prev.filter((id) => id !== agentId)
+      saveOpenAgents(next)
+      // Si on ferme l'agent actuellement ouvert, basculer vers un voisin
+      if (agentId === selectedAgent.id && next.length > 0) {
+        const fallback = agents.find((a) => a.id === next[next.length - 1])
+        if (fallback) handleAgentChange(fallback)
+      }
+      return next
+    })
   }
 
   const handleNewConversation = () => {
@@ -1149,6 +1191,39 @@ function ChatPageContent() {
             </div>
           )}
 
+          {/* Onglets des agents ouverts */}
+          {openAgentIds.length > 0 && (
+            <div className="agent-tabs">
+              {openAgentIds.map((id) => {
+                const a = getAgentById(id)
+                const active = id === selectedAgent.id
+                return (
+                  <button
+                    key={id}
+                    className={`agent-tab ${active ? 'active' : ''}`}
+                    onClick={() => handleAgentChange(a)}
+                    style={{ '--tab-color': a.color } as React.CSSProperties}
+                    title={`${a.name} - ${a.role}`}
+                  >
+                    <Image src={a.avatar} alt={a.name} width={22} height={22} className="tab-avatar" />
+                    <span className="tab-name">{a.name}</span>
+                    <span
+                      className="tab-close"
+                      role="button"
+                      aria-label={`Fermer ${a.name}`}
+                      onClick={(e) => closeAgentTab(e, id)}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
           <div className="header-actions">
             <button className="action-btn" title="Rechercher">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1849,11 +1924,78 @@ function ChatPageContent() {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          gap: 16px;
           padding: 16px 24px;
           border-bottom: 1px solid var(--border);
           background: var(--bg-primary);
           position: relative;
           z-index: 20;
+        }
+
+        /* Onglets des agents ouverts */
+        .agent-tabs {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          overflow-x: auto;
+          padding: 2px 4px;
+          scrollbar-width: thin;
+        }
+        .agent-tabs::-webkit-scrollbar { height: 4px; }
+        .agent-tabs::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .agent-tab {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          flex-shrink: 0;
+          max-width: 180px;
+          padding: 6px 8px 6px 6px;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          cursor: pointer;
+          transition: all 0.18s ease;
+          color: var(--text-secondary);
+        }
+        .agent-tab:hover { border-color: var(--tab-color); color: var(--text-primary); }
+        .agent-tab.active {
+          background: var(--bg-card);
+          border-color: var(--tab-color);
+          color: var(--text-primary);
+          box-shadow: 0 0 0 1px var(--tab-color);
+        }
+        .agent-tab :global(.tab-avatar) {
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          object-fit: cover;
+          flex-shrink: 0;
+        }
+        .tab-name {
+          font-family: 'Sora', sans-serif;
+          font-size: 0.85rem;
+          font-weight: 500;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .tab-close {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          flex-shrink: 0;
+          color: var(--text-tertiary);
+          transition: all 0.15s ease;
+        }
+        .tab-close:hover { background: rgba(239, 68, 68, 0.12); color: #EF4444; }
+
+        @media (max-width: 768px) {
+          .agent-tabs { display: none; }
         }
 
         .agent-selector {
