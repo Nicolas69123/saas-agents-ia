@@ -14,6 +14,7 @@ const PRESENTATION_TYPES = new Set(["presentation", "client_deck", "pitch_deck"]
 const DOCS_DIR = path.join(process.cwd(), "public", "documents")
 
 const TYPE_TO_FORMAT: Record<string, "docx" | "xlsx" | "pptx" | "pdf"> = {
+  // Comptable
   invoice: "docx",
   monthly_report: "docx",
   quarterly_report: "docx",
@@ -25,6 +26,17 @@ const TYPE_TO_FORMAT: Record<string, "docx" | "xlsx" | "pptx" | "pdf"> = {
   pitch_deck: "pptx",
   contract: "pdf",
   certificate: "pdf",
+  // RH (Claire)
+  job_posting: "docx",
+  job_offer: "pdf",
+  employment_contract: "pdf",
+  hr_letter: "docx",
+  onboarding_plan: "docx",
+  interview_guide: "docx",
+  cv_analysis: "xlsx",
+  work_certificate: "pdf",
+  pay_slip_summary: "xlsx",
+  hr_presentation: "pptx",
 }
 
 function resolveFormat(req: DocumentRequest): "docx" | "xlsx" | "pptx" | "pdf" {

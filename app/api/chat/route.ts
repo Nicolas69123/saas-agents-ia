@@ -181,9 +181,14 @@ async function processAssistantMessage(params: {
     if (typeof responseContent === "object" && responseContent?.type) {
       const docType = responseContent.type as string
       const docTypes = [
+        // Comptable
         "invoice", "monthly_report", "quarterly_report", "expense_analysis",
         "balance_sheet", "vat_check", "presentation", "client_deck",
         "pitch_deck", "contract", "certificate",
+        // RH (Claire)
+        "job_posting", "job_offer", "employment_contract", "hr_letter",
+        "onboarding_plan", "interview_guide", "cv_analysis", "work_certificate",
+        "pay_slip_summary", "hr_presentation",
       ]
       if (docTypes.includes(docType)) {
         try {

@@ -52,6 +52,17 @@ export interface DocumentRequest {
     period?: string
     slides?: SlideContent[]
     theme?: "business" | "marketing" | "finance" | "dark"
+    // RH (optionnels — le rendu se fait via content markdown, ces champs servent d'aide structurée)
+    job_title?: string
+    department?: string
+    contract_type?: string
+    candidate_name?: string
+    employee_name?: string
+    start_date?: string
+    end_date?: string
+    salary?: string
+    location?: string
+    seniority?: string
   }
   recommendations?: string[]
   alerts?: { level: string; message: string }[]
