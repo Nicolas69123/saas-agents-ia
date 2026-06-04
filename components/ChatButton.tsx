@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import ChatModal from './ChatModal'
 
-const HIDDEN_ON_PATHS = ['/chat', '/auth/login', '/auth/signup', '/profile']
+const HIDDEN_ON_PATHS = ['/chat', '/auth/login', '/auth/signup']
 
 export default function ChatButton() {
   const [isOpen, setIsOpen] = useState(false)
