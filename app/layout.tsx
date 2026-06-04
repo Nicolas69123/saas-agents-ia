@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { AuthProvider } from '@/components/AuthProvider'
-import ChatButton from '@/components/ChatButton'
+import SupportChat from '@/components/SupportChat'
 
 export const metadata: Metadata = {
   title: 'OmnIA - Agents IA Automatisés pour votre Business',
@@ -35,7 +35,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             {children}
-            <ChatButton />
+            <SupportChat />
           </AuthProvider>
         </ThemeProvider>
       </body>
