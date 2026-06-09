@@ -1,0 +1,104 @@
+<svg width="800" height="450" viewBox="0 0 800 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#059669;stop-opacity:0.08"/>
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:0.15"/>
+    </linearGradient>
+    <linearGradient id="accent5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#059669"/>
+      <stop offset="100%" style="stop-color:#10B981"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="450" fill="url(#bg5)"/>
+
+  <!-- Decorative circles -->
+  <circle cx="720" cy="80" r="120" fill="#059669" opacity="0.05"/>
+  <circle cx="80" cy="370" r="100" fill="#059669" opacity="0.08"/>
+
+  <!-- Main dashboard card -->
+  <g transform="translate(180, 60)">
+    <rect x="0" y="0" width="440" height="280" rx="24" fill="white" filter="drop-shadow(0 15px 40px rgba(5, 150, 105, 0.15))"/>
+
+    <!-- Header -->
+    <rect x="25" y="25" width="120" height="12" rx="6" fill="#059669"/>
+    <circle cx="400" cy="31" r="8" fill="#059669" opacity="0.2"/>
+    <circle cx="380" cy="31" r="8" fill="#059669" opacity="0.2"/>
+
+    <!-- Area chart -->
+    <g transform="translate(25, 60)">
+      <!-- Grid lines -->
+      <line x1="0" y1="0" x2="390" y2="0" stroke="#059669" stroke-width="1" opacity="0.1"/>
+      <line x1="0" y1="50" x2="390" y2="50" stroke="#059669" stroke-width="1" opacity="0.1"/>
+      <line x1="0" y1="100" x2="390" y2="100" stroke="#059669" stroke-width="1" opacity="0.1"/>
+      <line x1="0" y1="150" x2="390" y2="150" stroke="#059669" stroke-width="1" opacity="0.1"/>
+
+      <!-- Actual data area -->
+      <path d="M0 120 L50 100 L100 110 L150 80 L200 90 L250 60 L300 70 L300 150 L0 150 Z" fill="url(#accent5)" opacity="0.2"/>
+      <path d="M0 120 L50 100 L100 110 L150 80 L200 90 L250 60 L300 70" stroke="url(#accent5)" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+      <!-- Forecast area (dashed) -->
+      <path d="M300 70 L350 45 L390 55 L390 150 L300 150 Z" fill="#059669" opacity="0.1"/>
+      <path d="M300 70 L350 45 L390 55" stroke="#059669" stroke-width="3" stroke-dasharray="8 6" stroke-linecap="round" fill="none"/>
+
+      <!-- Data points -->
+      <circle cx="0" cy="120" r="5" fill="#059669"/>
+      <circle cx="50" cy="100" r="5" fill="#059669"/>
+      <circle cx="100" cy="110" r="5" fill="#059669"/>
+      <circle cx="150" cy="80" r="5" fill="#059669"/>
+      <circle cx="200" cy="90" r="5" fill="#059669"/>
+      <circle cx="250" cy="60" r="5" fill="#059669"/>
+      <circle cx="300" cy="70" r="6" fill="#059669"/>
+
+      <!-- Forecast point with glow -->
+      <circle cx="350" cy="45" r="8" fill="#059669" opacity="0.3"/>
+      <circle cx="350" cy="45" r="5" fill="white" stroke="#059669" stroke-width="2"/>
+    </g>
+
+    <!-- Stats row -->
+    <g transform="translate(25, 230)">
+      <rect x="0" y="0" width="120" height="35" rx="10" fill="#059669" opacity="0.1"/>
+      <text x="15" y="14" font-family="system-ui" font-size="9" fill="#059669" opacity="0.7">Cash actuel</text>
+      <text x="15" y="28" font-family="system-ui" font-size="12" fill="#059669" font-weight="700">245 890 EUR</text>
+
+      <rect x="135" y="0" width="120" height="35" rx="10" fill="#059669" opacity="0.1"/>
+      <text x="150" y="14" font-family="system-ui" font-size="9" fill="#059669" opacity="0.7">Prevision J+30</text>
+      <text x="150" y="28" font-family="system-ui" font-size="12" fill="#059669" font-weight="700">+32 450 EUR</text>
+
+      <rect x="270" y="0" width="120" height="35" rx="10" fill="#059669" opacity="0.1"/>
+      <text x="285" y="14" font-family="system-ui" font-size="9" fill="#059669" opacity="0.7">Tendance</text>
+      <path d="M285 28 L295 22 L305 28 L315 18" stroke="#059669" stroke-width="2" stroke-linecap="round" fill="none"/>
+      <text x="325" y="28" font-family="system-ui" font-size="11" fill="#059669" font-weight="600">+8.2%</text>
+    </g>
+  </g>
+
+  <!-- Money flow indicators -->
+  <g transform="translate(100, 140)">
+    <rect x="0" y="0" width="60" height="60" rx="14" fill="white" filter="drop-shadow(0 8px 20px rgba(5, 150, 105, 0.2))"/>
+    <circle cx="30" cy="25" r="12" fill="url(#accent5)" opacity="0.2"/>
+    <path d="M26 25 L34 25 M30 21 L30 29" stroke="#059669" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="30" y="50" font-family="system-ui" font-size="8" fill="#059669" text-anchor="middle">Entrees</text>
+  </g>
+
+  <g transform="translate(640, 180)">
+    <rect x="0" y="0" width="60" height="60" rx="14" fill="white" filter="drop-shadow(0 8px 20px rgba(5, 150, 105, 0.2))"/>
+    <circle cx="30" cy="25" r="12" fill="#059669" opacity="0.2"/>
+    <path d="M26 25 L34 25" stroke="#059669" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="30" y="50" font-family="system-ui" font-size="8" fill="#059669" text-anchor="middle">Sorties</text>
+  </g>
+
+  <!-- Alert badge -->
+  <g transform="translate(640, 300)">
+    <rect x="0" y="0" width="100" height="80" rx="16" fill="white" filter="drop-shadow(0 8px 20px rgba(5, 150, 105, 0.15))"/>
+    <circle cx="50" cy="35" r="18" fill="#059669" opacity="0.15"/>
+    <path d="M50 25 L50 38 M50 43 L50 45" stroke="#059669" stroke-width="3" stroke-linecap="round"/>
+    <text x="50" y="68" font-family="system-ui" font-size="9" fill="#059669" text-anchor="middle" opacity="0.7">Alerte seuil</text>
+  </g>
+
+  <!-- AI sparkle -->
+  <g transform="translate(530, 50)">
+    <path d="M20 0 L24 18 L42 22 L24 26 L20 44 L16 26 L-2 22 L16 18 Z" fill="#059669"/>
+    <circle cx="20" cy="22" r="5" fill="white"/>
+  </g>
+</svg>
